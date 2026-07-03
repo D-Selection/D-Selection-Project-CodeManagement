@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>안분표 생성 | 아크로드 서초 현장</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="logo">▤</span>
+        <div class="topbar-titles">
+          <h1>안분표 생성 <span class="round">(1차수)</span></h1>
+          <p>아크로드 서초 현장 <span class="site-code">(170020)</span></p>
+        </div>
+      </div>
+      <nav class="topbar-nav">
+        <span class="dept-tag">※ 메뉴별 담당부서</span>
+        <a href="#" class="nav-step active">1. 상품구성</a>
+        <a href="#" class="nav-step">2. 원가 수정</a>
+        <a href="#" class="nav-step">3. 상품고객언어</a>
+        <a href="#" class="nav-step">4. 판매가 수정</a>
+        <a href="#" class="nav-step">5. 안분표 생성</a>
+        <button class="close-btn" type="button">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1L13 13M13 1L1 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          닫기
+        </button>
+      </nav>
+    </header>
+
+    <!-- Sub bar: step tabs -->
+    <div class="subbar">
+      <div class="subbar-title">
+        <span class="grid-icon">▦</span>
+        <h2>상품업로드 <span class="round-badge">14 차수</span></h2>
+      </div>
+      <div class="step-tabs">
+        <button class="step-tab active" data-tab="product"><span class="num">1</span>프로덕트</button>
+        <button class="step-tab" data-tab="sku"><span class="num">2</span>상품구성코드</button>
+        <button class="step-tab" data-tab="mapping"><span class="num">3</span>프로덕트×상품구성코드</button>
+        <button class="step-tab" data-tab="area"><span class="num">4</span>평형그룹매핑</button>
+        <button class="step-tab" data-tab="category"><span class="num">5</span>대분류/중분류/제조사</button>
+      </div>
+      <div class="confirm-box">
+        <span class="confirm-badge">상품 구성<br />확 정</span>
+        <div class="confirm-info">
+          <p>확정자 : 안은철</p>
+          <p>확정일 : 2026년 6월 29일 (월) 오후 1:31:21</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filterbar">
+      <div class="filterbar-left">
+        <span class="section-label">소분류</span>
+        <span class="count-badge" id="rowCount">474</span>
+      </div>
+      <div class="filterbar-right">
+        <button class="filter-chip active" id="searchToggle">
+          <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.6"/><path d="M14.5 14.5L18 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          검색
+        </button>
+        <button class="filter-chip">코드</button>
+        <button class="filter-chip">명칭</button>
+        <button class="filter-chip">대·중분류</button>
+        <button class="filter-chip">제조사</button>
+        <button class="filter-chip">모델명</button>
+        <button class="filter-chip">마감재</button>
+        <button class="filter-chip">사용여부</button>
+        <button class="filter-chip add-filter">+ Add filter</button>
+      </div>
+    </div>
+
+    <div class="search-row" id="searchRow">
+      <input type="text" id="searchInput" placeholder="상품코드, 명칭, 제조사, 모델명으로 검색" />
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+      <table id="productTable">
+        <thead>
+          <tr>
+            <th class="sortable">상품코드 <span class="sort-icon">⇅</span></th>
+            <th>연번</th>
+            <th>Product 소분류명</th>
+            <th>Product 소분류명 (고객용)</th>
+            <th>제조사</th>
+            <th>모델명</th>
+            <th>마감재</th>
+            <th>사이즈</th>
+            <th>사용</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+<script src="script.js"></script>
+</body>
+</html>
