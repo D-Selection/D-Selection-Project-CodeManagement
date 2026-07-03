@@ -8,7 +8,7 @@ document.querySelectorAll(".ctab").forEach((btn) => {
   });
 });
 
-/* ===================== 전사공통코드 ===================== */
+/* ===================== 전사공통코드: 고객 / 공간 (변경 없음) ===================== */
 const customers = [
   { code: "C", name: "일반 - Customer" },
   { code: "U", name: "조합 - Union" },
@@ -87,6 +87,90 @@ document.getElementById("subcatBody").innerHTML = `
   </tr>
 `;
 
+/* =====================================================================
+   전사공통코드: 고객스타일 / 스타일 / 평형 / 평형옵션 / 선택형평면 마스터
+   -> 현장별코드에서는 이 마스터 목록 중에서 "선택"해서 배정한다.
+   ===================================================================== */
+const masterData = {
+  custStyles: [
+    { code: "MM", name: "미니멀" },
+    { code: "MN", name: "모던 내추럴" },
+    { code: "NN", name: "스타일 미적용 - None" },
+    { code: "SC", name: "소프트클래식" },
+    { code: "U1", name: "조합기본1" },
+    { code: "U2", name: "조합기본2" },
+  ],
+  styles: [
+    { code: "MM", name: "미니멀 - Minimal" },
+    { code: "MN", name: "모던 내추럴 - Modern Natural" },
+    { code: "NN", name: "스타일 미적용 - None" },
+    { code: "SC", name: "소프트 클래식 - Soft Classic" },
+    { code: "U1", name: "조합 1안 - Union 1" },
+    { code: "U2", name: "조합 2안 - Union 2" },
+  ],
+  pyeongs: ["0044:44", "0059:59", "0144:144", "075A:75A", "075B:75B", "084A:84A", "084B:84B", "084C:84C", "084D:84D", "110A:110A", "110B:110B", "110C:110C", "121A:121A", "121B:121B", "138A:138A", "138B:138B"]
+    .map((s) => { const [code, name] = s.split(":"); return { code, name }; }),
+  pyeongOptions: [{ code: "NNNN", name: "기본" }],
+  plans: [
+    { code: "00", name: "미적용" },
+    { code: "01", name: "一자형 주방구조 선택시" },
+    { code: "02", name: "ㄱ자형 주방구조 선택시" },
+  ],
+};
+
+const MASTER_META = {
+  custStyles: { section: "masterCustStyle" },
+  styles: { section: "masterStyle" },
+  pyeongs: { section: "masterPyeong" },
+  pyeongOptions: { section: "masterPyeongOption" },
+  plans: { section: "masterPlan" },
+};
+
+function renderMasterSection(key) {
+  const meta = MASTER_META[key];
+  document.getElementById(`${meta.section}Count`).textContent = masterData[key].length;
+  document.getElementById(`${meta.section}Body`).innerHTML = masterData[key].map((item) => `
+    <tr><td>${item.code}</td><td>${item.name}</td></tr>
+  `).join("");
+}
+Object.keys(masterData).forEach(renderMasterSection);
+
+document.querySelectorAll(".cmaster-add-btn[data-master]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const key = btn.dataset.master;
+    const meta = MASTER_META[key];
+    const body = document.getElementById(`${meta.section}Body`);
+    if (body.querySelector(".cinline-add-row")) return;
+
+    const tr = document.createElement("tr");
+    tr.className = "cinline-add-row";
+    tr.innerHTML = `
+      <td><input type="text" placeholder="코드" class="cnew-code" /></td>
+      <td>
+        <div style="display:flex; gap:4px;">
+          <input type="text" placeholder="명칭" class="cnew-name" />
+          <div class="cinline-add-actions">
+            <button class="cinline-confirm-btn">추가</button>
+            <button class="cinline-cancel-btn">취소</button>
+          </div>
+        </div>
+      </td>
+    `;
+    body.prepend(tr);
+    tr.querySelector(".cnew-code").focus();
+
+    tr.querySelector(".cinline-cancel-btn").addEventListener("click", () => tr.remove());
+    tr.querySelector(".cinline-confirm-btn").addEventListener("click", () => {
+      const code = tr.querySelector(".cnew-code").value.trim();
+      const name = tr.querySelector(".cnew-name").value.trim();
+      if (!code || !name) return;
+      if (masterData[key].some((m) => m.code === code)) { alert("이미 존재하는 코드입니다."); return; }
+      masterData[key].push({ code, name });
+      renderMasterSection(key);
+    });
+  });
+});
+
 /* ===================== 현장별코드 ===================== */
 const sitesCompact = [
   { code: "001108", name: "ACROHILLS 논현 현장" },
@@ -113,53 +197,109 @@ document.getElementById("siteSelectBody").innerHTML = sitesCompact.map((s) => `
   </tr>
 `).join("");
 
-const custStyles = [
-  { code: "MM", name: "미니멀" },
-  { code: "MN", name: "모던 내추럴" },
-  { code: "NN", name: "스타일 미적용 - None" },
-  { code: "SC", name: "소프트클래식" },
-  { code: "U1", name: "조합기본1" },
-  { code: "U2", name: "조합기본2" },
-];
-document.getElementById("custStyleBody").innerHTML = custStyles.map((c) => `
-  <tr><td>${c.code}</td><td>${c.name}</td></tr>
-`).join("");
+const SITE_COL_META = {
+  custStyles: { section: "custStyle", label: "고객 스타일" },
+  styles: { section: "style", label: "스타일" },
+  pyeongs: { section: "pyeong", label: "평형" },
+  pyeongOptions: { section: "pyeongOption", label: "평형옵션" },
+  plans: { section: "plan", label: "선택형 평면" },
+};
 
-const styles = [
-  { code: "MM", name: "미니멀 - Minimal" },
-  { code: "MN", name: "모던 내추럴 - Modern Natural" },
-  { code: "NN", name: "스타일 미적용 - None" },
-  { code: "SC", name: "소프트 클래식 - Soft Classic" },
-  { code: "U1", name: "조합 1안 - Union 1" },
-  { code: "U2", name: "조합 2안 - Union 2" },
-];
-document.getElementById("styleBody").innerHTML = styles.map((s) => `
-  <tr><td>${s.code}</td><td>${s.name}</td></tr>
-`).join("");
+// 현장별로 배정된 코드 목록(마스터 코드 참조). 190197은 목업과 동일하게 전량 배정된 상태로 시작.
+const siteAssignments = {};
+function getSiteAssignment(siteCode) {
+  if (!siteAssignments[siteCode]) {
+    siteAssignments[siteCode] = {
+      custStyles: masterData.custStyles.map((m) => m.code),
+      styles: masterData.styles.map((m) => m.code),
+      pyeongs: masterData.pyeongs.map((m) => m.code),
+      pyeongOptions: masterData.pyeongOptions.map((m) => m.code),
+      plans: masterData.plans.map((m) => m.code),
+    };
+  }
+  return siteAssignments[siteCode];
+}
 
-const pyeongs = ["0044:44", "0059:59", "0144:144", "075A:75A", "075B:75B", "084A:84A", "084B:84B", "084C:84C", "084D:84D", "110A:110A", "110B:110B", "110C:110C", "121A:121A", "121B:121B", "138A:138A", "138B:138B"]
-  .map((s) => { const [code, name] = s.split(":"); return { code, name }; });
-document.getElementById("pyeongBody").innerHTML = pyeongs.map((p) => `
-  <tr><td>${p.code}</td><td>${p.name}</td></tr>
-`).join("");
+let currentSiteCode = "190197";
 
-document.getElementById("pyeongOptionBody").innerHTML = `<tr><td>NNNN</td><td>기본</td></tr>`;
+function renderSiteColumn(key) {
+  const meta = SITE_COL_META[key];
+  const assignment = getSiteAssignment(currentSiteCode);
+  const codes = assignment[key];
+  document.getElementById(`${meta.section}Count`).textContent = codes.length;
+  document.getElementById(`${meta.section}Body`).innerHTML = codes.map((code) => {
+    const item = masterData[key].find((m) => m.code === code);
+    return `
+      <tr data-code="${code}">
+        <td>${code}</td>
+        <td>${item ? item.name : ""}</td>
+        <td><button class="cremove-btn" data-remove-master="${key}" data-remove-code="${code}">✕</button></td>
+      </tr>
+    `;
+  }).join("");
+}
+function renderAllSiteColumns() {
+  Object.keys(SITE_COL_META).forEach(renderSiteColumn);
+}
+renderAllSiteColumns();
 
-const plans = [
-  { code: "00", name: "미적용" },
-  { code: "01", name: "一자형 주방구조 선택시" },
-  { code: "02", name: "ㄱ자형 주방구조 선택시" },
-];
-document.getElementById("planBody").innerHTML = plans.map((p) => `
-  <tr><td>${p.code}</td><td>${p.name}</td></tr>
-`).join("");
+document.querySelector(".csite-cols").addEventListener("click", (e) => {
+  const removeBtn = e.target.closest("[data-remove-master]");
+  if (removeBtn) {
+    const key = removeBtn.dataset.removeMaster;
+    const code = removeBtn.dataset.removeCode;
+    const assignment = getSiteAssignment(currentSiteCode);
+    assignment[key] = assignment[key].filter((c) => c !== code);
+    renderSiteColumn(key);
+  }
+});
+
+document.querySelectorAll(".cmaster-add-btn[data-site-master]").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    const key = btn.dataset.siteMaster;
+    const meta = SITE_COL_META[key];
+    const body = document.getElementById(`${meta.section}Body`);
+    if (body.querySelector(".cinline-add-row")) return;
+
+    const assignment = getSiteAssignment(currentSiteCode);
+    const available = masterData[key].filter((m) => !assignment[key].includes(m.code));
+    if (available.length === 0) {
+      alert(`전사공통코드에 등록된 "${meta.label}" 코드가 모두 이미 배정되어 있습니다.\n새 코드는 전사공통코드 탭에서 추가해 주세요.`);
+      return;
+    }
+
+    const tr = document.createElement("tr");
+    tr.className = "cinline-add-row";
+    tr.innerHTML = `
+      <td colspan="2">
+        <select class="cnew-select">
+          ${available.map((m) => `<option value="${m.code}">${m.code} - ${m.name}</option>`).join("")}
+        </select>
+      </td>
+      <td class="cinline-add-actions">
+        <button class="cinline-confirm-btn">추가</button>
+        <button class="cinline-cancel-btn">취소</button>
+      </td>
+    `;
+    body.prepend(tr);
+
+    tr.querySelector(".cinline-cancel-btn").addEventListener("click", () => tr.remove());
+    tr.querySelector(".cinline-confirm-btn").addEventListener("click", () => {
+      const code = tr.querySelector(".cnew-select").value;
+      assignment[key].push(code);
+      renderSiteColumn(key);
+    });
+  });
+});
 
 document.getElementById("siteSelectBody").addEventListener("click", (e) => {
   const tr = e.target.closest("tr[data-code]");
   if (!tr) return;
   document.querySelectorAll("#siteSelectBody tr").forEach((r) => r.classList.remove("selected"));
   tr.classList.add("selected");
-  const site = sitesCompact.find((s) => s.code === tr.dataset.code);
+  currentSiteCode = tr.dataset.code;
+  const site = sitesCompact.find((s) => s.code === currentSiteCode);
   document.getElementById("siteHeaderName").textContent = `${site.name} (${site.code})`;
   document.getElementById("batchSelect").innerHTML = `<option>${site.code}-001</option>`;
+  renderAllSiteColumns();
 });

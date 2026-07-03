@@ -16,8 +16,8 @@
       <nav class="ctopbar-right">
         <span class="cbuild-tag">ⓘ 20131020</span>
         <a href="#" class="cnav-link"><span class="cnav-icon">🛡</span> 관리자 모드</a>
-        <a href="codes-landing.html" class="cnav-link"><span class="cnav-icon">📋</span> 현장 목록</a>
         <a href="codes-standard.html" class="cnav-link active"><span class="cnav-icon">📖</span> 현장별 표준코드</a>
+        <a href="codes-landing.html" class="cnav-link"><span class="cnav-icon">📋</span> 현장 목록</a>
       </nav>
     </header>
 
@@ -67,6 +67,45 @@
                 <tbody id="midBody"></tbody>
               </table>
             </div>
+          </div>
+        </aside>
+
+        <aside class="ccol ccol-narrow ccol-scrollable">
+          <div class="ccol-title"><span class="ccol-icon">🔎</span> 현장코드 (고객스타일/스타일/평형 등)</div>
+          <div class="cmini-section" id="masterCustStyleSection">
+            <div class="cmini-header">고객스타일 <span class="ccount" id="masterCustStyleCount">0</span> <button class="cmaster-add-btn" data-master="custStyles">+ 추가</button></div>
+            <table class="cmini-table">
+              <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
+              <tbody id="masterCustStyleBody"></tbody>
+            </table>
+          </div>
+          <div class="cmini-section" id="masterStyleSection">
+            <div class="cmini-header">스타일 <span class="ccount" id="masterStyleCount">0</span> <button class="cmaster-add-btn" data-master="styles">+ 추가</button></div>
+            <table class="cmini-table">
+              <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
+              <tbody id="masterStyleBody"></tbody>
+            </table>
+          </div>
+          <div class="cmini-section" id="masterPyeongSection">
+            <div class="cmini-header">평형 <span class="ccount" id="masterPyeongCount">0</span> <button class="cmaster-add-btn" data-master="pyeongs">+ 추가</button></div>
+            <table class="cmini-table">
+              <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
+              <tbody id="masterPyeongBody"></tbody>
+            </table>
+          </div>
+          <div class="cmini-section" id="masterPyeongOptionSection">
+            <div class="cmini-header">평형옵션 <span class="ccount" id="masterPyeongOptionCount">0</span> <button class="cmaster-add-btn" data-master="pyeongOptions">+ 추가</button></div>
+            <table class="cmini-table">
+              <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
+              <tbody id="masterPyeongOptionBody"></tbody>
+            </table>
+          </div>
+          <div class="cmini-section" id="masterPlanSection">
+            <div class="cmini-header">선택형평면 <span class="ccount" id="masterPlanCount">0</span> <button class="cmaster-add-btn" data-master="plans">+ 추가</button></div>
+            <table class="cmini-table">
+              <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
+              <tbody id="masterPlanBody"></tbody>
+            </table>
           </div>
         </aside>
 
@@ -134,37 +173,37 @@
           </div>
           <div class="csite-cols">
             <div class="csite-subcol">
-              <div class="cmini-header">고객 스타일 <span class="ccount">6</span> <span class="cexpand">⌄</span></div>
+              <div class="cmini-header">고객 스타일 <span class="ccount" id="custStyleCount">6</span> <button class="cmaster-add-btn" data-site-master="custStyles">+ 추가</button></div>
               <table class="cmini-table">
-                <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
+                <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th><th></th></tr></thead>
                 <tbody id="custStyleBody"></tbody>
               </table>
             </div>
             <div class="csite-subcol">
-              <div class="cmini-header">스타일 <span class="ccount">6</span> <span class="cexpand">⌄</span></div>
+              <div class="cmini-header">스타일 <span class="ccount" id="styleCount">6</span> <button class="cmaster-add-btn" data-site-master="styles">+ 추가</button></div>
               <table class="cmini-table">
-                <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
+                <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th><th></th></tr></thead>
                 <tbody id="styleBody"></tbody>
               </table>
             </div>
             <div class="csite-subcol">
-              <div class="cmini-header">평형 <span class="ccount">16</span> <span class="cexpand">⌄</span></div>
+              <div class="cmini-header">평형 <span class="ccount" id="pyeongCount">16</span> <button class="cmaster-add-btn" data-site-master="pyeongs">+ 추가</button></div>
               <table class="cmini-table">
-                <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
+                <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th><th></th></tr></thead>
                 <tbody id="pyeongBody"></tbody>
               </table>
             </div>
             <div class="csite-subcol">
-              <div class="cmini-header">평형옵션 <span class="ccount">1</span> <span class="cexpand">⌄</span></div>
+              <div class="cmini-header">평형옵션 <span class="ccount" id="pyeongOptionCount">1</span> <button class="cmaster-add-btn" data-site-master="pyeongOptions">+ 추가</button></div>
               <table class="cmini-table">
-                <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
+                <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th><th></th></tr></thead>
                 <tbody id="pyeongOptionBody"></tbody>
               </table>
             </div>
             <div class="csite-subcol">
-              <div class="cmini-header">선택형 평면 <span class="ccount">3</span> <span class="cexpand">⌄</span></div>
+              <div class="cmini-header">선택형 평면 <span class="ccount" id="planCount">3</span> <button class="cmaster-add-btn" data-site-master="plans">+ 추가</button></div>
               <table class="cmini-table">
-                <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
+                <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th><th></th></tr></thead>
                 <tbody id="planBody"></tbody>
               </table>
             </div>

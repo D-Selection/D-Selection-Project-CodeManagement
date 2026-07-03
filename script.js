@@ -1026,4 +1026,8 @@ document.addEventListener("click", () => {
   historyPanel.hidden = true;
 });
 
+document.getElementById("closeBtn").addEventListener("click", () => {
+  window.location.href = "codes-landing.html";
+});
+
 renderAll();

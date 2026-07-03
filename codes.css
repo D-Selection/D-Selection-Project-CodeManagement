@@ -156,11 +156,10 @@ body {
 /* Split layout (landing page) */
 .csplit { display: flex; flex: 1; min-height: 0; }
 .csplit-left { flex: 1; min-width: 0; overflow: auto; }
-.csplit-right { width: 460px; flex-shrink: 0; border-left: 1px solid var(--c-border); overflow: auto; }
 
 table { border-collapse: collapse; width: 100%; }
-.csite-table, .cbatch-table { min-width: 100%; }
-.csite-table thead th, .cbatch-table thead th {
+.csite-table { min-width: 100%; }
+.csite-table thead th {
   position: sticky;
   top: 0;
   background: #f5f6f9;
@@ -173,29 +172,16 @@ table { border-collapse: collapse; width: 100%; }
   white-space: nowrap;
   z-index: 1;
 }
-.csite-table tbody td, .cbatch-table tbody td {
+.csite-table tbody td {
   padding: 9px 16px;
   border-bottom: 1px solid #eef0f4;
   font-size: 13px;
   white-space: nowrap;
 }
-.csite-table tbody tr:hover, .cbatch-table tbody tr:hover { background: #f5f8ff; cursor: pointer; }
-.csite-table tbody tr.selected, .cbatch-table tbody tr.selected { background: var(--c-blue-light); }
+.csite-table tbody tr:hover { background: #f5f8ff; cursor: pointer; }
+.csite-table tbody tr.selected { background: var(--c-blue-light); }
 .value-empty { color: #b6bac4; font-style: italic; }
 .sort-icon { color: #a7adbb; font-size: 11px; margin-left: 2px; font-weight: 400; }
-
-.cright-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--c-border);
-  font-weight: 700;
-  font-size: 14px;
-  background: var(--c-navy);
-  color: #fff;
-}
-.cright-hint { font-size: 11.5px; font-weight: 500; color: #e2a92a; }
 
 /* Common-code 3-column layout */
 .ccommon-layout, .csite-layout { display: flex; flex: 1; min-height: 0; }
@@ -236,6 +222,52 @@ table { border-collapse: collapse; width: 100%; }
 .ccount { color: #9fb0d6; font-weight: 500; }
 .cexpand { margin-left: auto; color: #9fb0d6; font-size: 11px; }
 .cfilter-tag { background: rgba(255,255,255,0.15); padding: 1px 6px; border-radius: 3px; font-size: 11px; }
+
+.ccol-scrollable { overflow-y: auto; }
+
+.cmaster-add-btn {
+  margin-left: auto;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.25);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.cmaster-add-btn:hover { background: rgba(255,255,255,0.22); }
+
+.cinline-add-row input, .cinline-add-row select {
+  width: 100%;
+  border: 1px solid var(--c-blue);
+  border-radius: 3px;
+  padding: 3px 5px;
+  font-size: 11.5px;
+  box-sizing: border-box;
+}
+.cinline-add-actions { display: flex; gap: 4px; white-space: nowrap; }
+.cinline-confirm-btn, .cinline-cancel-btn {
+  border: none;
+  border-radius: 3px;
+  font-size: 11px;
+  padding: 3px 7px;
+  cursor: pointer;
+}
+.cinline-confirm-btn { background: var(--c-blue); color: #fff; }
+.cinline-cancel-btn { background: #eef0f4; color: var(--c-sub); }
+
+.cremove-btn {
+  border: none;
+  background: none;
+  color: #c2c7d1;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+.cremove-btn:hover { color: #e0483a; }
 
 .cmini-table { border-collapse: collapse; width: 100%; font-size: 12px; }
 .cmini-table thead th {
@@ -373,51 +405,8 @@ table { border-collapse: collapse; width: 100%; }
 }
 .csite-subcol:last-child { border-right: none; }
 
-/* 상품구성하기 팝업 */
-.cmodal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(20, 26, 40, 0.55);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 50;
-}
-.cmodal {
-  width: 360px;
-  background: #fff;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 16px 40px rgba(0,0,0,0.25);
-}
-.cmodal-header {
-  background: var(--c-navy);
-  color: #fff;
-  font-weight: 700;
-  font-size: 14px;
-  padding: 12px 16px;
-}
-.cmodal-body { padding: 18px; }
-.cmodal-action-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: #e8b98a;
-  color: #5a3a1a;
-  border: none;
-  border-radius: 6px;
-  padding: 14px;
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.cmodal-action-btn:hover { background: #dfa96f; }
-
 @media (max-width: 1100px) {
   .ctopbar, .cbreadcrumb, .csub-toolbar { flex-direction: column; align-items: flex-start; }
   .ccommon-layout, .csite-layout, .csplit { flex-direction: column; }
   .ccol-narrow { width: 100%; }
-  .csplit-right { width: 100%; border-left: none; border-top: 1px solid var(--c-border); }
 }
