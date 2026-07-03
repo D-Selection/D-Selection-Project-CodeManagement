@@ -21,6 +21,8 @@
       </nav>
     </header>
 
+    <div class="status-strip" id="dsStatusStrip"></div>
+
     <div class="ctabbar">
       <button class="ctab" data-tab="site"><span class="ctab-icon">💾</span> 현장별코드</button>
       <button class="ctab active" data-tab="common"><span class="ctab-icon">📄</span> 전사공통코드</button>
@@ -170,6 +172,7 @@
             <select class="cbatch-select" id="batchSelect">
               <option>190197-001</option>
             </select>
+            <div class="stage-box" id="stage0Box"></div>
           </div>
           <div class="csite-cols">
             <div class="csite-subcol">
@@ -218,6 +221,7 @@
     </section>
   </div>
 
+<script src="shared-state.js"></script>
 <script src="codes-standard.js"></script>
 </body>
 </html>

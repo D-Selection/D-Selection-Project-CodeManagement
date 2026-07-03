@@ -31,26 +31,8 @@
       </nav>
     </header>
 
-    <!-- 확정 관리 상태바 (모든 화면 공통, 항상 표시) -->
-    <div class="status-strip">
-      <div class="status-strip-stages" id="statusStrip"></div>
-      <div class="status-strip-actions">
-        <label class="role-switcher">
-          현재 담당자
-          <select id="roleSelect"></select>
-        </label>
-        <div class="notif-wrap">
-          <button class="notif-bell" id="historyBtn" type="button" title="확정/재작업 이력">🕘 이력</button>
-          <div class="notif-panel history-panel" id="historyPanel" hidden></div>
-        </div>
-        <div class="notif-wrap">
-          <button class="notif-bell" id="notifBell" type="button">
-            🔔<span class="notif-badge" id="notifBadge" hidden>0</span>
-          </button>
-          <div class="notif-panel" id="notifPanel" hidden></div>
-        </div>
-      </div>
-    </div>
+    <!-- 확정 관리 상태바 (모든 화면 공통, 항상 표시. shared-state.js가 채움) -->
+    <div class="status-strip" id="dsStatusStrip"></div>
 
     <!-- ============ STEP 1: 상품구성 ============ -->
     <section class="view active" id="view-1">
@@ -567,6 +549,7 @@
     </section>
   </div>
 
+<script src="shared-state.js"></script>
 <script src="script.js"></script>
 </body>
 </html>

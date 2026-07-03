@@ -167,6 +167,7 @@ document.querySelectorAll(".cmaster-add-btn[data-master]").forEach((btn) => {
       if (masterData[key].some((m) => m.code === code)) { alert("이미 존재하는 코드입니다."); return; }
       masterData[key].push({ code, name });
       renderMasterSection(key);
+      dsAddEditLog("전사공통코드", `"현장코드" 마스터에 ${code} ${name} 신규 등록`);
     });
   });
 });
@@ -222,10 +223,15 @@ function getSiteAssignment(siteCode) {
 
 let currentSiteCode = "190197";
 
+function isSiteEditable() {
+  return dsLoad().stages.s0.status === "editable";
+}
+
 function renderSiteColumn(key) {
   const meta = SITE_COL_META[key];
   const assignment = getSiteAssignment(currentSiteCode);
   const codes = assignment[key];
+  const editable = isSiteEditable();
   document.getElementById(`${meta.section}Count`).textContent = codes.length;
   document.getElementById(`${meta.section}Body`).innerHTML = codes.map((code) => {
     const item = masterData[key].find((m) => m.code === code);
@@ -233,7 +239,7 @@ function renderSiteColumn(key) {
       <tr data-code="${code}">
         <td>${code}</td>
         <td>${item ? item.name : ""}</td>
-        <td><button class="cremove-btn" data-remove-master="${key}" data-remove-code="${code}">✕</button></td>
+        <td><button class="cremove-btn" data-remove-master="${key}" data-remove-code="${code}" ${editable ? "" : "disabled"}>✕</button></td>
       </tr>
     `;
   }).join("");
@@ -241,21 +247,30 @@ function renderSiteColumn(key) {
 function renderAllSiteColumns() {
   Object.keys(SITE_COL_META).forEach(renderSiteColumn);
 }
+function renderSiteEditLock() {
+  const editable = isSiteEditable();
+  document.querySelectorAll(".cmaster-add-btn[data-site-master]").forEach((el) => { el.disabled = !editable; });
+}
 renderAllSiteColumns();
 
 document.querySelector(".csite-cols").addEventListener("click", (e) => {
   const removeBtn = e.target.closest("[data-remove-master]");
-  if (removeBtn) {
+  if (removeBtn && isSiteEditable()) {
     const key = removeBtn.dataset.removeMaster;
     const code = removeBtn.dataset.removeCode;
+    const meta = SITE_COL_META[key];
+    const item = masterData[key].find((m) => m.code === code);
     const assignment = getSiteAssignment(currentSiteCode);
     assignment[key] = assignment[key].filter((c) => c !== code);
     renderSiteColumn(key);
+    const site = sitesCompact.find((s) => s.code === currentSiteCode);
+    dsAddEditLog("현장별코드", `${site.name}(${currentSiteCode}) - ${meta.label}에서 ${code} ${item ? item.name : ""} 배정 해제`);
   }
 });
 
 document.querySelectorAll(".cmaster-add-btn[data-site-master]").forEach((btn) => {
   btn.addEventListener("click", () => {
+    if (!isSiteEditable()) return;
     const key = btn.dataset.siteMaster;
     const meta = SITE_COL_META[key];
     const body = document.getElementById(`${meta.section}Body`);
@@ -286,8 +301,11 @@ document.querySelectorAll(".cmaster-add-btn[data-site-master]").forEach((btn) =>
     tr.querySelector(".cinline-cancel-btn").addEventListener("click", () => tr.remove());
     tr.querySelector(".cinline-confirm-btn").addEventListener("click", () => {
       const code = tr.querySelector(".cnew-select").value;
+      const item = masterData[key].find((m) => m.code === code);
       assignment[key].push(code);
       renderSiteColumn(key);
+      const site = sitesCompact.find((s) => s.code === currentSiteCode);
+      dsAddEditLog("현장별코드", `${site.name}(${currentSiteCode}) - ${meta.label}에 ${code} ${item ? item.name : ""} 배정 추가`);
     });
   });
 });
@@ -303,3 +321,43 @@ document.getElementById("siteSelectBody").addEventListener("click", (e) => {
   document.getElementById("batchSelect").innerHTML = `<option>${site.code}-001</option>`;
   renderAllSiteColumns();
 });
+
+/* ===================== 0. 현장별코드 확정 관리 (shared-state.js) ===================== */
+function renderStage0Box() {
+  const box = document.getElementById("stage0Box");
+  const s = dsLoad().stages.s0;
+  const isOwner = dsGetCurrentRole() === s.owner;
+
+  if (s.status === "editable") {
+    box.innerHTML = `
+      ${s.justUnlocked ? `<span class="stage-approved-badge">✅ 잠금해제 승인 완료</span>` : ""}
+      <button class="ghost-btn green" id="stage0ConfirmBtn" ${isOwner ? "" : "disabled"}>✔ 현장별코드 확정하기</button>
+      ${isOwner ? "" : `<span class="stage-role-hint">담당자(${dsRoleName(s.owner)})만 확정할 수 있습니다</span>`}`;
+    document.getElementById("stage0ConfirmBtn").addEventListener("click", () => { dsConfirmStage("s0"); renderEverything(); });
+  } else if (s.status === "confirmed") {
+    box.innerHTML = `
+      <div class="confirm-box">
+        <span class="confirm-badge">현장별<br />코드 확정</span>
+        <div class="confirm-info">
+          <p>확정자 : ${dsRoleName(s.owner)}</p>
+          <p>확정일 : ${s.confirmedAt}</p>
+        </div>
+      </div>
+      <button class="danger-btn" id="stage0ReopenBtn" ${isOwner ? "" : "disabled"}>↺ 현장별코드 확정 강제취소</button>`;
+    document.getElementById("stage0ReopenBtn").addEventListener("click", () => { dsRequestReopen("s0"); renderEverything(); });
+  } else if (s.status === "reopen_pending") {
+    box.innerHTML = `
+      <span class="stage-pending-badge">⏳ 잠금 해제 승인 대기 중 (${s.pendingApprovals.map((k) => dsRoleName(dsLoad().stages[k].owner)).join(", ")})</span>
+      <button class="toolbar-btn" id="stage0CancelReopenBtn" ${isOwner ? "" : "disabled"}>요청 취소</button>`;
+    document.getElementById("stage0CancelReopenBtn").addEventListener("click", () => { dsCancelReopenRequest("s0"); renderEverything(); });
+  }
+
+  renderSiteEditLock();
+  renderAllSiteColumns();
+}
+
+function renderEverything() {
+  dsRenderStatusBar("dsStatusStrip", { onRoleChange: renderStage0Box, onStateChange: renderStage0Box });
+  renderStage0Box();
+}
+renderEverything();
