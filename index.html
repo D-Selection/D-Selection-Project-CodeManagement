@@ -238,14 +238,15 @@
 
           <div class="area-col area-col-wide">
             <div class="area-col-header">
-              <span>상품 구성 <span class="round-badge">103개</span> <span class="info-dot">ⓘ</span></span>
+              <span>상품 구성 <span class="round-badge" id="areaConfigCount">103개</span> <span class="info-dot">ⓘ</span></span>
               <span class="header-icons-text">
+                <button class="undo-btn" id="undoBtn" disabled title="Ctrl+Z">↩ 뒤로가기</button>
                 <button class="toolbar-btn">⭣ Excel 다운로드</button>
                 <button class="toolbar-btn icon-only">⟳</button>
                 <button class="danger-btn small">⊘ 평형그룹 매핑해제</button>
               </span>
             </div>
-            <div class="area-col-body">
+            <div class="area-col-body area-col-body-relative">
               <table class="mini-table">
                 <thead>
                   <tr>
@@ -255,6 +256,10 @@
                 </thead>
                 <tbody id="areaConfigBody"></tbody>
               </table>
+              <div class="undo-toast" id="undoToast" hidden>
+                <div class="undo-toast-title">직전 매핑이 취소되었습니다</div>
+                <div class="undo-toast-body" id="undoToastBody"></div>
+              </div>
             </div>
             <div class="area-subpanel">
               <div class="area-subpanel-header">프로덕트 코드 <span class="round-badge">1개</span></div>

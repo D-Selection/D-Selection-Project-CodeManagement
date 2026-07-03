@@ -645,6 +645,68 @@ tbody tr:hover { background: #eef4ff; }
 
 .pill-btn.selected-alt { background: var(--navy); color: #fff; }
 
+/* Undo ("뒤로가기") controls in 평형그룹매핑 */
+.undo-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  color: var(--blue);
+  border: 1px solid #cfe0fd;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.undo-btn:hover:not(:disabled) { background: var(--blue-light); }
+.undo-btn:disabled,
+.toolbar-btn.icon-only:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.area-col-body-relative { position: relative; }
+
+.undo-toast {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  animation: undo-fade-in 0.15s ease-out;
+}
+@keyframes undo-fade-in { from { opacity: 0; } to { opacity: 1; } }
+.undo-toast-title {
+  background: #e0483a;
+  color: #fff;
+  font-weight: 700;
+  font-size: 15px;
+  text-align: center;
+  padding: 14px;
+}
+.undo-toast-body {
+  flex: 1;
+  overflow: auto;
+  padding: 16px 20px;
+  font-size: 12.5px;
+  line-height: 1.9;
+  color: var(--text-main);
+}
+.undo-toast-body .undo-group-title { font-weight: 700; margin-top: 10px; }
+.undo-toast-body .undo-item { color: var(--text-sub); padding-left: 8px; }
+
+/* Rows greyed out in 상품코드 panel once mapped, without disappearing */
+.row-disabled td { color: #b6bac4 !important; background: #f7f8fa !important; }
+.row-disabled .code-cell { color: #b6bac4 !important; }
+.row-disabled input[type="checkbox"] { pointer-events: none; opacity: 0.4; }
+
+/* Rows in 상품 구성 panel belonging to the most recent (undoable) mapping action */
+.just-mapped { position: relative; background: #fdecea !important; }
+.just-mapped td:first-child { box-shadow: inset 3px 0 0 #e0483a; }
+
 /* mini table (used in area/category panels) */
 .mini-table { border-collapse: collapse; width: 100%; min-width: 0; font-size: 12px; }
 .mini-table thead th {

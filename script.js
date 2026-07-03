@@ -190,6 +190,15 @@ areaGroupBody.innerHTML = areaGroups.map((g, i) => `
   </tr>
 `).join("");
 
+function currentAreaGroupLabel() {
+  const checkedRow = [...areaGroupBody.querySelectorAll("tr")].find(
+    (tr) => tr.querySelector('input[type="checkbox"]').checked
+  );
+  if (!checkedRow) return "일반 - Customer 059A 기본";
+  const cells = checkedRow.querySelectorAll("td");
+  return `${cells[1].textContent} ${cells[2].textContent} ${cells[3].textContent}`;
+}
+
 const areaConfigRows = [
   { seq: 14, pyeong: "059A", code: "SL001", item: "슬라이딩 도어", itemCustomer: "슬라이딩 도어", space: "현관 - Entrance", hq: "본사", cnt: 1, sub: "현관중문 슬라이딩 도어/LX하우시스 F.3180" },
   { seq: 14, pyeong: "059A", code: "SL003", item: "신발장(아크로)", itemCustomer: "신발장(아크로)", space: "현관 - Entrance", hq: "본사", cnt: 1, sub: "신발장(pp)/아크로" },
@@ -205,21 +214,35 @@ const areaConfigRows = [
   { seq: 14, pyeong: "059A", code: "SL033", item: "원목마루_SC", itemCustomer: "원목마루_SC", space: "전체 공간 - General Area", hq: "본사", cnt: 1, sub: "원목마루/딤그레이(12.5t)" },
 ];
 
-document.getElementById("areaConfigBody").innerHTML = areaConfigRows.map((r) => `
-  <tr>
-    <td><input type="checkbox" /></td>
-    <td>${r.seq}</td>
-    <td>${r.pyeong}</td>
-    <td class="code-cell">${r.code}</td>
-    <td>${r.item}</td>
-    <td class="muted">-</td>
-    <td>${r.itemCustomer}</td>
-    <td>${r.space}</td>
-    <td>${r.hq}</td>
-    <td>${r.cnt}</td>
-    <td>${r.sub}</td>
-  </tr>
-`).join("");
+/* 뒤로가기(undo) 상태: 렌더 함수보다 먼저 선언되어야 함 */
+const MAX_MAPPING_HISTORY = 5;
+const mappingHistory = [];
+let highlightedRowIds = new Set();
+let nextConfigRowId = 1;
+let undoToastTimer = null;
+
+const areaConfigBody = document.getElementById("areaConfigBody");
+const areaConfigCountEl = document.getElementById("areaConfigCount");
+
+function renderAreaConfig() {
+  areaConfigBody.innerHTML = areaConfigRows.map((r) => `
+    <tr class="${highlightedRowIds.has(r.id) ? "just-mapped" : ""}">
+      <td><input type="checkbox" /></td>
+      <td>${r.seq}</td>
+      <td>${r.pyeong}</td>
+      <td class="code-cell">${r.code}</td>
+      <td>${r.item}</td>
+      <td class="muted">-</td>
+      <td>${r.itemCustomer}</td>
+      <td>${r.space}</td>
+      <td>${r.hq}</td>
+      <td>${r.cnt}</td>
+      <td>${r.sub}</td>
+    </tr>
+  `).join("");
+  areaConfigCountEl.textContent = `${areaConfigRows.length}개`;
+}
+renderAreaConfig();
 
 document.getElementById("areaProductCodeBody").innerHTML = `
   <tr>
@@ -254,16 +277,125 @@ const areaRightRows = [
   { space: "R1", code: "SL024", item: "인피니티 도어(침실1 세라믹패널)_U2", itemCustomer: "인피니티 도어(침실1 세라믹패널)_U2", cnt: 1 },
 ];
 
-document.getElementById("areaRightBody").innerHTML = areaRightRows.map((r) => `
-  <tr>
-    <td><input type="checkbox" /></td>
-    <td>${r.space}</td>
-    <td class="code-cell">${r.code}</td>
-    <td>${r.item}</td>
-    <td>${r.itemCustomer}</td>
-    <td>${r.cnt}</td>
-  </tr>
-`).join("");
+const areaRightBody = document.getElementById("areaRightBody");
+
+function renderAreaRight() {
+  areaRightBody.innerHTML = areaRightRows.map((r) => `
+    <tr class="${r.mapped ? "row-disabled" : ""}" data-code="${r.code}">
+      <td><input type="checkbox" ${r.mapped ? "disabled" : ""} /></td>
+      <td>${r.space}</td>
+      <td class="code-cell">${r.code}</td>
+      <td>${r.item}${r.mapped ? " (매핑됨)" : ""}</td>
+      <td>${r.itemCustomer}</td>
+      <td>${r.cnt}</td>
+    </tr>
+  `).join("");
+}
+renderAreaRight();
+
+/* ---- 뒤로가기(undo) : 평형그룹-상품 매핑 이력 ---- */
+const undoBtn = document.getElementById("undoBtn");
+const undoToast = document.getElementById("undoToast");
+const undoToastBody = document.getElementById("undoToastBody");
+
+function updateUndoButtons() {
+  undoBtn.disabled = mappingHistory.length === 0;
+}
+
+function spaceCodeToName(spaceCode) {
+  const map = { EN: "현관 - Entrance", R1: "침실1 - Bedroom 1", LV: "거실 - Living Room", KC: "주방 - Kitchen", GA: "전체 공간 - General Area" };
+  return map[spaceCode] || spaceCode;
+}
+
+document.querySelector(".map-btn").addEventListener("click", () => {
+  const checkedRows = [...areaRightBody.querySelectorAll("tr")].filter(
+    (tr) => tr.querySelector('input[type="checkbox"]').checked
+  );
+  if (checkedRows.length === 0) return;
+
+  const groupLabel = currentAreaGroupLabel();
+  const addedIds = [];
+  const items = [];
+
+  checkedRows.forEach((tr) => {
+    const code = tr.dataset.code;
+    const source = areaRightRows.find((r) => r.code === code);
+    if (!source || source.mapped) return;
+    source.mapped = true;
+
+    const id = nextConfigRowId++;
+    areaConfigRows.push({
+      id,
+      seq: 14,
+      pyeong: "059A",
+      code: source.code,
+      item: source.item,
+      itemCustomer: source.itemCustomer,
+      space: spaceCodeToName(source.space),
+      hq: "본사",
+      cnt: source.cnt,
+      sub: "-",
+    });
+    addedIds.push(id);
+    items.push({ code: source.code, item: source.item });
+  });
+
+  if (addedIds.length === 0) return;
+
+  mappingHistory.push({ groupLabel, rowIds: addedIds, items });
+  if (mappingHistory.length > MAX_MAPPING_HISTORY) mappingHistory.shift();
+
+  highlightedRowIds = new Set(addedIds);
+  renderAreaConfig();
+  renderAreaRight();
+  updateUndoButtons();
+});
+
+function showUndoToast(action) {
+  undoToastBody.innerHTML = `
+    <div class="undo-group-title">${action.groupLabel} ${action.items.length}건</div>
+    ${action.items.map((i) => `<div class="undo-item">- ${i.code} ${i.item}</div>`).join("")}
+  `;
+  undoToast.hidden = false;
+  clearTimeout(undoToastTimer);
+  undoToastTimer = setTimeout(() => { undoToast.hidden = true; }, 2600);
+}
+
+function undoLastMapping() {
+  if (mappingHistory.length === 0) return;
+  const action = mappingHistory.pop();
+
+  const removeIds = new Set(action.rowIds);
+  for (let i = areaConfigRows.length - 1; i >= 0; i--) {
+    if (removeIds.has(areaConfigRows[i].id)) areaConfigRows.splice(i, 1);
+  }
+  action.items.forEach((i) => {
+    const source = areaRightRows.find((r) => r.code === i.code);
+    if (source) source.mapped = false;
+  });
+
+  highlightedRowIds = mappingHistory.length
+    ? new Set(mappingHistory[mappingHistory.length - 1].rowIds)
+    : new Set();
+
+  renderAreaConfig();
+  renderAreaRight();
+  updateUndoButtons();
+  showUndoToast(action);
+}
+
+undoBtn.addEventListener("click", undoLastMapping);
+
+document.addEventListener("keydown", (e) => {
+  const isCtrlZ = (e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === "z";
+  if (!isCtrlZ) return;
+  const areaPanelActive = document.getElementById("panel-area").classList.contains("active");
+  const inFormField = ["INPUT", "TEXTAREA"].includes(document.activeElement.tagName);
+  if (areaPanelActive && !inFormField) {
+    e.preventDefault();
+    undoLastMapping();
+  }
+});
 
 /* ===================== STEP 1 · PANEL 5: 대분류/중분류/제조사 ===================== */
 const majorCats = [
