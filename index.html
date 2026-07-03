@@ -165,15 +165,16 @@
           <div class="cha-main">
             <div class="toolbar">
               <div class="toolbar-left">
-                <button class="toolbar-btn primary-toggle active">
+                <button class="toolbar-btn primary-toggle active stage13-editable-control">
                   <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.6"/></svg>
                   엑셀 업로드 원본
                 </button>
-                <button class="toolbar-btn success-toggle">
+                <button class="toolbar-btn success-toggle stage13-editable-control">
                   <span class="dot dot-sm"></span>
                   업로드 결과 보기
                 </button>
                 <span class="count-pill">219건</span>
+                <span class="stage-lock-tag" id="stage13LockTag" hidden>🔒 확정됨(잠금)</span>
               </div>
               <div class="toolbar-right">
                 <button class="toolbar-btn dark">👁 안내문코드</button>
@@ -182,8 +183,8 @@
                 <button class="filter-chip">스타일명</button>
                 <button class="filter-chip">항목명</button>
                 <button class="filter-chip add-filter">+ Add filter</button>
-                <button class="toolbar-btn">⭣ 양식 다운로드</button>
-                <button class="toolbar-btn">⭱ Excel 업로드</button>
+                <button class="toolbar-btn stage13-editable-control">⭣ 양식 다운로드</button>
+                <button class="toolbar-btn stage13-editable-control">⭱ Excel 업로드</button>
               </div>
             </div>
             <div class="table-wrap">
@@ -213,6 +214,9 @@
 
       <!-- Panel 4: 평형그룹매핑 -->
       <section class="tab-panel" id="panel-area">
+        <div class="lock-overlay" id="stage14FullLockOverlay" hidden>
+          <div class="lock-overlay-msg"></div>
+        </div>
         <div class="area-layout">
           <div class="area-col area-col-narrow">
             <div class="area-col-header">

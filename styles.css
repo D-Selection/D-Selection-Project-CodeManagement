@@ -49,6 +49,7 @@ body {
   flex-direction: column;
   flex: 1;
   min-height: 0;
+  position: relative;
 }
 .tab-panel.active { display: flex; }
 
@@ -781,6 +782,20 @@ tbody tr:hover { background: #eef4ff; }
   font-weight: 600;
 }
 .stage-lock-tag { font-size: 11px; font-weight: 600; color: #d4590f; }
+.stage-approved-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #eafcf1;
+  border: 1px solid #bdf0cf;
+  color: #1a9a52;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.confirm-box.compact { align-items: center; }
+.confirm-box.compact .confirm-info p { white-space: nowrap; }
 .stage-role-hint { font-size: 11px; color: var(--text-sub); margin-left: 4px; }
 
 /* 잠금 오버레이 (선행작업 미확정 시 후속 화면 잠금) */
