@@ -519,14 +519,28 @@
         <div></div>
         <div class="toolbar-right">
           <button class="ghost-btn green">◉ 1. 안분표 가생성</button>
-          <button class="ghost-btn blue-fill">☰ 2. 안분표 설정</button>
+          <div class="dropdown-wrap">
+            <button class="ghost-btn blue-fill" id="allocationSettingsBtn">☰ 2. 안분표 설정 ⌄</button>
+            <div class="dropdown-menu" id="allocationSettingsMenu" hidden>
+              <button class="dropdown-item" data-action="package">📦 패키지 만들기</button>
+              <button class="dropdown-item" data-action="step">🔢 스텝설정</button>
+              <button class="dropdown-item" data-action="reorder">⇄ 품목/항목 열변경</button>
+              <button class="dropdown-item" data-action="select-package">👁 선택 패키지 구성품</button>
+              <button class="dropdown-item" data-action="delete">🗑 패키지/상품 삭제</button>
+              <button class="dropdown-item accent" id="allocationSendMenuItem">➤ 안분표발송</button>
+            </div>
+          </div>
+          <div class="notif-wrap">
+            <button class="notif-bell" id="sendHistoryBtn" type="button" title="안분표 발송 이력">📮 발송 이력</button>
+            <div class="notif-panel history-panel" id="sendHistoryPanel" hidden></div>
+          </div>
         </div>
       </div>
       <div class="table-wrap">
         <table>
           <thead>
             <tr>
-              <th class="checkbox-col"><input type="checkbox" /></th>
+              <th class="checkbox-col"><input type="checkbox" id="allocationSelectAll" /></th>
               <th class="sortable">순번 <span class="sort-icon">⇅</span></th>
               <th>영업별매물코드(세일즈코드)</th>
               <th class="sortable">고객 타입명 <span class="sort-icon">⇅</span></th>
@@ -541,12 +555,22 @@
               <th>품목/항목<br/>열번호</th>
               <th>품목명</th>
               <th>항목명</th>
+              <th>발송상태</th>
             </tr>
           </thead>
           <tbody id="allocationTableBody"></tbody>
         </table>
       </div>
     </section>
+
+    <!-- 안분표 발송(상품별 차수 분할 발송) 모달 -->
+    <div class="cmodal-backdrop" id="sendModal" hidden>
+      <div class="send-modal">
+        <div class="cmodal-header">➤ 안분표 발송 — 상품별 차수 분할 발송</div>
+        <div class="cmodal-body" id="sendModalBody"></div>
+      </div>
+    </div>
+    <div class="toast" id="sendToast" hidden></div>
   </div>
 
 <script src="shared-state.js"></script>

@@ -570,25 +570,154 @@ const allocationRows = [
   { seq: 4955, sales: "ST-U-074C-NM-GA-01", pyeong: "074C", item: "신발장", detail: "에어브러시" },
 ];
 
-document.getElementById("allocationTableBody").innerHTML = allocationRows.map((r) => `
-  <tr>
-    <td class="checkbox-col"><input type="checkbox" /></td>
-    <td>${r.seq}</td>
-    <td class="code-cell">${r.sales}</td>
-    <td>조합 - Union</td>
-    <td>${r.pyeong}</td>
-    <td>본사</td>
-    <td>내추럴 모던 - Natural Modern</td>
-    <td class="muted">-</td>
-    <td>기본</td>
-    <td>미적용</td>
-    <td>전체 공간 - General Area</td>
-    <td class="muted">-</td>
-    <td>[내추럴 모던]인테리어 스타일 선택</td>
-    <td>${r.item}</td>
-    <td>${r.detail}</td>
-  </tr>
-`).join("");
+allocationRows.forEach((r) => { r.sent = false; r.sentBatch = null; });
+
+const allocationTableBody = document.getElementById("allocationTableBody");
+const allocationSelectAll = document.getElementById("allocationSelectAll");
+
+function renderAllocationTable() {
+  allocationTableBody.innerHTML = allocationRows.map((r) => `
+    <tr class="${r.sent ? "row-disabled" : ""}" data-seq="${r.seq}">
+      <td class="checkbox-col"><input type="checkbox" class="allocation-row-check" ${r.sent ? "disabled" : ""} /></td>
+      <td>${r.seq}</td>
+      <td class="code-cell">${r.sales}</td>
+      <td>조합 - Union</td>
+      <td>${r.pyeong}</td>
+      <td>본사</td>
+      <td>내추럴 모던 - Natural Modern</td>
+      <td class="muted">-</td>
+      <td>기본</td>
+      <td>미적용</td>
+      <td>전체 공간 - General Area</td>
+      <td class="muted">-</td>
+      <td>[내추럴 모던]인테리어 스타일 선택</td>
+      <td>${r.item}</td>
+      <td>${r.detail}</td>
+      <td>${r.sent ? `<span class="send-status-badge sent">✔ ${r.sentBatch}</span>` : `<span class="send-status-badge unsent">미발송</span>`}</td>
+    </tr>
+  `).join("");
+  allocationSelectAll.checked = false;
+  allocationSelectAll.indeterminate = false;
+}
+renderAllocationTable();
+
+allocationSelectAll.addEventListener("change", () => {
+  document.querySelectorAll(".allocation-row-check:not(:disabled)").forEach((cb) => { cb.checked = allocationSelectAll.checked; });
+});
+
+/* ===================== 안분표 발송: 상품별 차수 분할 발송 ===================== */
+let sendBatchSeq = 1;
+const sendBatches = []; // { id, name, count, pyeongs, sentAt, sentBy }
+
+const allocationSettingsBtn = document.getElementById("allocationSettingsBtn");
+const allocationSettingsMenu = document.getElementById("allocationSettingsMenu");
+allocationSettingsBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  allocationSettingsMenu.hidden = !allocationSettingsMenu.hidden;
+});
+allocationSettingsMenu.addEventListener("click", (e) => e.stopPropagation());
+document.addEventListener("click", () => { allocationSettingsMenu.hidden = true; });
+
+const sendModal = document.getElementById("sendModal");
+const sendModalBody = document.getElementById("sendModalBody");
+const sendToast = document.getElementById("sendToast");
+
+function showToast(text) {
+  sendToast.textContent = text;
+  sendToast.hidden = false;
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => { sendToast.hidden = true; }, 2400);
+}
+
+function openSendModal() {
+  allocationSettingsMenu.hidden = true;
+  const checked = [...document.querySelectorAll(".allocation-row-check:checked")].map(
+    (cb) => Number(cb.closest("tr").dataset.seq)
+  );
+
+  if (checked.length === 0) {
+    sendModalBody.innerHTML = `
+      <div class="send-empty-msg">
+        발송할 항목이 선택되지 않았습니다.<br/>
+        분양 행사가 여러 차수로 나뉘어 진행되므로, 표에서 이번에 내보낼 상품(평형/고객타입 등으로 필터링 후)만 체크한 뒤 다시 시도해 주세요.
+        전체를 한 번에 일괄 발송하지 않고, 상품별로 나눠 발송하기 위한 절차입니다.
+      </div>
+      <div class="cmodal-actions">
+        <button class="toolbar-btn" id="sendModalCloseBtn">닫기</button>
+      </div>`;
+    document.getElementById("sendModalCloseBtn").addEventListener("click", () => { sendModal.hidden = true; });
+    sendModal.hidden = false;
+    return;
+  }
+
+  const rows = allocationRows.filter((r) => checked.includes(r.seq));
+  const pyeongs = [...new Set(rows.map((r) => r.pyeong))];
+  const defaultName = `${sendBatchSeq}차 발송`;
+
+  sendModalBody.innerHTML = `
+    <div class="send-summary">
+      선택 <strong>${rows.length}건</strong>을 새 발송 차수로 「분양수금 시스템」에 전송합니다.<br/>
+      대상 평형 : ${pyeongs.length}종
+    </div>
+    <div class="send-pyeong-tags">${pyeongs.map((p) => `<span class="send-pyeong-tag">${p}</span>`).join("")}</div>
+    <div class="send-field" style="margin-top:14px;">
+      <label>발송 차수명</label>
+      <input type="text" id="sendBatchNameInput" value="${defaultName}" />
+    </div>
+    <div class="cmodal-actions">
+      <button class="toolbar-btn" id="sendModalCancelBtn">취소</button>
+      <button class="primary-btn" id="sendModalConfirmBtn">➤ 발송</button>
+    </div>`;
+
+  document.getElementById("sendModalCancelBtn").addEventListener("click", () => { sendModal.hidden = true; });
+  document.getElementById("sendModalConfirmBtn").addEventListener("click", () => {
+    const name = document.getElementById("sendBatchNameInput").value.trim() || defaultName;
+    rows.forEach((r) => { r.sent = true; r.sentBatch = name; });
+    const batch = {
+      id: sendBatchSeq++,
+      name,
+      count: rows.length,
+      pyeongs,
+      sentAt: dsNowKorean(),
+      sentBy: dsRoleName(dsGetCurrentRole()),
+    };
+    sendBatches.unshift(batch);
+    dsAddEditLog("5. 안분표 생성", `「${name}」 ${rows.length}건을 분양수금 시스템으로 발송 (평형 ${pyeongs.join(", ")})`);
+    renderAllocationTable();
+    renderSendHistory();
+    sendModal.hidden = true;
+    showToast(`「${name}」 ${rows.length}건이 분양수금 시스템으로 발송되었습니다.`);
+  });
+
+  sendModal.hidden = false;
+}
+
+document.getElementById("allocationSendMenuItem").addEventListener("click", openSendModal);
+sendModal.addEventListener("click", (e) => { if (e.target === sendModal) sendModal.hidden = true; });
+
+const sendHistoryBtn = document.getElementById("sendHistoryBtn");
+const sendHistoryPanel = document.getElementById("sendHistoryPanel");
+
+function renderSendHistory() {
+  if (sendBatches.length === 0) {
+    sendHistoryPanel.innerHTML = `<div class="notif-panel-title">안분표 발송 이력</div><div class="notif-item-empty">아직 발송한 차수가 없습니다.</div>`;
+    return;
+  }
+  sendHistoryPanel.innerHTML = `<div class="notif-panel-title">안분표 발송 이력 (전체 ${sendBatches.length}건)</div>` + sendBatches.map((b) => `
+    <div class="notif-item">
+      <div class="notif-item-text">「${b.name}」 ${b.count}건 · 평형 ${b.pyeongs.join(", ")}</div>
+      <div class="notif-item-meta">${b.sentBy} · ${b.sentAt}</div>
+    </div>
+  `).join("");
+}
+renderSendHistory();
+
+sendHistoryBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  sendHistoryPanel.hidden = !sendHistoryPanel.hidden;
+});
+sendHistoryPanel.addEventListener("click", (e) => e.stopPropagation());
+document.addEventListener("click", () => { sendHistoryPanel.hidden = true; });
 
 /* ===================== 내비게이션: 상단 5단계 + 상품구성 5개 서브탭 ===================== */
 document.querySelectorAll(".nav-step").forEach((link) => {

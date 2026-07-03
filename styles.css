@@ -969,3 +969,126 @@ tbody tr:hover { background: #eef4ff; }
   .cha-sidebar { width: 100%; }
   .cat-layout { flex-direction: column; }
 }
+
+/* ===================== 드롭다운 메뉴 (2. 안분표 설정) ===================== */
+.dropdown-wrap { position: relative; }
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  width: 220px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.14);
+  z-index: 30;
+  overflow: hidden;
+  padding: 6px;
+}
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  border: none;
+  background: none;
+  text-align: left;
+  padding: 9px 10px;
+  font-size: 13px;
+  color: var(--text-main);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.dropdown-item:hover { background: #f2f4f8; }
+.dropdown-item.accent { color: #1a9a52; font-weight: 700; border-top: 1px solid var(--border); margin-top: 4px; padding-top: 12px; border-radius: 0 0 6px 6px; }
+.dropdown-item.accent:hover { background: #eafcf1; }
+
+/* ===================== 안분표 발송 모달 ===================== */
+.cmodal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 26, 40, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 60;
+}
+.send-modal {
+  width: 520px;
+  max-width: 92vw;
+  background: #fff;
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 16px 40px rgba(0,0,0,0.25);
+}
+.cmodal-header {
+  background: var(--navy);
+  color: #fff;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 14px 18px;
+}
+.cmodal-body { padding: 20px; font-size: 13px; color: var(--text-main); }
+.send-summary {
+  background: var(--blue-light);
+  border: 1px solid #cfe0fd;
+  border-radius: 8px;
+  padding: 12px 14px;
+  margin-bottom: 14px;
+  line-height: 1.7;
+}
+.send-summary strong { color: var(--blue); }
+.send-empty-msg {
+  background: #fff5e8;
+  border: 1px solid #ffdca8;
+  color: #9a5b13;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 12.5px;
+  line-height: 1.6;
+}
+.send-field { margin-bottom: 14px; }
+.send-field label { display: block; font-size: 12px; font-weight: 700; color: var(--text-sub); margin-bottom: 6px; }
+.send-field input[type="text"] {
+  width: 100%;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 13px;
+  box-sizing: border-box;
+}
+.send-field input[type="text"]:focus { border-color: var(--blue); outline: none; }
+.send-pyeong-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.send-pyeong-tag {
+  background: #eef1f6;
+  color: var(--text-sub);
+  font-size: 11.5px;
+  padding: 3px 9px;
+  border-radius: 12px;
+}
+.cmodal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+
+.send-status-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.send-status-badge.sent { background: #eafcf1; color: #1a9a52; }
+.send-status-badge.unsent { background: #eef1f6; color: var(--text-sub); }
+
+.toast {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1c2333;
+  color: #fff;
+  padding: 12px 22px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  z-index: 80;
+}
