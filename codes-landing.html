@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>D.Selection 코드 관리시스템 | 현장 목록</title>
+<link rel="stylesheet" href="codes.css" />
+</head>
+<body>
+  <div class="capp">
+    <header class="ctopbar">
+      <div class="ctopbar-left">
+        <span class="clogo">DL<sub>E&amp;C</sub></span>
+        <h1>D.Selection 코드 관리시스템 <button class="ctitle-toggle" type="button">⌃⌄</button></h1>
+        <a href="#" class="cpermission-btn">↗ 권한신청 하러가기</a>
+      </div>
+      <nav class="ctopbar-right">
+        <span class="cbuild-tag">ⓘ 20131020</span>
+        <a href="#" class="cnav-link"><span class="cnav-icon">🛡</span> 관리자 모드</a>
+        <a href="codes-landing.html" class="cnav-link active"><span class="cnav-icon">📋</span> 현장 목록</a>
+        <a href="codes-standard.html" class="cnav-link"><span class="cnav-icon">📖</span> 현장별 표준코드</a>
+      </nav>
+    </header>
+
+    <div class="cbreadcrumb">
+      <div class="cbreadcrumb-left">
+        <span class="cbreadcrumb-active">현장리스트</span>
+        <span class="cbreadcrumb-sep">현장명</span>
+      </div>
+      <button class="cadd-btn" type="button">📇 추가할 현장목록</button>
+    </div>
+
+    <div class="csplit">
+      <div class="csplit-left">
+        <table class="csite-table">
+          <thead>
+            <tr>
+              <th class="sortable">현장코드 <span class="sort-icon">↓A｜Z</span></th>
+              <th>현장명</th>
+              <th>사업유형명</th>
+              <th>상품종류</th>
+              <th>생성일시</th>
+            </tr>
+          </thead>
+          <tbody id="siteTableBody"></tbody>
+        </table>
+      </div>
+      <div class="csplit-right">
+        <div class="cright-header">
+          <span id="crightTitle">현장을 선택해 주세요 ⚙</span>
+          <span class="cright-hint">◤ 표에서 우클릭</span>
+        </div>
+        <table class="cbatch-table">
+          <thead>
+            <tr><th>차수</th><th>차수생성자</th><th>차수생성일</th></tr>
+          </thead>
+          <tbody id="batchTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="cmodal-backdrop" id="batchModal" hidden>
+    <div class="cmodal">
+      <div class="cmodal-header">🖊 상품구성하기</div>
+      <div class="cmodal-body">
+        <button class="cmodal-action-btn" id="batchModalGoBtn">📦 상품구성</button>
+      </div>
+    </div>
+  </div>
+
+<script src="codes-landing.js"></script>
+</body>
+</html>
