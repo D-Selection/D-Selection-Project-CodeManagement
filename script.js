@@ -219,7 +219,10 @@ const MAX_MAPPING_HISTORY = 5;
 const mappingHistory = [];
 let highlightedRowIds = new Set();
 let nextConfigRowId = 1;
-let undoToastTimer = null;
+
+// 평형그룹 매핑 이력(매핑/매핑취소 전체 로그, undo 스택과 별개로 계속 누적됨)
+let mappingLogSeq = 1;
+const mappingLog = [];
 
 const areaConfigBody = document.getElementById("areaConfigBody");
 const areaConfigCountEl = document.getElementById("areaConfigCount");
@@ -295,8 +298,39 @@ renderAreaRight();
 
 /* ---- 뒤로가기(undo) : 평형그룹-상품 매핑 이력 ---- */
 const undoBtn = document.getElementById("undoBtn");
-const undoToast = document.getElementById("undoToast");
-const undoToastBody = document.getElementById("undoToastBody");
+const mappingHistoryBtn = document.getElementById("mappingHistoryBtn");
+const mappingHistoryPanel = document.getElementById("mappingHistoryPanel");
+const mappingHistoryList = document.getElementById("mappingHistoryList");
+
+function addMappingLog(type, groupLabel, items) {
+  mappingLog.unshift({ id: mappingLogSeq++, type, groupLabel, items, time: nowKorean() });
+}
+
+function renderMappingHistoryPanel(highlightLatest) {
+  if (mappingLog.length === 0) {
+    mappingHistoryList.innerHTML = `<div class="mapping-history-empty">아직 매핑 이력이 없습니다.</div>`;
+    return;
+  }
+  mappingHistoryList.innerHTML = mappingLog.map((h, i) => `
+    <div class="mapping-history-item ${highlightLatest && i === 0 ? "latest" : ""}">
+      <div class="mapping-history-item-title">
+        <span class="${h.type === "map" ? "tag-map" : "tag-undo"}">${h.type === "map" ? "➕ 매핑" : "↩ 매핑 취소"}</span>
+        <span>${h.groupLabel} · ${h.items.length}건</span>
+      </div>
+      <div class="mapping-history-item-detail">${h.items.map((it) => `- ${it.code} ${it.item}`).join("<br/>")}</div>
+      <div class="mapping-history-item-time">${h.time}</div>
+    </div>
+  `).join("");
+}
+renderMappingHistoryPanel(false);
+
+mappingHistoryBtn.addEventListener("click", () => {
+  mappingHistoryPanel.hidden = !mappingHistoryPanel.hidden;
+  if (!mappingHistoryPanel.hidden) renderMappingHistoryPanel(false);
+});
+document.getElementById("mappingHistoryClose").addEventListener("click", () => {
+  mappingHistoryPanel.hidden = true;
+});
 
 function updateUndoButtons() {
   // stages(확정 관리 상태) is defined later in this file; by the time a user can
@@ -348,21 +382,14 @@ document.querySelector(".map-btn").addEventListener("click", () => {
   mappingHistory.push({ groupLabel, rowIds: addedIds, items });
   if (mappingHistory.length > MAX_MAPPING_HISTORY) mappingHistory.shift();
 
+  addMappingLog("map", groupLabel, items);
+  if (!mappingHistoryPanel.hidden) renderMappingHistoryPanel(false);
+
   highlightedRowIds = new Set(addedIds);
   renderAreaConfig();
   renderAreaRight();
   updateUndoButtons();
 });
-
-function showUndoToast(action) {
-  undoToastBody.innerHTML = `
-    <div class="undo-group-title">${action.groupLabel} ${action.items.length}건</div>
-    ${action.items.map((i) => `<div class="undo-item">- ${i.code} ${i.item}</div>`).join("")}
-  `;
-  undoToast.hidden = false;
-  clearTimeout(undoToastTimer);
-  undoToastTimer = setTimeout(() => { undoToast.hidden = true; }, 2600);
-}
 
 function undoLastMapping() {
   if (mappingHistory.length === 0 || stages.s14.status !== "editable") return;
@@ -384,7 +411,10 @@ function undoLastMapping() {
   renderAreaConfig();
   renderAreaRight();
   updateUndoButtons();
-  showUndoToast(action);
+
+  addMappingLog("undo", action.groupLabel, action.items);
+  mappingHistoryPanel.hidden = false;
+  renderMappingHistoryPanel(true);
 }
 
 undoBtn.addEventListener("click", undoLastMapping);
@@ -616,6 +646,13 @@ let currentRole = "owner13";
 let notifSeq = 1;
 const notifications = [];
 
+// 확정/잠금해제/재작업 감사 이력 (역할과 무관하게 전체 공개, 계속 누적)
+let historySeq = 1;
+const workflowHistory = [];
+function addHistory(stageKey, text) {
+  workflowHistory.unshift({ id: historySeq++, stageKey, text, time: nowKorean() });
+}
+
 function nowKorean() {
   const d = new Date();
   const weekday = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
@@ -649,11 +686,13 @@ function confirmStage(stageKey) {
   stage.status = "confirmed";
   stage.confirmedAt = nowKorean();
   stage.justUnlocked = false;
+  addHistory(stageKey, `✔ ${roleName(stage.owner)}님이 「${stage.label}」을(를) 확정했습니다.`);
   stage.downstream.forEach((dKey) => {
     const d = stages[dKey];
     if (d.status === "locked") {
       d.status = "editable";
       addNotification(d.owner, "confirmed", `「${stage.label}」 확정이 완료되었습니다. 이제 「${d.label}」 작업을 시작할 수 있습니다.`, dKey);
+      addHistory(dKey, `🔓 「${stage.label}」 확정에 따라 「${d.label}」 작업이 시작 가능해졌습니다.`);
     }
   });
   renderAll();
@@ -666,11 +705,16 @@ function requestReopen(stageKey) {
   if (approvers.length === 0) {
     stage.status = "editable";
     stage.confirmedAt = null;
+    addHistory(stageKey, `↺ ${roleName(stage.owner)}님이 「${stage.label}」 잠금을 해제하고 재작업을 시작했습니다. (후속 작업 미착수로 승인 불필요)`);
     renderAll();
     return;
   }
   stage.status = "reopen_pending";
   stage.pendingApprovals = approvers.slice();
+  addHistory(
+    stageKey,
+    `↺ ${roleName(stage.owner)}님이 「${stage.label}」 재작업을 위해 잠금 해제를 요청했습니다. (승인 필요: ${approvers.map((k) => roleName(stages[k].owner)).join(", ")})`
+  );
   approvers.forEach((dKey) => {
     const d = stages[dKey];
     const n = addNotification(
@@ -689,6 +733,7 @@ function cancelReopenRequest(stageKey) {
   if (stage.status !== "reopen_pending") return;
   stage.status = "confirmed";
   stage.pendingApprovals = [];
+  addHistory(stageKey, `${roleName(stage.owner)}님이 「${stage.label}」 잠금 해제 요청을 취소했습니다.`);
   renderAll();
 }
 
@@ -705,12 +750,14 @@ function approveReopen(notifId) {
   approverStage.status = "locked";
   approverStage.confirmedAt = null;
   approverStage.justUnlocked = false;
+  addHistory(notif.approverStage, `✅ ${roleName(approverStage.owner)}님이 「${stage.label}」 잠금 해제를 승인했습니다. 「${approverStage.label}」은(는) 재확정이 필요합니다.`);
 
   if (stage.pendingApprovals.length === 0) {
     stage.status = "editable";
     stage.confirmedAt = null;
     stage.justUnlocked = true;
     addNotification(stage.owner, "reopen_approved", `모든 후속 작업 담당자가 잠금 해제를 승인했습니다. 「${stage.label}」을(를) 다시 수정할 수 있습니다.`, stage.key);
+    addHistory(stage.key, `🔓 잠금 해제 승인이 모두 완료되어 「${stage.label}」 재작업이 가능합니다.`);
   }
   renderAll();
 }
@@ -886,12 +933,27 @@ function renderNotifications() {
   `).join("");
 }
 
+function renderHistoryPanel() {
+  const panel = document.getElementById("historyPanel");
+  if (workflowHistory.length === 0) {
+    panel.innerHTML = `<div class="notif-panel-title">확정 / 재작업 이력</div><div class="notif-item-empty">아직 이력이 없습니다.</div>`;
+    return;
+  }
+  panel.innerHTML = `<div class="notif-panel-title">확정 / 재작업 이력 (전체 ${workflowHistory.length}건)</div>` + workflowHistory.map((h) => `
+    <div class="notif-item">
+      <div class="notif-item-text">${h.text}</div>
+      <div class="notif-item-meta">${h.time}</div>
+    </div>
+  `).join("");
+}
+
 function renderAll() {
   renderStatusStrip();
   renderStep1StageBox();
   renderStageBox("s2", "stage2Box", "원가", "원 가");
   renderStageBox("s4", "stage4Box", "판매가", "판매가");
   renderNotifications();
+  renderHistoryPanel();
 }
 
 const roleSelect = document.getElementById("roleSelect");
@@ -906,6 +968,7 @@ const notifBell = document.getElementById("notifBell");
 const notifPanel = document.getElementById("notifPanel");
 notifBell.addEventListener("click", (e) => {
   e.stopPropagation();
+  historyPanel.hidden = true;
   notifPanel.hidden = !notifPanel.hidden;
   if (!notifPanel.hidden) {
     notifications.filter((n) => n.to === currentRole).forEach((n) => { n.read = true; });
@@ -917,6 +980,20 @@ notifPanel.addEventListener("click", (e) => {
   const btn = e.target.closest("[data-approve]");
   if (btn) approveReopen(Number(btn.dataset.approve));
 });
-document.addEventListener("click", () => { notifPanel.hidden = true; });
+
+const historyBtn = document.getElementById("historyBtn");
+const historyPanel = document.getElementById("historyPanel");
+historyBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  notifPanel.hidden = true;
+  historyPanel.hidden = !historyPanel.hidden;
+  if (!historyPanel.hidden) renderHistoryPanel();
+});
+historyPanel.addEventListener("click", (e) => e.stopPropagation());
+
+document.addEventListener("click", () => {
+  notifPanel.hidden = true;
+  historyPanel.hidden = true;
+});
 
 renderAll();

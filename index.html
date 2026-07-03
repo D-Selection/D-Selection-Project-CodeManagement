@@ -40,6 +40,10 @@
           <select id="roleSelect"></select>
         </label>
         <div class="notif-wrap">
+          <button class="notif-bell" id="historyBtn" type="button" title="확정/재작업 이력">🕘 이력</button>
+          <div class="notif-panel history-panel" id="historyPanel" hidden></div>
+        </div>
+        <div class="notif-wrap">
           <button class="notif-bell" id="notifBell" type="button">
             🔔<span class="notif-badge" id="notifBadge" hidden>0</span>
           </button>
@@ -252,6 +256,7 @@
               <span>상품 구성 <span class="round-badge" id="areaConfigCount">103개</span> <span class="info-dot">ⓘ</span> <span class="stage-lock-tag" id="stage14LockTag" hidden>🔒 확정됨(잠금)</span></span>
               <span class="header-icons-text">
                 <button class="undo-btn" id="undoBtn" disabled title="Ctrl+Z">↩ 뒤로가기</button>
+                <button class="undo-btn" id="mappingHistoryBtn" type="button">🕘 매핑 이력</button>
                 <button class="toolbar-btn">⭣ Excel 다운로드</button>
                 <button class="toolbar-btn icon-only">⟳</button>
                 <button class="danger-btn small mapping-editable-control" id="unmapBtn">⊘ 평형그룹 매핑해제</button>
@@ -267,9 +272,12 @@
                 </thead>
                 <tbody id="areaConfigBody"></tbody>
               </table>
-              <div class="undo-toast" id="undoToast" hidden>
-                <div class="undo-toast-title">직전 매핑이 취소되었습니다</div>
-                <div class="undo-toast-body" id="undoToastBody"></div>
+              <div class="mapping-history-panel" id="mappingHistoryPanel" hidden>
+                <div class="mapping-history-header">
+                  <span>매핑 이력</span>
+                  <button class="mapping-history-close" id="mappingHistoryClose" type="button">✕</button>
+                </div>
+                <div class="mapping-history-list" id="mappingHistoryList"></div>
               </div>
             </div>
             <div class="area-subpanel">

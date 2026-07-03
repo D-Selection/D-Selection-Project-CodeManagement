@@ -740,6 +740,7 @@ tbody tr:hover { background: #eef4ff; }
   box-shadow: 0 8px 24px rgba(0,0,0,0.12);
   z-index: 20;
 }
+.notif-panel.history-panel { width: 420px; }
 .notif-panel-title {
   padding: 10px 14px;
   font-weight: 700;
@@ -847,34 +848,46 @@ tbody tr:hover { background: #eef4ff; }
 
 .area-col-body-relative { position: relative; }
 
-.undo-toast {
+.mapping-history-panel {
   position: absolute;
   inset: 0;
   z-index: 5;
   background: #fff;
   display: flex;
   flex-direction: column;
+  border: 1px solid var(--border);
   animation: undo-fade-in 0.15s ease-out;
 }
 @keyframes undo-fade-in { from { opacity: 0; } to { opacity: 1; } }
-.undo-toast-title {
-  background: #e0483a;
-  color: #fff;
+.mapping-history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: #f5f6f9;
+  border-bottom: 1px solid var(--border);
   font-weight: 700;
+  font-size: 13px;
+}
+.mapping-history-close {
+  border: none;
+  background: none;
   font-size: 15px;
-  text-align: center;
-  padding: 14px;
+  cursor: pointer;
+  color: var(--text-sub);
+  line-height: 1;
 }
-.undo-toast-body {
-  flex: 1;
-  overflow: auto;
-  padding: 16px 20px;
-  font-size: 12.5px;
-  line-height: 1.9;
-  color: var(--text-main);
-}
-.undo-toast-body .undo-group-title { font-weight: 700; margin-top: 10px; }
-.undo-toast-body .undo-item { color: var(--text-sub); padding-left: 8px; }
+.mapping-history-close:hover { color: var(--text-main); }
+.mapping-history-list { flex: 1; overflow: auto; padding: 6px 16px; }
+.mapping-history-item { padding: 10px 0; border-bottom: 1px solid #f0f1f4; font-size: 12.5px; }
+.mapping-history-item:last-child { border-bottom: none; }
+.mapping-history-item.latest { background: #fdecea; margin: 0 -16px; padding: 10px 16px; }
+.mapping-history-item-title { font-weight: 700; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; }
+.mapping-history-item-title .tag-map { color: #1a9a52; }
+.mapping-history-item-title .tag-undo { color: #e0483a; }
+.mapping-history-item-detail { color: var(--text-sub); line-height: 1.7; padding-left: 2px; }
+.mapping-history-item-time { color: #a7adbb; font-size: 11px; margin-top: 4px; }
+.mapping-history-empty { text-align: center; color: var(--text-sub); padding: 24px 0; font-size: 12.5px; }
 
 /* Rows greyed out in 상품코드 panel once mapped, without disappearing */
 .row-disabled td { color: #b6bac4 !important; background: #f7f8fa !important; }
