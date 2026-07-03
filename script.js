@@ -698,6 +698,34 @@ function confirmStage(stageKey) {
   renderAll();
 }
 
+// 다른 단계가 보낸 "잠금 해제 승인 요청" 중 stageKey를 기다리던 것이 있다면,
+// stageKey 담당자가 (알림의 승인 버튼을 누르지 않고) 자기 화면에서 직접
+// 확정을 해제하는 것만으로도 그 요청은 승인된 것으로 간주해 자동 완료 처리한다.
+function autoResolvePendingApprovalsFor(stageKey) {
+  Object.values(stages).forEach((up) => {
+    if (up.status !== "reopen_pending" || !up.pendingApprovals.includes(stageKey)) return;
+    const approverStage = stages[stageKey];
+
+    up.pendingApprovals = up.pendingApprovals.filter((k) => k !== stageKey);
+    addHistory(
+      stageKey,
+      `↺ ${roleName(approverStage.owner)}님이 「${approverStage.label}」을(를) 직접 해제하여, 「${up.label}」의 잠금 해제 요청이 (승인 버튼 없이) 자동 완료 처리되었습니다.`
+    );
+
+    notifications
+      .filter((n) => n.kind === "reopen_request" && n.stageKey === up.key && n.approverStage === stageKey && !n.resolved)
+      .forEach((n) => { n.resolved = true; n.read = true; n.autoResolved = true; });
+
+    if (up.pendingApprovals.length === 0) {
+      up.status = "editable";
+      up.confirmedAt = null;
+      up.justUnlocked = true;
+      addNotification(up.owner, "reopen_approved", `모든 후속 작업 담당자의 잠금 해제가 완료되었습니다. 「${up.label}」을(를) 다시 수정할 수 있습니다.`, up.key);
+      addHistory(up.key, `🔓 잠금 해제가 모두 완료되어 「${up.label}」 재작업이 가능합니다.`);
+    }
+  });
+}
+
 function requestReopen(stageKey) {
   const stage = stages[stageKey];
   if (stage.status !== "confirmed") return;
@@ -706,6 +734,7 @@ function requestReopen(stageKey) {
     stage.status = "editable";
     stage.confirmedAt = null;
     addHistory(stageKey, `↺ ${roleName(stage.owner)}님이 「${stage.label}」 잠금을 해제하고 재작업을 시작했습니다. (후속 작업 미착수로 승인 불필요)`);
+    autoResolvePendingApprovalsFor(stageKey);
     renderAll();
     return;
   }
@@ -725,6 +754,7 @@ function requestReopen(stageKey) {
     );
     n.approverStage = dKey;
   });
+  autoResolvePendingApprovalsFor(stageKey);
   renderAll();
 }
 
@@ -928,7 +958,7 @@ function renderNotifications() {
       <div class="notif-item-text">${n.text}</div>
       <div class="notif-item-meta">${n.time}</div>
       ${n.kind === "reopen_request" && !n.resolved ? `<button class="notif-approve-btn" data-approve="${n.id}">승인</button>` : ""}
-      ${n.kind === "reopen_request" && n.resolved ? `<span class="notif-resolved-tag">✓ 승인 완료</span>` : ""}
+      ${n.kind === "reopen_request" && n.resolved ? `<span class="notif-resolved-tag">✓ ${n.autoResolved ? "자동 완료 (직접 해제함)" : "승인 완료"}</span>` : ""}
     </div>
   `).join("");
 }
