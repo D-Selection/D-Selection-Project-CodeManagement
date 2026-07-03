@@ -13,17 +13,17 @@
       <div class="topbar-left">
         <span class="logo">▤</span>
         <div class="topbar-titles">
-          <h1>안분표 생성 <span class="round">(1차수)</span></h1>
+          <h1 id="pageTitle">안분표 생성 <span class="round">(1차수)</span></h1>
           <p>아크로드 서초 현장 <span class="site-code">(170020)</span></p>
         </div>
       </div>
       <nav class="topbar-nav">
         <span class="dept-tag">※ 메뉴별 담당부서</span>
-        <a href="#" class="nav-step active">1. 상품구성</a>
-        <a href="#" class="nav-step">2. 원가 수정</a>
-        <a href="#" class="nav-step">3. 상품고객언어</a>
-        <a href="#" class="nav-step">4. 판매가 수정</a>
-        <a href="#" class="nav-step">5. 안분표 생성</a>
+        <a href="#" class="nav-step active" data-step="1">1. 상품구성</a>
+        <a href="#" class="nav-step" data-step="2">2. 원가 수정</a>
+        <a href="#" class="nav-step" data-step="3">3. 상품고객언어</a>
+        <a href="#" class="nav-step" data-step="4">4. 판매가 수정</a>
+        <a href="#" class="nav-step" data-step="5">5. 안분표 생성</a>
         <button class="close-btn" type="button">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1L13 13M13 1L1 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
           닫기
@@ -31,74 +31,522 @@
       </nav>
     </header>
 
-    <!-- Sub bar: step tabs -->
-    <div class="subbar">
-      <div class="subbar-title">
-        <span class="grid-icon">▦</span>
-        <h2>상품업로드 <span class="round-badge">14 차수</span></h2>
+    <!-- ============ STEP 1: 상품구성 ============ -->
+    <section class="view active" id="view-1">
+      <div class="subbar">
+        <div class="subbar-title">
+          <span class="grid-icon">▦</span>
+          <h2>상품업로드 <span class="round-badge">14 차수</span></h2>
+        </div>
+        <div class="step-tabs">
+          <button class="step-tab active" data-tab="product"><span class="num">1</span>프로덕트</button>
+          <button class="step-tab" data-tab="sku"><span class="num">2</span>상품구성코드</button>
+          <button class="step-tab" data-tab="mapping"><span class="num">3</span>프로덕트×상품구성코드</button>
+          <button class="step-tab" data-tab="area"><span class="num">4</span>평형그룹매핑</button>
+          <button class="step-tab" data-tab="category"><span class="num">5</span>대분류/중분류/제조사</button>
+        </div>
+        <div class="confirm-box" id="confirmBoxProduct">
+          <span class="confirm-badge">상품 구성<br />확 정</span>
+          <div class="confirm-info">
+            <p>확정자 : 안은철</p>
+            <p>확정일 : 2026년 6월 29일 (월) 오후 1:31:21</p>
+          </div>
+        </div>
+        <button class="danger-btn" id="confirmCancelArea" hidden>
+          <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M4 10a6 6 0 1 1 2 4.5M4 10V5m0 5h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          상품구성 확정 강제취소
+        </button>
       </div>
-      <div class="step-tabs">
-        <button class="step-tab active" data-tab="product"><span class="num">1</span>프로덕트</button>
-        <button class="step-tab" data-tab="sku"><span class="num">2</span>상품구성코드</button>
-        <button class="step-tab" data-tab="mapping"><span class="num">3</span>프로덕트×상품구성코드</button>
-        <button class="step-tab" data-tab="area"><span class="num">4</span>평형그룹매핑</button>
-        <button class="step-tab" data-tab="category"><span class="num">5</span>대분류/중분류/제조사</button>
-      </div>
-      <div class="confirm-box">
-        <span class="confirm-badge">상품 구성<br />확 정</span>
-        <div class="confirm-info">
-          <p>확정자 : 안은철</p>
-          <p>확정일 : 2026년 6월 29일 (월) 오후 1:31:21</p>
+
+      <!-- Panel 1: 프로덕트 -->
+      <section class="tab-panel active" id="panel-product">
+        <div class="filterbar">
+          <div class="filterbar-left">
+            <span class="section-label">소분류</span>
+            <span class="count-badge" id="rowCount">474</span>
+          </div>
+          <div class="filterbar-right">
+            <button class="filter-chip active" id="searchToggle">
+              <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.6"/><path d="M14.5 14.5L18 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              검색
+            </button>
+            <button class="filter-chip">코드</button>
+            <button class="filter-chip">명칭</button>
+            <button class="filter-chip">대·중분류</button>
+            <button class="filter-chip">제조사</button>
+            <button class="filter-chip">모델명</button>
+            <button class="filter-chip">마감재</button>
+            <button class="filter-chip">사용여부</button>
+            <button class="filter-chip add-filter">+ Add filter</button>
+          </div>
+        </div>
+        <div class="search-row" id="searchRow">
+          <input type="text" id="searchInput" placeholder="상품코드, 명칭, 제조사, 모델명으로 검색" />
+        </div>
+        <div class="table-wrap">
+          <table id="productTable">
+            <thead>
+              <tr>
+                <th class="sortable">상품코드 <span class="sort-icon">⇅</span></th>
+                <th>연번</th>
+                <th>Product 소분류명</th>
+                <th>Product 소분류명 (고객용)</th>
+                <th>제조사</th>
+                <th>모델명</th>
+                <th>마감재</th>
+                <th>사이즈</th>
+                <th>사용</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Panel 2: 상품구성코드 -->
+      <section class="tab-panel" id="panel-sku">
+        <div class="cha-layout">
+          <aside class="cha-sidebar" id="chaSidebarSku"></aside>
+          <div class="cha-main">
+            <div class="filterbar">
+              <div class="filterbar-left">
+                <span class="section-icon">▤</span>
+                <span class="section-label">상품구성코드</span>
+              </div>
+              <div class="filterbar-right">
+                <button class="filter-chip">상품 코드</button>
+                <button class="filter-chip">공간명</button>
+                <button class="filter-chip">스타일명</button>
+                <button class="filter-chip">상품 대분류명</button>
+                <button class="filter-chip">상품 중분류명</button>
+                <button class="filter-chip">상품 제조사명</button>
+                <button class="filter-chip">항목명</button>
+                <button class="filter-chip">항목명(고객용)</button>
+                <button class="filter-chip add-filter">+ Add filter</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="sortable">상품 코드 <span class="sort-icon">⇅</span></th>
+                    <th>공간코드</th>
+                    <th>공간명</th>
+                    <th>스타일코드</th>
+                    <th>스타일명</th>
+                    <th>현장본사구분</th>
+                    <th>상품 대분류코드</th>
+                    <th>상품 대분류명</th>
+                    <th>상품 중분류코드</th>
+                    <th>상품 중분류명</th>
+                    <th>상품 제조사코드</th>
+                    <th>항목명</th>
+                    <th>항목명 (고객용)</th>
+                  </tr>
+                </thead>
+                <tbody id="skuTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 3: 프로덕트 × 상품구성코드 -->
+      <section class="tab-panel" id="panel-mapping">
+        <div class="cha-layout">
+          <aside class="cha-sidebar" id="chaSidebarMapping"></aside>
+          <div class="cha-main">
+            <div class="toolbar">
+              <div class="toolbar-left">
+                <button class="toolbar-btn primary-toggle active">
+                  <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.6"/></svg>
+                  엑셀 업로드 원본
+                </button>
+                <button class="toolbar-btn success-toggle">
+                  <span class="dot dot-sm"></span>
+                  업로드 결과 보기
+                </button>
+                <span class="count-pill">219건</span>
+              </div>
+              <div class="toolbar-right">
+                <button class="toolbar-btn dark">👁 안내문코드</button>
+                <button class="toolbar-btn dark">공통코드보기</button>
+                <button class="filter-chip">공간명</button>
+                <button class="filter-chip">스타일명</button>
+                <button class="filter-chip">항목명</button>
+                <button class="filter-chip add-filter">+ Add filter</button>
+                <button class="toolbar-btn">⭣ 양식 다운로드</button>
+                <button class="toolbar-btn">⭱ Excel 업로드</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="sortable">상품코드 <span class="sort-icon">⇅</span></th>
+                    <th>공간코드</th>
+                    <th>공간명</th>
+                    <th>스타일코드</th>
+                    <th>스타일명</th>
+                    <th>현장본사구분</th>
+                    <th>항목명</th>
+                    <th>상품 대분류코드</th>
+                    <th>상품 대분류명</th>
+                    <th>상품 중분류코드</th>
+                    <th>상품 중분류명</th>
+                    <th>상품 제조사코드</th>
+                  </tr>
+                </thead>
+                <tbody id="mappingTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 4: 평형그룹매핑 -->
+      <section class="tab-panel" id="panel-area">
+        <div class="area-layout">
+          <div class="area-col area-col-narrow">
+            <div class="area-col-header">
+              <span>평형 그룹 <span class="round-badge">28개</span></span>
+              <span class="header-icons">▤ ⤢</span>
+            </div>
+            <div class="area-search">
+              <input type="text" placeholder="검색어를 입력해주세요." />
+            </div>
+            <div class="area-chip-row">
+              <button class="filter-chip small">고객명</button>
+              <button class="filter-chip small">평형</button>
+              <button class="filter-chip small">평형옵션명</button>
+              <button class="filter-chip small">선택형평면명</button>
+            </div>
+            <div class="area-col-body">
+              <table class="mini-table">
+                <thead>
+                  <tr><th></th><th>고객</th><th>평형</th><th>평형옵션명</th></tr>
+                </thead>
+                <tbody id="areaGroupBody"></tbody>
+              </table>
+            </div>
+            <div class="area-col-footer">
+              <button class="pill-btn green">평형추가</button>
+              <button class="pill-btn">평형삭제</button>
+              <button class="pill-btn pink">상품삭제</button>
+            </div>
+          </div>
+
+          <div class="area-col area-col-wide">
+            <div class="area-col-header">
+              <span>상품 구성 <span class="round-badge">103개</span> <span class="info-dot">ⓘ</span></span>
+              <span class="header-icons-text">
+                <button class="toolbar-btn">⭣ Excel 다운로드</button>
+                <button class="toolbar-btn icon-only">⟳</button>
+                <button class="danger-btn small">⊘ 평형그룹 매핑해제</button>
+              </span>
+            </div>
+            <div class="area-col-body">
+              <table class="mini-table">
+                <thead>
+                  <tr>
+                    <th></th><th>상품<br/>차수</th><th>평형명</th><th>상품코드</th><th>항목명</th><th>비고</th>
+                    <th>항목명 (고객용)</th><th>공간명</th><th>현장<br/>본사<br/>구분</th><th>프로<br/>덕트<br/>수</th><th>소분류명</th>
+                  </tr>
+                </thead>
+                <tbody id="areaConfigBody"></tbody>
+              </table>
+            </div>
+            <div class="area-subpanel">
+              <div class="area-subpanel-header">프로덕트 코드 <span class="round-badge">1개</span></div>
+              <table class="mini-table">
+                <thead>
+                  <tr><th>프로덕트 컬랩구분</th><th>상품코드</th><th>가감품목</th><th>특이사항</th><th>소분류코드</th><th>소분류명</th><th>제조사</th><th>모델명</th></tr>
+                </thead>
+                <tbody id="areaProductCodeBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="area-col area-col-wide">
+            <div class="area-col-header">
+              <span>상품코드 <span class="round-badge">업로드14차수(116개)</span></span>
+              <span class="header-icons-text">
+                <button class="filter-chip small">항목명</button>
+                <button class="filter-chip small add-filter">+ Add filter</button>
+              </span>
+            </div>
+            <button class="map-btn">⇄ 평형그룹과 매핑</button>
+            <p class="area-note">선택 0건 &nbsp; <span class="check-ok">✓</span> "상품코드"에는 상품업로드 「마지막 차수」만 표시됩니다.</p>
+            <div class="area-col-body">
+              <table class="mini-table">
+                <thead>
+                  <tr><th></th><th>공간코드</th><th>상품코드</th><th>항목명</th><th>항목명 (고객용)</th><th>프로덕트<br/>연결수</th></tr>
+                </thead>
+                <tbody id="areaRightBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 5: 대분류/중분류/제조사 -->
+      <section class="tab-panel" id="panel-category">
+        <div class="cat-layout">
+          <aside class="cat-sidebar">
+            <div class="cat-sidebar-title">분양수금 공통 코드 동기화<br/><span>최신</span></div>
+            <div class="cat-source-card">
+              <div class="cat-source-name">📄 [PRD D-Sel] 별매... <span class="muted">5 hours ago</span> ⋯</div>
+              <table class="mini-table">
+                <thead><tr><th>SOURCE NAME</th><th>LAST UPDATED</th></tr></thead>
+                <tbody><tr><td>🗂 분양수금 공통코드</td><td>5 hours ago</td></tr></tbody>
+              </table>
+            </div>
+          </aside>
+          <div class="cat-col">
+            <h3>대분류</h3>
+            <table class="mini-table">
+              <thead><tr><th>이름</th><th>코드 <span class="sort-icon">⇅</span></th></tr></thead>
+              <tbody id="majorCatBody"></tbody>
+            </table>
+          </div>
+          <div class="cat-col">
+            <h3>중분류</h3>
+            <table class="mini-table">
+              <thead><tr><th>대분류</th><th>이름</th><th>코드 <span class="sort-icon">⇅</span></th></tr></thead>
+              <tbody id="midCatBody"></tbody>
+            </table>
+          </div>
+          <div class="cat-col">
+            <h3>제조사</h3>
+            <table class="mini-table">
+              <thead><tr><th>이름</th><th>코드 <span class="sort-icon">⇅</span></th></tr></thead>
+              <tbody id="makerBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- ============ STEP 2: 원가 수정 ============ -->
+    <section class="view" id="view-2">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <button class="toolbar-btn">⭣ 원가 Excel 양식 다운로드</button>
+          <button class="toolbar-btn">⭱ 원가 Excel 업로드</button>
+          <button class="toolbar-btn">↕1 순번정렬</button>
+        </div>
+        <div class="toolbar-right">
+          <div class="confirm-box">
+            <span class="confirm-badge">원 가<br />확 정</span>
+            <div class="confirm-info">
+              <p>확정자 : 안은철</p>
+              <p>확정일 : 2026년 6월 29일 (월) 오후 5:30:20</p>
+            </div>
+          </div>
+          <button class="danger-btn">↺ 원가 확정 강제취소</button>
+          <button class="ghost-btn">👁 원가 합산결과</button>
         </div>
       </div>
-    </div>
-
-    <!-- Filter bar -->
-    <div class="filterbar">
-      <div class="filterbar-left">
-        <span class="section-label">소분류</span>
-        <span class="count-badge" id="rowCount">474</span>
+      <div class="section-title-bar">
+        <div class="section-title-left">
+          <h2>3. 원가 수정 <span class="count-pill">5398개</span></h2>
+        </div>
+        <div class="filterbar-right">
+          <button class="filter-chip">평형그룹명</button>
+          <button class="filter-chip">항목명</button>
+          <button class="filter-chip add-filter">+ Add filter</button>
+        </div>
       </div>
-      <div class="filterbar-right">
-        <button class="filter-chip active" id="searchToggle">
-          <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.6"/><path d="M14.5 14.5L18 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-          검색
-        </button>
-        <button class="filter-chip">코드</button>
-        <button class="filter-chip">명칭</button>
-        <button class="filter-chip">대·중분류</button>
-        <button class="filter-chip">제조사</button>
-        <button class="filter-chip">모델명</button>
-        <button class="filter-chip">마감재</button>
-        <button class="filter-chip">사용여부</button>
-        <button class="filter-chip add-filter">+ Add filter</button>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="sortable">순번 <span class="sort-icon">⇅</span></th>
+              <th>평형그룹</th>
+              <th>비고</th>
+              <th>상품코드</th>
+              <th class="sortable">프로덕트코드 <span class="sort-icon">⇅</span></th>
+              <th>항목명</th>
+              <th>항목명 (고객용)</th>
+              <th>세부사항</th>
+              <th>세부사항 (고객용)</th>
+            </tr>
+          </thead>
+          <tbody id="costTableBody"></tbody>
+        </table>
       </div>
-    </div>
+    </section>
 
-    <div class="search-row" id="searchRow">
-      <input type="text" id="searchInput" placeholder="상품코드, 명칭, 제조사, 모델명으로 검색" />
-    </div>
+    <!-- ============ STEP 3: 상품고객언어 ============ -->
+    <section class="view" id="view-3">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <button class="toolbar-btn">⭣ 고객언어 Excel 양식 다운로드</button>
+          <button class="toolbar-btn">⭱ 고객언어 Excel 업로드</button>
+          <button class="toolbar-btn">↕1 순번정렬</button>
+        </div>
+        <div class="info-box">
+          1.「순번」,「항목명(고객용)」,「세부사항(고객용)」,「비고」를 수정할 수 있어요.<br/>
+          2. 만약 상품 엑셀업로드에 "고객용" 데이터를 업로드 하지 않았다면 이곳에서 수정하세요.<br/>
+          3. 이곳에서 설정한 "고객용" 데이터는 안분표를 생성/재생성 하여야 안분표에 반영됩니다.
+        </div>
+      </div>
+      <div class="section-title-bar">
+        <div class="section-title-left">
+          <h2>4. 「상품별」 고객언어 수정 <span class="count-pill">2036개</span></h2>
+        </div>
+        <div class="filterbar-right">
+          <button class="filter-chip">평형명</button>
+          <button class="filter-chip">상품코드</button>
+          <button class="filter-chip">항목명</button>
+          <button class="filter-chip">항목명 (고객용)</button>
+          <button class="filter-chip add-filter">+ Add filter</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="sortable">순번 <span class="sort-icon">⇅</span></th>
+              <th>고객명</th>
+              <th>평형명</th>
+              <th>현장본사구분</th>
+              <th>스타일명</th>
+              <th>평형옵션명</th>
+              <th>선택형평면명</th>
+              <th>공간명</th>
+              <th>상품 대분류명</th>
+              <th>상품 중분류명</th>
+              <th>상품 제조사명</th>
+              <th class="sortable">공간코드 <span class="sort-icon">⇅</span></th>
+              <th>항목명</th>
+              <th>항목명 (고객용)</th>
+              <th>세부사항 구성코드</th>
+              <th>세부사항</th>
+              <th>세부사항 (고객용)</th>
+            </tr>
+          </thead>
+          <tbody id="langTableBody"></tbody>
+        </table>
+      </div>
+      <div class="floating-action">
+        <button class="primary-btn">✎ 항목명(고객용) / 세부사항(고객용) 수정</button>
+      </div>
+    </section>
 
-    <!-- Table -->
-    <div class="table-wrap">
-      <table id="productTable">
-        <thead>
-          <tr>
-            <th class="sortable">상품코드 <span class="sort-icon">⇅</span></th>
-            <th>연번</th>
-            <th>Product 소분류명</th>
-            <th>Product 소분류명 (고객용)</th>
-            <th>제조사</th>
-            <th>모델명</th>
-            <th>마감재</th>
-            <th>사이즈</th>
-            <th>사용</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody">
-        </tbody>
-      </table>
-    </div>
+    <!-- ============ STEP 4: 판매가 수정 ============ -->
+    <section class="view" id="view-4">
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <button class="toolbar-btn">⭣ 판매가 Excel 양식 다운로드</button>
+          <button class="toolbar-btn">⭱ 판매가 Excel 업로드</button>
+          <button class="toolbar-btn">▦ 프로덕트 원가합산표</button>
+          <button class="toolbar-btn">↕1 순번정렬</button>
+        </div>
+        <div class="toolbar-right">
+          <div class="confirm-box">
+            <span class="confirm-badge">판매가<br />확 정</span>
+            <div class="confirm-info">
+              <p>확정자 : 안은철</p>
+              <p>확정일 : 2026년 6월 29일 (월) 오후 5:30:03</p>
+            </div>
+          </div>
+          <button class="danger-btn">↺ 판매가 확정 강제취소</button>
+        </div>
+      </div>
+      <div class="section-title-bar">
+        <div class="section-title-left">
+          <h2>4. 「상품별」 판매가 수정 <span class="count-pill">2036개</span></h2>
+        </div>
+        <div class="filterbar-right">
+          <button class="filter-chip">평형명</button>
+          <button class="filter-chip">상품코드</button>
+          <button class="filter-chip">항목명</button>
+          <button class="filter-chip">항목명 (고객용)</button>
+          <button class="filter-chip add-filter">+ Add filter</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="sortable">순번 <span class="sort-icon">⇅</span></th>
+              <th>고객명</th>
+              <th>평형명</th>
+              <th>현장본사구분</th>
+              <th>스타일명</th>
+              <th>평형옵션명</th>
+              <th>선택형평면명</th>
+              <th>공간명</th>
+              <th class="sortable">공간코드 <span class="sort-icon">⇅</span></th>
+              <th>세부사항 구성코드</th>
+              <th>항목명</th>
+              <th>항목명 (고객용)</th>
+              <th>상품 대분류명</th>
+              <th>상품 중분류명</th>
+              <th>상품 제조사명</th>
+              <th>해당품목원가</th>
+            </tr>
+          </thead>
+          <tbody id="priceTableBody"></tbody>
+        </table>
+      </div>
+      <div class="floating-action">
+        <button class="primary-btn">✎ 수정하기</button>
+      </div>
+    </section>
+
+    <!-- ============ STEP 5: 안분표 생성 ============ -->
+    <section class="view" id="view-5">
+      <div class="section-title-bar">
+        <div class="section-title-left">
+          <h2>5. 안분표 <span class="count-pill">5771건</span></h2>
+          <button class="toolbar-btn icon-only">⟳</button>
+          <button class="pill-btn selected">전체컬럼</button>
+          <button class="pill-btn yellow">필수컬럼</button>
+        </div>
+        <div class="filterbar-right">
+          <span class="filter-icon">▽ 0</span>
+          <button class="filter-chip">고객</button>
+          <button class="filter-chip">평형</button>
+          <button class="filter-chip">고객타입명</button>
+          <button class="filter-chip">공간</button>
+          <button class="filter-chip">패키지구분</button>
+          <button class="filter-chip add-filter">+ Add filter</button>
+        </div>
+      </div>
+      <div class="toolbar toolbar-slim">
+        <div></div>
+        <div class="toolbar-right">
+          <button class="ghost-btn green">◉ 1. 안분표 가생성</button>
+          <button class="ghost-btn blue-fill">☰ 2. 안분표 설정</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="checkbox-col"><input type="checkbox" /></th>
+              <th class="sortable">순번 <span class="sort-icon">⇅</span></th>
+              <th>영업별매물코드(세일즈코드)</th>
+              <th class="sortable">고객 타입명 <span class="sort-icon">⇅</span></th>
+              <th>평형</th>
+              <th>현장본<br/>사구분</th>
+              <th class="sortable">고객스타일명 <span class="sort-icon">⇅</span></th>
+              <th>스타일</th>
+              <th>평형옵션명</th>
+              <th>선택형면명</th>
+              <th>공간명</th>
+              <th>승탁일패키지선물여부</th>
+              <th>품목/항목<br/>열번호</th>
+              <th>품목명</th>
+              <th>항목명</th>
+            </tr>
+          </thead>
+          <tbody id="allocationTableBody"></tbody>
+        </table>
+      </div>
+    </section>
   </div>
 
 <script src="script.js"></script>
