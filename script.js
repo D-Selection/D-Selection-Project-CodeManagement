@@ -299,7 +299,9 @@ const undoToast = document.getElementById("undoToast");
 const undoToastBody = document.getElementById("undoToastBody");
 
 function updateUndoButtons() {
-  undoBtn.disabled = mappingHistory.length === 0;
+  // stages(확정 관리 상태) is defined later in this file; by the time a user can
+  // trigger this (click), the whole script has already finished loading.
+  undoBtn.disabled = mappingHistory.length === 0 || stages.s14.status !== "editable";
 }
 
 function spaceCodeToName(spaceCode) {
@@ -308,6 +310,7 @@ function spaceCodeToName(spaceCode) {
 }
 
 document.querySelector(".map-btn").addEventListener("click", () => {
+  if (stages.s14.status !== "editable") return;
   const checkedRows = [...areaRightBody.querySelectorAll("tr")].filter(
     (tr) => tr.querySelector('input[type="checkbox"]').checked
   );
@@ -362,7 +365,7 @@ function showUndoToast(action) {
 }
 
 function undoLastMapping() {
-  if (mappingHistory.length === 0) return;
+  if (mappingHistory.length === 0 || stages.s14.status !== "editable") return;
   const action = mappingHistory.pop();
 
   const removeIds = new Set(action.rowIds);
@@ -567,22 +570,307 @@ document.querySelectorAll(".nav-step").forEach((link) => {
   });
 });
 
-const confirmBoxProduct = document.getElementById("confirmBoxProduct");
-const confirmCancelArea = document.getElementById("confirmCancelArea");
-
 document.querySelectorAll(".step-tab").forEach((btn) => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".step-tab").forEach((b) => b.classList.remove("active"));
     btn.classList.add("active");
     document.querySelectorAll("#view-1 .tab-panel").forEach((p) => p.classList.remove("active"));
     document.getElementById(`panel-${btn.dataset.tab}`).classList.add("active");
-
-    if (btn.dataset.tab === "area") {
-      confirmBoxProduct.hidden = true;
-      confirmCancelArea.hidden = false;
-    } else {
-      confirmBoxProduct.hidden = false;
-      confirmCancelArea.hidden = true;
-    }
+    renderStage14Box();
   });
 });
+
+/* =====================================================================
+   메뉴별 확정 관리 (승인 워크플로우)
+   작업순서 : 1.4 평형그룹매핑 → 2. 원가 수정 → 4. 판매가 수정
+   - 확정하면 다음 단계 담당자에게 알림
+   - 후속 작업이 이미 진행/확정된 상태에서 선행 작업을 재작업(잠금해제)하려면
+     해당 후속 담당자(들)의 승인이 필요 (아직 손대지 않은 담당자는 자동 통과)
+   - 승인 완료 시 선행 담당자에게 알림, 승인한 후속 작업은 다시 잠김(재확정 필요)
+   ===================================================================== */
+const roles = [
+  { key: "owner14", name: "안은철", team: "설계팀", stageLabel: "1.4 평형그룹매핑" },
+  { key: "owner2", name: "김민준", team: "원가팀", stageLabel: "2. 원가 수정" },
+  { key: "owner4", name: "박서연", team: "영업팀", stageLabel: "4. 판매가 수정" },
+];
+function roleName(key) {
+  const r = roles.find((x) => x.key === key);
+  return r ? `${r.name}(${r.team})` : key;
+}
+
+const stages = {
+  s14: { key: "s14", label: "1.4 평형그룹매핑", owner: "owner14", downstream: ["s2"], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오후 1:31:21", pendingApprovals: [] },
+  s2: { key: "s2", label: "2. 원가 수정", owner: "owner2", downstream: ["s4"], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오후 5:30:20", pendingApprovals: [] },
+  s4: { key: "s4", label: "4. 판매가 수정", owner: "owner4", downstream: [], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오후 5:30:03", pendingApprovals: [] },
+};
+
+let currentRole = "owner14";
+let notifSeq = 1;
+const notifications = [];
+
+function nowKorean() {
+  const d = new Date();
+  const weekday = ["일", "월", "화", "수", "목", "금", "토"][d.getDay()];
+  const hour24 = d.getHours();
+  const ampm = hour24 < 12 ? "오전" : "오후";
+  const hour12 = hour24 % 12 === 0 ? 12 : hour24 % 12;
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return `${d.getFullYear()}년 ${d.getMonth() + 1}월 ${d.getDate()}일 (${weekday}) ${ampm} ${hour12}:${min}`;
+}
+
+function statusLabel(status) {
+  return { locked: "대기(잠금)", editable: "작업중", confirmed: "확정완료", reopen_pending: "잠금해제 요청중" }[status];
+}
+
+function addNotification(toRoleKey, kind, text, stageKey) {
+  notifications.unshift({
+    id: notifSeq++, to: toRoleKey, kind, text, time: nowKorean(),
+    read: false, resolved: false, stageKey, approverStage: null,
+  });
+  return notifications[0];
+}
+
+function downstreamNeedingApproval(stage) {
+  // 아직 손대지 않은(잠금 상태) 후속 담당자는 승인 없이 자동 통과
+  return stage.downstream.filter((k) => stages[k].status !== "locked");
+}
+
+function confirmStage(stageKey) {
+  const stage = stages[stageKey];
+  if (stage.status !== "editable") return;
+  stage.status = "confirmed";
+  stage.confirmedAt = nowKorean();
+  stage.downstream.forEach((dKey) => {
+    const d = stages[dKey];
+    if (d.status === "locked") {
+      d.status = "editable";
+      addNotification(d.owner, "confirmed", `「${stage.label}」 확정이 완료되었습니다. 이제 「${d.label}」 작업을 시작할 수 있습니다.`, dKey);
+    }
+  });
+  renderAll();
+}
+
+function requestReopen(stageKey) {
+  const stage = stages[stageKey];
+  if (stage.status !== "confirmed") return;
+  const approvers = downstreamNeedingApproval(stage);
+  if (approvers.length === 0) {
+    stage.status = "editable";
+    stage.confirmedAt = null;
+    renderAll();
+    return;
+  }
+  stage.status = "reopen_pending";
+  stage.pendingApprovals = approvers.slice();
+  approvers.forEach((dKey) => {
+    const d = stages[dKey];
+    const n = addNotification(
+      d.owner,
+      "reopen_request",
+      `${roleName(stage.owner)}님이 「${stage.label}」 재작업을 위해 잠금 해제를 요청했습니다. 승인하면 「${d.label}」은(는) 다시 확정해야 합니다.`,
+      stageKey
+    );
+    n.approverStage = dKey;
+  });
+  renderAll();
+}
+
+function cancelReopenRequest(stageKey) {
+  const stage = stages[stageKey];
+  if (stage.status !== "reopen_pending") return;
+  stage.status = "confirmed";
+  stage.pendingApprovals = [];
+  renderAll();
+}
+
+function approveReopen(notifId) {
+  const notif = notifications.find((n) => n.id === notifId);
+  if (!notif || notif.resolved || notif.kind !== "reopen_request") return;
+  const stage = stages[notif.stageKey];
+  const approverStage = stages[notif.approverStage];
+  notif.resolved = true;
+  notif.read = true;
+
+  stage.pendingApprovals = stage.pendingApprovals.filter((k) => k !== notif.approverStage);
+  // 승인한 후속 작업 기준 데이터가 바뀔 수 있으므로 다시 잠금(재확정 필요)
+  approverStage.status = "locked";
+  approverStage.confirmedAt = null;
+
+  if (stage.pendingApprovals.length === 0) {
+    stage.status = "editable";
+    stage.confirmedAt = null;
+    addNotification(stage.owner, "reopen_approved", `모든 후속 작업 담당자가 잠금 해제를 승인했습니다. 「${stage.label}」을(를) 다시 수정할 수 있습니다.`, stage.key);
+  }
+  renderAll();
+}
+
+/* ---- 렌더링 ---- */
+function renderStatusStrip() {
+  const order = ["s14", "s2", "s4"];
+  document.getElementById("statusStrip").innerHTML = order.map((key, i) => {
+    const s = stages[key];
+    const node = `
+      <span class="status-node">
+        <span class="status-dot ${s.status}"></span>
+        <span class="status-node-label">${s.label}</span>
+        <span class="status-node-owner">· ${roleName(s.owner)} · ${statusLabel(s.status)}</span>
+      </span>`;
+    return i < order.length - 1 ? node + `<span class="status-arrow">→</span>` : node;
+  }).join("");
+}
+
+function renderMappingLock() {
+  const editable = stages.s14.status === "editable";
+  document.querySelectorAll(".mapping-editable-control").forEach((el) => { el.disabled = !editable; });
+  document.getElementById("stage14LockTag").hidden = editable;
+  updateUndoButtons();
+}
+
+function renderStage14Box() {
+  const box = document.getElementById("stage14Box");
+  const s = stages.s14;
+  const isAreaTab = document.getElementById("panel-area").classList.contains("active");
+  const isOwner = currentRole === s.owner;
+
+  if (!isAreaTab) {
+    box.innerHTML = `
+      <div class="confirm-box">
+        <span class="confirm-badge">상품 구성<br />${s.status === "confirmed" ? "확 정" : statusLabel(s.status)}</span>
+        <div class="confirm-info">
+          <p>담당자 : ${roleName(s.owner)}</p>
+          <p>${s.confirmedAt ? `확정일 : ${s.confirmedAt}` : "확정 전"}</p>
+        </div>
+      </div>`;
+    renderMappingLock();
+    return;
+  }
+
+  if (s.status === "editable") {
+    box.innerHTML = `
+      <button class="ghost-btn green" id="stage14ConfirmBtn" ${isOwner ? "" : "disabled"}>✔ 평형그룹매핑 확정하기</button>
+      ${isOwner ? "" : `<span class="stage-role-hint">담당자(${roleName(s.owner)})만 확정할 수 있습니다</span>`}`;
+    document.getElementById("stage14ConfirmBtn").addEventListener("click", () => confirmStage("s14"));
+  } else if (s.status === "confirmed") {
+    box.innerHTML = `
+      <div class="confirm-box">
+        <span class="confirm-badge">상품 구성<br />확 정</span>
+        <div class="confirm-info">
+          <p>확정자 : ${roleName(s.owner)}</p>
+          <p>확정일 : ${s.confirmedAt}</p>
+        </div>
+      </div>
+      <button class="danger-btn" id="stage14ReopenBtn" ${isOwner ? "" : "disabled"}>↺ 상품구성 확정 강제취소</button>`;
+    document.getElementById("stage14ReopenBtn").addEventListener("click", () => requestReopen("s14"));
+  } else if (s.status === "reopen_pending") {
+    box.innerHTML = `
+      <div class="stage-pending-badge">⏳ 잠금 해제 승인 대기 중 (${s.pendingApprovals.map((k) => roleName(stages[k].owner)).join(", ")})</div>
+      <button class="toolbar-btn" id="stage14CancelReopenBtn" ${isOwner ? "" : "disabled"}>요청 취소</button>`;
+    document.getElementById("stage14CancelReopenBtn").addEventListener("click", () => cancelReopenRequest("s14"));
+  }
+  renderMappingLock();
+}
+
+function renderStageBox(stageKey, containerId, verb, badgeText) {
+  const box = document.getElementById(containerId);
+  const s = stages[stageKey];
+  const isOwner = currentRole === s.owner;
+
+  if (s.status === "locked") {
+    box.innerHTML = `<span class="stage-pending-badge">🔒 선행 작업 확정 대기 중</span>`;
+  } else if (s.status === "editable") {
+    box.innerHTML = `
+      <button class="ghost-btn green" id="${stageKey}ConfirmBtn" ${isOwner ? "" : "disabled"}>✔ ${verb} 확정하기</button>
+      ${isOwner ? "" : `<span class="stage-role-hint">담당자(${roleName(s.owner)})만 확정할 수 있습니다</span>`}`;
+    document.getElementById(`${stageKey}ConfirmBtn`).addEventListener("click", () => confirmStage(stageKey));
+  } else if (s.status === "confirmed") {
+    box.innerHTML = `
+      <div class="confirm-box">
+        <span class="confirm-badge">${badgeText}<br />확 정</span>
+        <div class="confirm-info">
+          <p>확정자 : ${roleName(s.owner)}</p>
+          <p>확정일 : ${s.confirmedAt}</p>
+        </div>
+      </div>
+      <button class="danger-btn" id="${stageKey}ReopenBtn" ${isOwner ? "" : "disabled"}>↺ ${verb} 확정 강제취소</button>`;
+    document.getElementById(`${stageKey}ReopenBtn`).addEventListener("click", () => requestReopen(stageKey));
+  } else if (s.status === "reopen_pending") {
+    box.innerHTML = `
+      <div class="stage-pending-badge">⏳ 잠금 해제 승인 대기 중 (${s.pendingApprovals.map((k) => roleName(stages[k].owner)).join(", ")})</div>
+      <button class="toolbar-btn" id="${stageKey}CancelReopenBtn" ${isOwner ? "" : "disabled"}>요청 취소</button>`;
+    document.getElementById(`${stageKey}CancelReopenBtn`).addEventListener("click", () => cancelReopenRequest(stageKey));
+  }
+
+  const overlayId = stageKey === "s2" ? "stage2LockOverlay" : "stage4LockOverlay";
+  const toolbarLeftId = stageKey === "s2" ? "stage2ToolbarLeft" : "stage4ToolbarLeft";
+  const overlay = document.getElementById(overlayId);
+  const toolbarLeft = document.getElementById(toolbarLeftId);
+  const upstream = stageKey === "s2" ? stages.s14 : stages.s2;
+
+  if (s.status === "locked") {
+    overlay.hidden = false;
+    overlay.querySelector(".lock-overlay-msg").textContent = `🔒 「${upstream.label}」 확정 후 작업할 수 있습니다.`;
+    toolbarLeft.classList.add("disabled-group");
+  } else {
+    overlay.hidden = true;
+    toolbarLeft.classList.toggle("disabled-group", s.status !== "editable");
+  }
+}
+
+function renderNotifications() {
+  const badge = document.getElementById("notifBadge");
+  const panel = document.getElementById("notifPanel");
+  const mine = notifications.filter((n) => n.to === currentRole);
+  const unread = mine.filter((n) => !n.read).length;
+
+  badge.hidden = unread === 0;
+  badge.textContent = unread;
+
+  if (mine.length === 0) {
+    panel.innerHTML = `<div class="notif-panel-title">알림 (${roleName(currentRole)})</div><div class="notif-item-empty">받은 알림이 없습니다.</div>`;
+    return;
+  }
+
+  panel.innerHTML = `<div class="notif-panel-title">알림 (${roleName(currentRole)})</div>` + mine.map((n) => `
+    <div class="notif-item ${n.read ? "" : "unread"}">
+      <div class="notif-item-text">${n.text}</div>
+      <div class="notif-item-meta">${n.time}</div>
+      ${n.kind === "reopen_request" && !n.resolved ? `<button class="notif-approve-btn" data-approve="${n.id}">승인</button>` : ""}
+      ${n.kind === "reopen_request" && n.resolved ? `<span class="notif-resolved-tag">✓ 승인 완료</span>` : ""}
+    </div>
+  `).join("");
+}
+
+function renderAll() {
+  renderStatusStrip();
+  renderStage14Box();
+  renderStageBox("s2", "stage2Box", "원가", "원 가");
+  renderStageBox("s4", "stage4Box", "판매가", "판매가");
+  renderNotifications();
+}
+
+const roleSelect = document.getElementById("roleSelect");
+roleSelect.innerHTML = roles.map((r) => `<option value="${r.key}">${r.name} · ${r.stageLabel}</option>`).join("");
+roleSelect.value = currentRole;
+roleSelect.addEventListener("change", () => {
+  currentRole = roleSelect.value;
+  renderAll();
+});
+
+const notifBell = document.getElementById("notifBell");
+const notifPanel = document.getElementById("notifPanel");
+notifBell.addEventListener("click", (e) => {
+  e.stopPropagation();
+  notifPanel.hidden = !notifPanel.hidden;
+  if (!notifPanel.hidden) {
+    notifications.filter((n) => n.to === currentRole).forEach((n) => { n.read = true; });
+    renderNotifications();
+  }
+});
+notifPanel.addEventListener("click", (e) => {
+  e.stopPropagation();
+  const btn = e.target.closest("[data-approve]");
+  if (btn) approveReopen(Number(btn.dataset.approve));
+});
+document.addEventListener("click", () => { notifPanel.hidden = true; });
+
+renderAll();

@@ -645,6 +645,169 @@ tbody tr:hover { background: #eef4ff; }
 
 .pill-btn.selected-alt { background: var(--navy); color: #fff; }
 
+/* ===================== 확정 관리(워크플로우) 상태바 ===================== */
+.status-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 8px 24px;
+  background: #f5f6fa;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.status-strip-stages {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.status-node {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 10px;
+  border-radius: 16px;
+  background: #fff;
+  border: 1px solid var(--border);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.status-dot.locked { background: #c2c7d1; }
+.status-dot.editable { background: var(--blue); }
+.status-dot.confirmed { background: var(--green); }
+.status-dot.reopen_pending { background: #e2a92a; }
+.status-node-label { font-weight: 700; color: var(--text-main); }
+.status-node-owner { color: var(--text-sub); }
+.status-arrow { color: #c2c7d1; font-size: 13px; }
+
+.status-strip-actions { display: flex; align-items: center; gap: 14px; }
+.role-switcher {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-sub);
+  font-weight: 600;
+}
+.role-switcher select {
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 5px 8px;
+  font-size: 12px;
+  background: #fff;
+  color: var(--text-main);
+}
+
+.notif-wrap { position: relative; }
+.notif-bell {
+  position: relative;
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 14px;
+  cursor: pointer;
+}
+.notif-badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #e0483a;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 999px;
+  min-width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+}
+.notif-panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 340px;
+  max-height: 420px;
+  overflow-y: auto;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  z-index: 20;
+}
+.notif-panel-title {
+  padding: 10px 14px;
+  font-weight: 700;
+  font-size: 12.5px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-main);
+}
+.notif-item { padding: 10px 14px; border-bottom: 1px solid #f0f1f4; font-size: 12px; }
+.notif-item:last-child { border-bottom: none; }
+.notif-item.unread { background: #f4f8ff; }
+.notif-item-text { color: var(--text-main); line-height: 1.5; margin-bottom: 4px; }
+.notif-item-meta { color: var(--text-sub); font-size: 11px; }
+.notif-item-empty { padding: 24px 14px; text-align: center; color: var(--text-sub); font-size: 12px; }
+.notif-approve-btn {
+  margin-top: 6px;
+  background: var(--blue);
+  color: #fff;
+  border: none;
+  border-radius: 5px;
+  padding: 5px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.notif-approve-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.notif-resolved-tag { color: var(--green); font-weight: 700; font-size: 11px; }
+
+/* 단계별 확정 상태 박스 (stage14 / stage2 / stage4 공용) */
+.stage-box, .stage-box-inline { display: flex; align-items: stretch; gap: 8px; }
+.stage-pending-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #fff8e8;
+  border: 1px solid #f5dfa0;
+  color: #9a7b0a;
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.stage-lock-tag { font-size: 11px; font-weight: 600; color: #d4590f; }
+.stage-role-hint { font-size: 11px; color: var(--text-sub); margin-left: 4px; }
+
+/* 잠금 오버레이 (선행작업 미확정 시 후속 화면 잠금) */
+.lockable { position: relative; display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.lock-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  background: rgba(255,255,255,0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.disabled-group { opacity: 0.4; pointer-events: none; }
+
+.lock-overlay-msg {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px 28px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
 /* Undo ("뒤로가기") controls in 평형그룹매핑 */
 .undo-btn {
   display: flex;

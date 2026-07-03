@@ -31,6 +31,23 @@
       </nav>
     </header>
 
+    <!-- 확정 관리 상태바 (모든 화면 공통, 항상 표시) -->
+    <div class="status-strip">
+      <div class="status-strip-stages" id="statusStrip"></div>
+      <div class="status-strip-actions">
+        <label class="role-switcher">
+          현재 담당자
+          <select id="roleSelect"></select>
+        </label>
+        <div class="notif-wrap">
+          <button class="notif-bell" id="notifBell" type="button">
+            🔔<span class="notif-badge" id="notifBadge" hidden>0</span>
+          </button>
+          <div class="notif-panel" id="notifPanel" hidden></div>
+        </div>
+      </div>
+    </div>
+
     <!-- ============ STEP 1: 상품구성 ============ -->
     <section class="view active" id="view-1">
       <div class="subbar">
@@ -45,17 +62,7 @@
           <button class="step-tab" data-tab="area"><span class="num">4</span>평형그룹매핑</button>
           <button class="step-tab" data-tab="category"><span class="num">5</span>대분류/중분류/제조사</button>
         </div>
-        <div class="confirm-box" id="confirmBoxProduct">
-          <span class="confirm-badge">상품 구성<br />확 정</span>
-          <div class="confirm-info">
-            <p>확정자 : 안은철</p>
-            <p>확정일 : 2026년 6월 29일 (월) 오후 1:31:21</p>
-          </div>
-        </div>
-        <button class="danger-btn" id="confirmCancelArea" hidden>
-          <svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M4 10a6 6 0 1 1 2 4.5M4 10V5m0 5h5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          상품구성 확정 강제취소
-        </button>
+        <div class="stage-box" id="stage14Box"></div>
       </div>
 
       <!-- Panel 1: 프로덕트 -->
@@ -230,20 +237,20 @@
               </table>
             </div>
             <div class="area-col-footer">
-              <button class="pill-btn green">평형추가</button>
-              <button class="pill-btn">평형삭제</button>
-              <button class="pill-btn pink">상품삭제</button>
+              <button class="pill-btn green mapping-editable-control">평형추가</button>
+              <button class="pill-btn mapping-editable-control">평형삭제</button>
+              <button class="pill-btn pink mapping-editable-control">상품삭제</button>
             </div>
           </div>
 
           <div class="area-col area-col-wide">
             <div class="area-col-header">
-              <span>상품 구성 <span class="round-badge" id="areaConfigCount">103개</span> <span class="info-dot">ⓘ</span></span>
+              <span>상품 구성 <span class="round-badge" id="areaConfigCount">103개</span> <span class="info-dot">ⓘ</span> <span class="stage-lock-tag" id="stage14LockTag" hidden>🔒 확정됨(잠금)</span></span>
               <span class="header-icons-text">
                 <button class="undo-btn" id="undoBtn" disabled title="Ctrl+Z">↩ 뒤로가기</button>
                 <button class="toolbar-btn">⭣ Excel 다운로드</button>
                 <button class="toolbar-btn icon-only">⟳</button>
-                <button class="danger-btn small">⊘ 평형그룹 매핑해제</button>
+                <button class="danger-btn small mapping-editable-control" id="unmapBtn">⊘ 평형그룹 매핑해제</button>
               </span>
             </div>
             <div class="area-col-body area-col-body-relative">
@@ -280,7 +287,7 @@
                 <button class="filter-chip small add-filter">+ Add filter</button>
               </span>
             </div>
-            <button class="map-btn">⇄ 평형그룹과 매핑</button>
+            <button class="map-btn mapping-editable-control" id="mapBtn">⇄ 평형그룹과 매핑</button>
             <p class="area-note">선택 0건 &nbsp; <span class="check-ok">✓</span> "상품코드"에는 상품업로드 「마지막 차수」만 표시됩니다.</p>
             <div class="area-col-body">
               <table class="mini-table">
@@ -335,50 +342,48 @@
     <!-- ============ STEP 2: 원가 수정 ============ -->
     <section class="view" id="view-2">
       <div class="toolbar">
-        <div class="toolbar-left">
+        <div class="toolbar-left" id="stage2ToolbarLeft">
           <button class="toolbar-btn">⭣ 원가 Excel 양식 다운로드</button>
           <button class="toolbar-btn">⭱ 원가 Excel 업로드</button>
           <button class="toolbar-btn">↕1 순번정렬</button>
         </div>
         <div class="toolbar-right">
-          <div class="confirm-box">
-            <span class="confirm-badge">원 가<br />확 정</span>
-            <div class="confirm-info">
-              <p>확정자 : 안은철</p>
-              <p>확정일 : 2026년 6월 29일 (월) 오후 5:30:20</p>
-            </div>
-          </div>
-          <button class="danger-btn">↺ 원가 확정 강제취소</button>
           <button class="ghost-btn">👁 원가 합산결과</button>
+          <div id="stage2Box" class="stage-box-inline"></div>
         </div>
       </div>
-      <div class="section-title-bar">
-        <div class="section-title-left">
-          <h2>3. 원가 수정 <span class="count-pill">5398개</span></h2>
+      <div class="lockable" id="stage2Lockable">
+        <div class="lock-overlay" id="stage2LockOverlay" hidden>
+          <div class="lock-overlay-msg"></div>
         </div>
-        <div class="filterbar-right">
-          <button class="filter-chip">평형그룹명</button>
-          <button class="filter-chip">항목명</button>
-          <button class="filter-chip add-filter">+ Add filter</button>
+        <div class="section-title-bar">
+          <div class="section-title-left">
+            <h2>3. 원가 수정 <span class="count-pill">5398개</span></h2>
+          </div>
+          <div class="filterbar-right">
+            <button class="filter-chip">평형그룹명</button>
+            <button class="filter-chip">항목명</button>
+            <button class="filter-chip add-filter">+ Add filter</button>
+          </div>
         </div>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th class="sortable">순번 <span class="sort-icon">⇅</span></th>
-              <th>평형그룹</th>
-              <th>비고</th>
-              <th>상품코드</th>
-              <th class="sortable">프로덕트코드 <span class="sort-icon">⇅</span></th>
-              <th>항목명</th>
-              <th>항목명 (고객용)</th>
-              <th>세부사항</th>
-              <th>세부사항 (고객용)</th>
-            </tr>
-          </thead>
-          <tbody id="costTableBody"></tbody>
-        </table>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="sortable">순번 <span class="sort-icon">⇅</span></th>
+                <th>평형그룹</th>
+                <th>비고</th>
+                <th>상품코드</th>
+                <th class="sortable">프로덕트코드 <span class="sort-icon">⇅</span></th>
+                <th>항목명</th>
+                <th>항목명 (고객용)</th>
+                <th>세부사항</th>
+                <th>세부사항 (고객용)</th>
+              </tr>
+            </thead>
+            <tbody id="costTableBody"></tbody>
+          </table>
+        </div>
       </div>
     </section>
 
@@ -442,62 +447,58 @@
     <!-- ============ STEP 4: 판매가 수정 ============ -->
     <section class="view" id="view-4">
       <div class="toolbar">
-        <div class="toolbar-left">
+        <div class="toolbar-left" id="stage4ToolbarLeft">
           <button class="toolbar-btn">⭣ 판매가 Excel 양식 다운로드</button>
           <button class="toolbar-btn">⭱ 판매가 Excel 업로드</button>
           <button class="toolbar-btn">▦ 프로덕트 원가합산표</button>
           <button class="toolbar-btn">↕1 순번정렬</button>
         </div>
-        <div class="toolbar-right">
-          <div class="confirm-box">
-            <span class="confirm-badge">판매가<br />확 정</span>
-            <div class="confirm-info">
-              <p>확정자 : 안은철</p>
-              <p>확정일 : 2026년 6월 29일 (월) 오후 5:30:03</p>
-            </div>
+        <div class="toolbar-right" id="stage4Box"></div>
+      </div>
+      <div class="lockable" id="stage4Lockable">
+        <div class="lock-overlay" id="stage4LockOverlay" hidden>
+          <div class="lock-overlay-msg"></div>
+        </div>
+        <div class="section-title-bar">
+          <div class="section-title-left">
+            <h2>4. 「상품별」 판매가 수정 <span class="count-pill">2036개</span></h2>
           </div>
-          <button class="danger-btn">↺ 판매가 확정 강제취소</button>
+          <div class="filterbar-right">
+            <button class="filter-chip">평형명</button>
+            <button class="filter-chip">상품코드</button>
+            <button class="filter-chip">항목명</button>
+            <button class="filter-chip">항목명 (고객용)</button>
+            <button class="filter-chip add-filter">+ Add filter</button>
+          </div>
         </div>
-      </div>
-      <div class="section-title-bar">
-        <div class="section-title-left">
-          <h2>4. 「상품별」 판매가 수정 <span class="count-pill">2036개</span></h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="sortable">순번 <span class="sort-icon">⇅</span></th>
+                <th>고객명</th>
+                <th>평형명</th>
+                <th>현장본사구분</th>
+                <th>스타일명</th>
+                <th>평형옵션명</th>
+                <th>선택형평면명</th>
+                <th>공간명</th>
+                <th class="sortable">공간코드 <span class="sort-icon">⇅</span></th>
+                <th>세부사항 구성코드</th>
+                <th>항목명</th>
+                <th>항목명 (고객용)</th>
+                <th>상품 대분류명</th>
+                <th>상품 중분류명</th>
+                <th>상품 제조사명</th>
+                <th>해당품목원가</th>
+              </tr>
+            </thead>
+            <tbody id="priceTableBody"></tbody>
+          </table>
         </div>
-        <div class="filterbar-right">
-          <button class="filter-chip">평형명</button>
-          <button class="filter-chip">상품코드</button>
-          <button class="filter-chip">항목명</button>
-          <button class="filter-chip">항목명 (고객용)</button>
-          <button class="filter-chip add-filter">+ Add filter</button>
+        <div class="floating-action">
+          <button class="primary-btn">✎ 수정하기</button>
         </div>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th class="sortable">순번 <span class="sort-icon">⇅</span></th>
-              <th>고객명</th>
-              <th>평형명</th>
-              <th>현장본사구분</th>
-              <th>스타일명</th>
-              <th>평형옵션명</th>
-              <th>선택형평면명</th>
-              <th>공간명</th>
-              <th class="sortable">공간코드 <span class="sort-icon">⇅</span></th>
-              <th>세부사항 구성코드</th>
-              <th>항목명</th>
-              <th>항목명 (고객용)</th>
-              <th>상품 대분류명</th>
-              <th>상품 중분류명</th>
-              <th>상품 제조사명</th>
-              <th>해당품목원가</th>
-            </tr>
-          </thead>
-          <tbody id="priceTableBody"></tbody>
-        </table>
-      </div>
-      <div class="floating-action">
-        <button class="primary-btn">✎ 수정하기</button>
       </div>
     </section>
 
