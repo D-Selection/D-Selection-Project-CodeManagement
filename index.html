@@ -508,15 +508,16 @@
           <button class="toolbar-btn">⭣ 고객언어 Excel 양식 다운로드</button>
           <button class="toolbar-btn">⭱ 고객언어 Excel 업로드</button>
           <button class="toolbar-btn">↕1 순번정렬</button>
-          <button class="toolbar-btn" id="sortOrderBtn">🔃 대분류 · 중분류 · 제조사 정렬순서 설정</button>
         </div>
+        <button class="toolbar-btn" id="sortOrderBtn">🗂 대분류 · 중분류 · 제조사 조회/편집</button>
         <div class="toolbar-right" id="stage3Box"></div>
       </div>
       <div class="info-box">
         1.「순번」,「항목명(고객용)」,「세부사항(고객용)」,「비고」를 수정할 수 있어요.<br/>
         2. 상품 대분류명 · 상품 중분류명 · 상품 제조사명은 분양수금 시스템에 이미 등록된 코드/명칭과 일치해야 하며, 일치하지 않는 값을 입력하면 업로드 시 오류가 발생합니다.<br/>
         3. 항목명(고객용) · 세부사항(고객용)은 분양수금 시스템에 데이터가 없는 항목으로, 입력한 값 그대로 저장됩니다.<br/>
-        4. 이곳에서 설정한 "고객용" 데이터는 안분표를 생성/재생성 하여야 안분표에 반영됩니다.
+        4. 별매품 단계(1/2/3)는 엑셀 업로드 또는 아래 「선택 항목 수정」으로 설정하며, 5.안분표 생성의 같은 상품코드 행에도 그대로 반영됩니다.<br/>
+        5. 이곳에서 설정한 "고객용" 데이터는 안분표를 생성/재생성 하여야 안분표에 반영됩니다.
       </div>
       <div class="lockable" id="stage3Lockable">
         <div class="lock-overlay" id="stage3LockOverlay" hidden>
@@ -550,6 +551,7 @@
                 <th>상품 대분류명</th>
                 <th>상품 중분류명</th>
                 <th>상품 제조사명</th>
+                <th>별매품 단계</th>
                 <th class="sortable">공간코드 <span class="sort-icon">⇅</span></th>
                 <th>항목명</th>
                 <th>항목명 (고객용)</th>
@@ -562,7 +564,7 @@
           </table>
         </div>
         <div class="floating-action">
-          <button class="primary-btn stage3-editable-control" id="langEditBtn">✎ 선택 항목 수정 (대분류/중분류/제조사명 · 항목명(고객용) · 세부사항(고객용))</button>
+          <button class="primary-btn stage3-editable-control" id="langEditBtn">✎ 선택 항목 수정 (대분류/중분류/제조사명 · 별매품 단계 · 항목명(고객용) · 세부사항(고객용))</button>
         </div>
       </div>
     </section>
@@ -628,6 +630,7 @@
               <th class="sortable">상품코드 <span class="sort-icon">⇅</span></th>
               <th>품목명</th>
               <th>항목명</th>
+              <th>별매품 단계</th>
               <th>발송상태</th>
             </tr>
           </thead>
@@ -656,7 +659,7 @@
     <!-- 4. 상품고객언어 : 대분류/중분류/제조사 정렬순서 설정 모달 -->
     <div class="cmodal-backdrop" id="sortOrderModal" hidden>
       <div class="send-modal">
-        <div class="cmodal-header">🔃 대분류 · 중분류 · 제조사 정렬순서 설정 <button class="cmodal-close" id="sortOrderModalClose" type="button">✕</button></div>
+        <div class="cmodal-header">🗂 대분류 · 중분류 · 제조사 조회/편집 (1.5 대분류/중분류/제조사와 동일한 데이터) <button class="cmodal-close" id="sortOrderModalClose" type="button">✕</button></div>
         <div class="cmodal-body" id="sortOrderModalBody"></div>
       </div>
     </div>

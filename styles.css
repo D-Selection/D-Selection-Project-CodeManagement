@@ -1215,17 +1215,18 @@ table.pivot-table thead th.pivot-product-col { background: var(--navy); z-index:
 .cmodal-body { padding: 20px; font-size: 13px; color: var(--text-main); max-height: 76vh; overflow: auto; }
 
 /* 4. 상품고객언어 : 일괄수정 / 정렬순서 모달은 폭이 더 필요함 */
-#langEditModal .send-modal, #sortOrderModal .send-modal { width: 640px; }
+#langEditModal .send-modal { width: 640px; }
+#sortOrderModal .send-modal { width: 820px; }
 .lang-edit-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
 .lang-edit-field label { font-size: 12px; font-weight: 700; color: var(--text-main); }
-.lang-edit-field input {
+.lang-edit-field input, .lang-edit-field select {
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 8px 10px;
   font-size: 12.5px;
   outline: none;
 }
-.lang-edit-field input:focus { border-color: var(--blue); }
+.lang-edit-field input:focus, .lang-edit-field select:focus { border-color: var(--blue); }
 .lang-edit-field .field-hint { font-size: 11px; color: var(--text-sub); }
 .lang-edit-error { color: #d64545; font-size: 11.5px; margin-top: 2px; }
 .lang-edit-summary {
@@ -1252,7 +1253,6 @@ table.pivot-table thead th.pivot-product-col { background: var(--navy); z-index:
   border-bottom: 1px solid #f0f1f4;
 }
 .sort-order-item:last-child { border-bottom: none; }
-.sort-order-item-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sort-order-item-btns { display: flex; gap: 3px; flex-shrink: 0; }
 .sort-order-item-btns button {
   border: 1px solid var(--border);
@@ -1267,6 +1267,41 @@ table.pivot-table thead th.pivot-product-col { background: var(--navy); z-index:
 .sort-order-item-btns button:hover:not(:disabled) { border-color: var(--blue); color: var(--blue); }
 .sort-order-item-btns button:disabled { opacity: .3; cursor: not-allowed; }
 .sort-order-actions { display: flex; justify-content: flex-end; margin-top: 16px; }
+
+.sort-edit-input {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 11.5px;
+  min-width: 0;
+}
+.sort-edit-name { flex: 1; }
+.sort-edit-code { width: 46px; flex-shrink: 0; }
+.sort-edit-major { flex: 1; max-width: 84px; flex-shrink: 0; }
+.sort-edit-remove {
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 4px;
+  width: 20px;
+  height: 20px;
+  font-size: 10px;
+  cursor: pointer;
+  color: var(--text-sub);
+  flex-shrink: 0;
+}
+.sort-edit-remove:hover { border-color: #d64545; color: #d64545; }
+.sort-edit-add {
+  width: 100%;
+  margin-top: 6px;
+  border: 1px dashed var(--border);
+  background: #fff;
+  border-radius: 6px;
+  padding: 6px;
+  font-size: 11.5px;
+  color: var(--text-sub);
+  cursor: pointer;
+}
+.sort-edit-add:hover { border-color: var(--blue); color: var(--blue); }
 .send-summary {
   background: var(--blue-light);
   border: 1px solid #cfe0fd;

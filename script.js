@@ -664,6 +664,17 @@ function renderCategoryTables() {
 }
 renderCategoryTables();
 
+/* 별매품 단계(1/2/3) : 상품코드별로 관리되는 값. 4.상품고객언어에서 수정하면
+   5.안분표 생성의 같은 상품코드 행에도 그대로 반영된다(단일 소스). */
+const PRODUCT_OPTION_TIER = {
+  SL001: "1", SL003: "2", SL006: "3", SL007: "3", SL008: "3",
+  SL021: "2", SL022: "2", SL025: "3", SL026: "3", SL031: "1",
+  SL032: "1", SL033: "1", SL034: "2", SL035: "2", SL036: "2",
+  SL037: "3", SL038: "3", SL040: "2", SL045: "3", SL047: "1",
+  SL048: "1", SL052: "1", SL054: "2", SL055: "2",
+  SL060: "3",
+};
+
 /* ===================== STEPS 2-4 공용 데이터 (원가 / 고객언어 / 판매가) ===================== */
 const flatRows = [
   { seq: 1, code: "SL001", detailCode: "FN-501-01", style: "스타일 미적용 - None", space: "현관 - Entrance", item: "슬라이딩 도어", itemCustomer: "슬라이딩 도어", detail: "현관중문 슬라이딩 도어/LX하우시스 F.3180", detailCustomer: "현관중문 슬라이딩 도어/LX하우시스 F.3180", price: "" },
@@ -725,6 +736,7 @@ function renderLangTable() {
       <td class="${r.majorName ? "" : "muted"}">${r.majorName || "-"}</td>
       <td class="${r.midName ? "" : "muted"}">${r.midName || "-"}</td>
       <td class="${r.makerName ? "" : "muted"}">${r.makerName || "-"}</td>
+      <td>${PRODUCT_OPTION_TIER[r.code] ? `${PRODUCT_OPTION_TIER[r.code]}단계` : "-"}</td>
       <td class="code-cell">${r.code}</td>
       <td>${r.item}</td>
       <td>${r.itemCustomer}</td>
@@ -794,6 +806,16 @@ langEditBtn.addEventListener("click", () => {
       <div class="lang-edit-error" id="langEditMakerError" hidden></div>
     </div>
     <div class="lang-edit-field">
+      <label>별매품 단계</label>
+      <select id="langEditTier">
+        <option value="">(변경 안 함)</option>
+        <option value="1">1단계</option>
+        <option value="2">2단계</option>
+        <option value="3">3단계</option>
+      </select>
+      <div class="field-hint">여기서 지정한 단계는 5.안분표 생성의 같은 상품코드 행에도 그대로 반영됩니다.</div>
+    </div>
+    <div class="lang-edit-field">
       <label>항목명(고객용)</label>
       <input type="text" id="langEditItemCustomer" placeholder="자유롭게 입력 (데이터 검증 없음)" />
     </div>
@@ -816,6 +838,7 @@ langEditBtn.addEventListener("click", () => {
     const majorInput = document.getElementById("langEditMajor").value.trim();
     const midInput = document.getElementById("langEditMid").value.trim();
     const makerInput = document.getElementById("langEditMaker").value.trim();
+    const tierInput = document.getElementById("langEditTier").value;
     const itemCustomerInput = document.getElementById("langEditItemCustomer").value.trim();
     const detailCustomerInput = document.getElementById("langEditDetailCustomer").value.trim();
 
@@ -854,6 +877,7 @@ langEditBtn.addEventListener("click", () => {
       if (majorMatch) { r.majorName = majorMatch.name; r.majorCode = majorMatch.code; }
       if (midMatch) { r.midName = midMatch.name; r.midCode = midMatch.code; }
       if (makerMatch) { r.makerName = makerMatch.name; r.makerCode = makerMatch.code; }
+      if (tierInput) PRODUCT_OPTION_TIER[r.code] = tierInput;
       if (itemCustomerInput) r.itemCustomer = itemCustomerInput;
       if (detailCustomerInput) r.detailCustomer = detailCustomerInput;
       changed.push(r.seq);
@@ -862,12 +886,15 @@ langEditBtn.addEventListener("click", () => {
     dsAddEditLog("4. 상품고객언어", `${changed.length}건 수정 (순번: ${changed.join(", ")})`);
     renderLangTable();
     renderPriceTable();
+    renderAllocationTable();
     langEditModal.hidden = true;
     showToast(`${changed.length}건이 수정되었습니다.`);
   });
 });
 
-// 대분류/중분류/제조사 정렬순서 설정 : ▲▼로 배열 순서를 바꾸면 전사공통코드(5.대분류/중분류/제조사) 표시 순서에도 그대로 반영된다.
+// 대분류/중분류/제조사 조회·편집 : 1.5(대분류/중분류/제조사)에 있는 마스터 데이터를
+// 4.상품고객언어 상단에서도 바로 조회·추가·수정·삭제·정렬할 수 있게 한다.
+// 변경 즉시 majorCats/midCats/makers 배열 자체를 수정하므로 1.5 화면과 데이터를 공유한다.
 const sortOrderModal = document.getElementById("sortOrderModal");
 const sortOrderModalBody = document.getElementById("sortOrderModalBody");
 const SORT_ORDER_ARRAYS = { major: majorCats, mid: midCats, maker: makers };
@@ -879,14 +906,22 @@ function renderSortOrderColumn(title, arr, key) {
       <div class="sort-order-list">
         ${arr.map((c, i) => `
           <div class="sort-order-item">
-            <span class="sort-order-item-name">${c.name}</span>
             <span class="sort-order-item-btns">
               <button type="button" data-list="${key}" data-idx="${i}" data-dir="up" ${i === 0 ? "disabled" : ""}>▲</button>
               <button type="button" data-list="${key}" data-idx="${i}" data-dir="down" ${i === arr.length - 1 ? "disabled" : ""}>▼</button>
             </span>
+            ${key === "mid" ? `
+              <select class="sort-edit-input sort-edit-major" data-list="${key}" data-idx="${i}" data-field="major">
+                ${majorCats.map((m) => `<option value="${m.name}" ${m.name === c.major ? "selected" : ""}>${m.name}</option>`).join("")}
+              </select>
+            ` : ""}
+            <input type="text" class="sort-edit-input sort-edit-name" data-list="${key}" data-idx="${i}" data-field="name" value="${c.name}" placeholder="명칭" />
+            <input type="text" class="sort-edit-input sort-edit-code" data-list="${key}" data-idx="${i}" data-field="code" value="${c.code}" placeholder="코드" />
+            <button type="button" class="sort-edit-remove" data-list="${key}" data-idx="${i}" title="삭제">✕</button>
           </div>
         `).join("")}
       </div>
+      <button type="button" class="sort-edit-add" data-list="${key}">+ 추가</button>
     </div>
   `;
 }
@@ -912,11 +947,31 @@ function renderSortOrderModal() {
       renderSortOrderModal();
     });
   });
+  sortOrderModalBody.querySelectorAll(".sort-edit-input").forEach((el) => {
+    el.addEventListener(el.tagName === "SELECT" ? "change" : "input", () => {
+      const arr = SORT_ORDER_ARRAYS[el.dataset.list];
+      arr[Number(el.dataset.idx)][el.dataset.field] = el.value;
+    });
+  });
+  sortOrderModalBody.querySelectorAll(".sort-edit-remove").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const arr = SORT_ORDER_ARRAYS[btn.dataset.list];
+      arr.splice(Number(btn.dataset.idx), 1);
+      renderSortOrderModal();
+    });
+  });
+  sortOrderModalBody.querySelectorAll(".sort-edit-add").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const arr = SORT_ORDER_ARRAYS[btn.dataset.list];
+      arr.push(btn.dataset.list === "mid" ? { major: majorCats[0] ? majorCats[0].name : "", name: "", code: "" } : { name: "", code: "" });
+      renderSortOrderModal();
+    });
+  });
   document.getElementById("sortOrderSaveBtn").addEventListener("click", () => {
     renderCategoryTables();
-    dsAddEditLog("4. 상품고객언어", "대분류/중분류/제조사 정렬순서 변경");
+    dsAddEditLog("4. 상품고객언어", "대분류/중분류/제조사 마스터 데이터 수정");
     sortOrderModal.hidden = true;
-    showToast("정렬순서가 저장되었습니다.");
+    showToast("변경사항이 저장되었습니다.");
   });
 }
 
@@ -991,6 +1046,7 @@ function renderAllocationTable() {
       <td class="code-cell">${r.productCode}</td>
       <td>${r.item}</td>
       <td>${r.detail}</td>
+      <td>${PRODUCT_OPTION_TIER[r.productCode] ? `${PRODUCT_OPTION_TIER[r.productCode]}단계` : "-"}</td>
       <td>${statusHtml}</td>
     </tr>
   `;
