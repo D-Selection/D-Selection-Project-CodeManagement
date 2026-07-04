@@ -438,7 +438,11 @@ table { border-collapse: collapse; width: 100%; }
   border: 1px solid var(--c-border);
   font-size: 12px;
   white-space: nowrap;
+  font-family: inherit;
+  cursor: pointer;
+  margin: 0;
 }
+.status-node:hover { border-color: var(--c-blue); background: var(--c-blue-light); }
 .status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
 .status-dot.locked { background: #c2c7d1; }
 .status-dot.editable { background: var(--c-blue); }

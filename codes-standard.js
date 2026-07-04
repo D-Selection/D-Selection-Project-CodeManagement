@@ -361,3 +361,14 @@ function renderEverything() {
   renderStage0Box();
 }
 renderEverything();
+
+// 상태바의 단계 배지를 눌러 이동해 왔을 때(같은 페이지 내 이동 + 다른 페이지에서 넘어온 경우 모두) 해당 화면으로 전환
+function applyStageNavigation(stageKey) {
+  if (stageKey !== "s0") return;
+  const tabBtn = document.querySelector('.ctab[data-tab="site"]');
+  if (tabBtn) tabBtn.click();
+}
+
+document.addEventListener("ds:goto-stage", (e) => applyStageNavigation(e.detail.stageKey));
+const dsPendingGoto = dsConsumeGotoHash();
+if (dsPendingGoto) applyStageNavigation(dsPendingGoto);

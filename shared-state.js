@@ -18,6 +18,34 @@ const DS_ROLES = [
 ];
 const DS_STAGE_ORDER = ["s0", "s13", "s14", "s2", "s4", "s3"];
 
+// 상태바의 단계 배지를 눌렀을 때 이동할 파일. 같은 파일이면 페이지 이동 없이
+// ds:goto-stage 이벤트로 탭만 전환하고, 다른 파일이면 #goto=<key> 해시를 달아 이동한다.
+const DS_STAGE_FILE = { s0: "codes-standard.html", s13: "index.html", s14: "index.html", s2: "index.html", s4: "index.html", s3: "index.html" };
+
+function dsCurrentFile() {
+  const name = location.pathname.split("/").pop();
+  return name || "index.html";
+}
+
+function dsGoToStage(stageKey) {
+  const file = DS_STAGE_FILE[stageKey];
+  if (!file) return;
+  if (dsCurrentFile() === file) {
+    document.dispatchEvent(new CustomEvent("ds:goto-stage", { detail: { stageKey } }));
+  } else {
+    location.href = `${file}#goto=${stageKey}`;
+  }
+}
+
+// 페이지 로드 시 호출: 다른 화면에서 넘어온 "#goto=stageKey" 해시가 있으면
+// 그 값을 반환하고 해시는 지운다. 없으면 null.
+function dsConsumeGotoHash() {
+  const m = location.hash.match(/^#goto=(\w+)$/);
+  if (!m) return null;
+  history.replaceState(null, "", location.pathname + location.search);
+  return m[1];
+}
+
 function dsRoleName(key) {
   const r = DS_ROLES.find((x) => x.key === key);
   return r ? `${r.name}(${r.team})` : key;
@@ -281,13 +309,16 @@ function dsRenderStatusBar(containerId, opts) {
   stagesEl.innerHTML = DS_STAGE_ORDER.map((key, i) => {
     const st = s.stages[key];
     const node = `
-      <span class="status-node">
+      <button type="button" class="status-node" data-stage-key="${key}" title="「${st.label}」 화면으로 이동">
         <span class="status-dot ${st.status}"></span>
         <span class="status-node-label">${st.label}</span>
         <span class="status-node-owner">· ${dsRoleName(st.owner)} · ${dsStatusLabel(st.status)}</span>
-      </span>`;
+      </button>`;
     return i < DS_STAGE_ORDER.length - 1 ? node + `<span class="status-arrow">→</span>` : node;
   }).join("");
+  stagesEl.querySelectorAll(".status-node").forEach((btn) => {
+    btn.addEventListener("click", () => dsGoToStage(btn.dataset.stageKey));
+  });
 
   const notifBell = document.getElementById("dsNotifBell");
   const notifPanel = document.getElementById("dsNotifPanel");

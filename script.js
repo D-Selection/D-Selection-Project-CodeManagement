@@ -1358,3 +1358,27 @@ document.getElementById("closeBtn").addEventListener("click", () => {
 });
 
 renderEverything();
+
+// 상태바의 단계 배지를 눌러 이동해 왔을 때(같은 페이지 내 이동 + 다른 페이지에서 넘어온 경우 모두) 해당 화면으로 전환
+function applyStageNavigation(stageKey) {
+  const goStep1Tab = (tab) => {
+    document.querySelector('.nav-step[data-step="1"]').click();
+    const tabBtn = document.querySelector(`.step-tab[data-tab="${tab}"]`);
+    if (tabBtn) tabBtn.click();
+  };
+  const goStep = (step) => {
+    const link = document.querySelector(`.nav-step[data-step="${step}"]`);
+    if (link) link.click();
+  };
+  ({
+    s13: () => goStep1Tab("mapping"),
+    s14: () => goStep1Tab("area"),
+    s2: () => goStep("2"),
+    s4: () => goStep("3"),
+    s3: () => goStep("4"),
+  }[stageKey] || (() => {}))();
+}
+
+document.addEventListener("ds:goto-stage", (e) => applyStageNavigation(e.detail.stageKey));
+const dsPendingGoto = dsConsumeGotoHash();
+if (dsPendingGoto) applyStageNavigation(dsPendingGoto);
