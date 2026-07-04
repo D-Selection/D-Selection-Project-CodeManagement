@@ -1365,3 +1365,96 @@ table.pivot-table thead th.pivot-product-col { background: var(--navy); z-index:
   box-shadow: 0 8px 24px rgba(0,0,0,0.25);
   z-index: 80;
 }
+
+/* ===================== 5. 안분표 생성 : 패키지 만들기 (현재안 + 개선안) ===================== */
+.pkg-modal { width: 920px; }
+.pkg-section { margin-bottom: 18px; }
+.pkg-section-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  justify-content: space-between;
+  background: var(--navy);
+  color: #fff;
+  font-weight: 700;
+  font-size: 12.5px;
+  padding: 8px 12px;
+  border-radius: 6px 6px 0 0;
+}
+.pkg-section-body { border: 1px solid var(--border); border-top: none; border-radius: 0 0 6px 6px; padding: 12px; }
+.pkg-field-row { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 10px; }
+.pkg-field { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 160px; }
+.pkg-field label { font-size: 11.5px; font-weight: 700; color: var(--text-sub); }
+.pkg-field input, .pkg-field select, .pkg-field textarea {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 7px 9px;
+  font-size: 12.5px;
+  outline: none;
+}
+.pkg-field input:focus, .pkg-field select:focus, .pkg-field textarea:focus { border-color: var(--blue); }
+.pkg-field.readonly input { background: #f5f6f9; color: var(--text-sub); }
+.pkg-radio-group { display: flex; gap: 14px; align-items: center; font-size: 12.5px; }
+.pkg-radio-group label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+
+.pkg-table-scroll { max-height: 220px; overflow: auto; border: 1px solid var(--border); border-radius: 6px; }
+.pkg-table { border-collapse: collapse; width: 100%; font-size: 12px; }
+.pkg-table thead th {
+  position: sticky;
+  top: 0;
+  background: #f5f6f9;
+  padding: 7px 8px;
+  font-size: 11px;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+  white-space: nowrap;
+}
+.pkg-table tbody td { padding: 6px 8px; border-bottom: 1px solid #f0f1f4; white-space: nowrap; }
+.pkg-table tbody tr:hover { background: #f7f9fc; }
+
+.pkg-pyeong-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+  max-height: 160px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px;
+}
+.pkg-pyeong-chip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 7px;
+  cursor: pointer;
+}
+.pkg-pyeong-chip:has(input:checked) { background: var(--blue-light); border-color: var(--blue); }
+
+.pkg-summary {
+  display: flex;
+  gap: 18px;
+  background: var(--blue-light);
+  border: 1px solid #cfe0fd;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+  flex-wrap: wrap;
+}
+.pkg-summary strong { color: var(--navy); }
+.pkg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; }
+
+.pkg-history-item {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 11.5px;
+  margin-bottom: 8px;
+}
+.pkg-history-item-title { font-weight: 700; margin-bottom: 3px; display: flex; justify-content: space-between; gap: 6px; }
+.pkg-history-tag { font-size: 10.5px; padding: 1px 7px; border-radius: 10px; background: #eef1f6; color: var(--text-sub); }
+.pkg-history-tag.mapped { background: #eafcf1; color: #1a9a52; }
+.pkg-history-empty { text-align: center; color: var(--text-sub); padding: 24px 0; font-size: 12.5px; }

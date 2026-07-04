@@ -1221,6 +1221,318 @@ sendHistoryBtn.addEventListener("click", (e) => {
 sendHistoryPanel.addEventListener("click", (e) => e.stopPropagation());
 document.addEventListener("click", () => { sendHistoryPanel.hidden = true; });
 
+/* =====================================================================
+   5. 안분표 생성 : 패키지 만들기
+   1) 현재안(패키지 만들기) : 평형 1개를 고른 뒤 그 평형의 상품후보만 보고 패키지 1개를 생성 — 그대로 유지.
+   2) 개선안(공통 패키지 만들기) : 패키지를 구성할 상품을 한 번만 고르고, 적용할 평형을 여러 개
+      체크해서 한 번에 일괄 생성한다 — 1.4에서 쓰는 pivotProducts(상품 후보)/pivotAssignments(평형별
+      배정)/pyeongList(평형 목록)를 그대로 재사용해 "어느 평형에 어떤 상품이 있는지"를 새로 정의하지 않는다.
+   ===================================================================== */
+const PRODUCT_PRICE = {};
+pivotProducts.forEach((p, i) => { PRODUCT_PRICE[p.code] = [10, 20, 30, 40, 50, 60][i % 6]; });
+
+let packageSeq = 1;
+const packages = []; // { id, code, name, pyeong, type, space, items, supply, vat, total, note, source, batchId, createdAt, createdBy }
+
+function packageCandidateRowsHtml(candidates, selectedCodes, checkboxClass) {
+  return candidates.map((p) => {
+    const supply = PRODUCT_PRICE[p.code] || 10;
+    const vat = Math.round(supply * 0.1);
+    return `
+      <tr>
+        <td><input type="checkbox" class="${checkboxClass}" data-code="${p.code}" ${selectedCodes.has(p.code) ? "checked" : ""} /></td>
+        <td class="code-cell">${p.code}</td>
+        <td>${p.item}</td>
+        <td>${p.itemCustomer}</td>
+        <td>${supply}</td>
+        <td>${vat}</td>
+        <td>${supply + vat}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+function calcPackageTotals(codes) {
+  let supply = 0;
+  codes.forEach((code) => { supply += PRODUCT_PRICE[code] || 10; });
+  const vat = Math.round(supply * 0.1);
+  return { supply, vat, total: supply + vat };
+}
+
+/* ---- 현재안 : 평형 1개 선택 → 그 평형의 후보 상품 선택 → 패키지 1개 생성 ---- */
+const packageModal = document.getElementById("packageModal");
+const packageModalBody = document.getElementById("packageModalBody");
+
+function renderPackageModal() {
+  const select = document.getElementById("pkgPyeongSelect");
+  const pyeong = select ? select.value : pyeongList[0];
+  const candidates = pivotProducts.filter((p) => pivotAssignments[pyeong] && pivotAssignments[pyeong].has(p.code));
+  const checkedCodes = new Set([...document.querySelectorAll(".pkg-candidate-check:checked")].map((cb) => cb.dataset.code));
+  const totals = calcPackageTotals([...checkedCodes]);
+  const spaceOptions = [...new Set(pivotProducts.map((p) => p.space))];
+
+  packageModalBody.innerHTML = `
+    <div class="pkg-section">
+      <div class="pkg-section-title">1 패키지 기본정보</div>
+      <div class="pkg-section-body">
+        <div class="pkg-field-row">
+          <div class="pkg-field">
+            <label>평형그룹</label>
+            <select id="pkgPyeongSelect">${pyeongList.map((p) => `<option value="${p}" ${p === pyeong ? "selected" : ""}>${p}</option>`).join("")}</select>
+          </div>
+          <div class="pkg-field readonly"><label>고객스타일</label><input type="text" value="내추럴 모던 - Natural Modern" disabled /></div>
+          <div class="pkg-field readonly"><label>평형옵션</label><input type="text" value="기본" disabled /></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="pkg-section">
+      <div class="pkg-section-title">2 패키지로 구성할 상품후보 <span>${candidates.length}건</span></div>
+      <div class="pkg-section-body">
+        <div class="pkg-table-scroll">
+          <table class="pkg-table">
+            <thead><tr><th></th><th>상품코드</th><th>품목명</th><th>항목명(고객용)</th><th>공급가(원)</th><th>부가세(원)</th><th>합계(원)</th></tr></thead>
+            <tbody>${packageCandidateRowsHtml(candidates, checkedCodes, "pkg-candidate-check")}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="pkg-section">
+      <div class="pkg-section-title">3 패키지 생성정보</div>
+      <div class="pkg-section-body">
+        <div class="pkg-field-row">
+          <div class="pkg-field">
+            <label>패키지타입</label>
+            <div class="pkg-radio-group">
+              <label><input type="radio" name="pkgType" value="스타일 패키지" checked /> 스타일 패키지</label>
+              <label><input type="radio" name="pkgType" value="할인 패키지" /> 할인 패키지</label>
+            </div>
+          </div>
+          <div class="pkg-field">
+            <label>공간</label>
+            <select id="pkgSpaceSelect">${spaceOptions.map((s) => `<option value="${s}">${s}</option>`).join("")}</select>
+          </div>
+        </div>
+        <div class="pkg-field-row">
+          <div class="pkg-field" style="flex:2">
+            <label>품목명</label>
+            <input type="text" id="pkgNameInput" value="패키지임시명칭-${pyeong}-${packageSeq}" />
+          </div>
+        </div>
+        <div class="pkg-field-row">
+          <div class="pkg-field"><label>비고</label><textarea id="pkgNoteInput" rows="2"></textarea></div>
+        </div>
+        <div class="pkg-summary">
+          <span>선택 상품 <strong>${checkedCodes.size}건</strong></span>
+          <span>공급가 합계 <strong>${totals.supply}원</strong></span>
+          <span>부가세 합계 <strong>${totals.vat}원</strong></span>
+          <span>판매가 합계 <strong>${totals.total}원</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="pkg-actions">
+      <button class="toolbar-btn" id="packageCancelBtn" type="button">취소</button>
+      <button class="primary-btn" id="packageCreateBtn" type="button">생성하기</button>
+    </div>
+  `;
+
+  document.getElementById("pkgPyeongSelect").addEventListener("change", renderPackageModal);
+  packageModalBody.querySelectorAll(".pkg-candidate-check").forEach((cb) => {
+    cb.addEventListener("change", renderPackageModal);
+  });
+  document.getElementById("packageCancelBtn").addEventListener("click", () => { packageModal.hidden = true; });
+  document.getElementById("packageCreateBtn").addEventListener("click", () => {
+    const codes = [...document.querySelectorAll(".pkg-candidate-check:checked")].map((cb) => cb.dataset.code);
+    if (codes.length === 0) { showToast("패키지에 포함할 상품을 선택해주세요."); return; }
+    const items = candidates.filter((p) => codes.includes(p.code));
+    const t = calcPackageTotals(codes);
+    const id = packageSeq++;
+    const pkg = {
+      id,
+      code: `PKG-${pyeong}-${String(id).padStart(3, "0")}`,
+      name: document.getElementById("pkgNameInput").value.trim() || `패키지-${pyeong}`,
+      pyeong,
+      type: document.querySelector('input[name="pkgType"]:checked').value,
+      space: document.getElementById("pkgSpaceSelect").value,
+      items,
+      supply: t.supply, vat: t.vat, total: t.total,
+      note: document.getElementById("pkgNoteInput").value.trim(),
+      source: "individual",
+      batchId: null,
+      createdAt: dsNowKorean(),
+      createdBy: dsRoleName(dsGetCurrentRole()),
+    };
+    packages.unshift(pkg);
+    dsAddEditLog("5. 안분표 생성", `패키지 「${pkg.name}」(${pyeong}) ${items.length}개 상품으로 생성`);
+    renderPackageHistory();
+    packageModal.hidden = true;
+    showToast(`「${pkg.name}」 패키지가 생성되었습니다.`);
+  });
+}
+
+document.getElementById("packageMenuItem").addEventListener("click", () => {
+  allocationSettingsMenu.hidden = true;
+  renderPackageModal();
+  packageModal.hidden = false;
+});
+document.getElementById("packageModalClose").addEventListener("click", () => { packageModal.hidden = true; });
+
+/* ---- 개선안 : 패키지를 구성할 상품을 한 번만 선택 → 적용할 평형을 여러 개 체크 → 일괄 생성 ---- */
+const packageMapModal = document.getElementById("packageMapModal");
+const packageMapModalBody = document.getElementById("packageMapModalBody");
+
+function renderPackageMapModal() {
+  const checkedCodes = new Set([...document.querySelectorAll(".pkgmap-candidate-check:checked")].map((cb) => cb.dataset.code));
+  const checkedPyeongs = new Set([...document.querySelectorAll(".pkgmap-pyeong-check:checked")].map((cb) => cb.value));
+  const totals = calcPackageTotals([...checkedCodes]);
+
+  packageMapModalBody.innerHTML = `
+    <div class="pkg-section">
+      <div class="pkg-section-title">1 패키지 구성 상품 선택 <span>${pivotProducts.length}건 중 ${checkedCodes.size}건 선택</span></div>
+      <div class="pkg-section-body">
+        <div class="pkg-table-scroll">
+          <table class="pkg-table">
+            <thead><tr><th></th><th>상품코드</th><th>품목명</th><th>항목명(고객용)</th><th>공급가(원)</th><th>부가세(원)</th><th>합계(원)</th></tr></thead>
+            <tbody>${packageCandidateRowsHtml(pivotProducts, checkedCodes, "pkgmap-candidate-check")}</tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="pkg-section">
+      <div class="pkg-section-title">2 매핑할 평형 선택 <span>${pyeongList.length}종 중 ${checkedPyeongs.size}종 선택</span></div>
+      <div class="pkg-section-body">
+        <div class="pkg-pyeong-grid">
+          ${pyeongList.map((p) => `
+            <label class="pkg-pyeong-chip">
+              <input type="checkbox" class="pkgmap-pyeong-check" value="${p}" ${checkedPyeongs.has(p) ? "checked" : ""} /> ${p}
+            </label>
+          `).join("")}
+        </div>
+      </div>
+    </div>
+
+    <div class="pkg-section">
+      <div class="pkg-section-title">3 패키지 생성정보 (선택한 모든 평형에 동일하게 적용)</div>
+      <div class="pkg-section-body">
+        <div class="pkg-field-row">
+          <div class="pkg-field">
+            <label>패키지타입</label>
+            <div class="pkg-radio-group">
+              <label><input type="radio" name="pkgMapType" value="스타일 패키지" checked /> 스타일 패키지</label>
+              <label><input type="radio" name="pkgMapType" value="할인 패키지" /> 할인 패키지</label>
+            </div>
+          </div>
+          <div class="pkg-field" style="flex:2">
+            <label>품목명(공통)</label>
+            <input type="text" id="pkgMapNameInput" value="공통패키지-${packageSeq}" />
+          </div>
+        </div>
+        <div class="pkg-field-row">
+          <div class="pkg-field"><label>비고</label><textarea id="pkgMapNoteInput" rows="2"></textarea></div>
+        </div>
+        <div class="pkg-summary">
+          <span>선택 상품 <strong>${checkedCodes.size}건</strong></span>
+          <span>공급가 합계 <strong>${totals.supply}원</strong></span>
+          <span>부가세 합계 <strong>${totals.vat}원</strong></span>
+          <span>판매가 합계 <strong>${totals.total}원</strong></span>
+          <span>적용 평형 <strong>${checkedPyeongs.size}종</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="pkg-actions">
+      <button class="toolbar-btn" id="packageMapCancelBtn" type="button">취소</button>
+      <button class="primary-btn" id="packageMapCreateBtn" type="button">선택 평형에 일괄 생성하기</button>
+    </div>
+  `;
+
+  packageMapModalBody.querySelectorAll(".pkgmap-candidate-check, .pkgmap-pyeong-check").forEach((el) => {
+    el.addEventListener("change", renderPackageMapModal);
+  });
+  document.getElementById("packageMapCancelBtn").addEventListener("click", () => { packageMapModal.hidden = true; });
+  document.getElementById("packageMapCreateBtn").addEventListener("click", () => {
+    const codes = [...document.querySelectorAll(".pkgmap-candidate-check:checked")].map((cb) => cb.dataset.code);
+    const targetPyeongs = [...document.querySelectorAll(".pkgmap-pyeong-check:checked")].map((cb) => cb.value);
+    if (codes.length === 0) { showToast("패키지에 포함할 상품을 선택해주세요."); return; }
+    if (targetPyeongs.length === 0) { showToast("매핑할 평형을 선택해주세요."); return; }
+
+    const items = pivotProducts.filter((p) => codes.includes(p.code));
+    const t = calcPackageTotals(codes);
+    const baseName = document.getElementById("pkgMapNameInput").value.trim() || "공통패키지";
+    const type = document.querySelector('input[name="pkgMapType"]:checked').value;
+    const note = document.getElementById("pkgMapNoteInput").value.trim();
+    const batchId = packageSeq;
+    const createdAt = dsNowKorean();
+    const createdBy = dsRoleName(dsGetCurrentRole());
+
+    targetPyeongs.forEach((pyeong) => {
+      const id = packageSeq++;
+      packages.unshift({
+        id,
+        code: `PKG-${pyeong}-${String(id).padStart(3, "0")}`,
+        name: `${baseName} - ${pyeong}`,
+        pyeong,
+        type,
+        space: "전체 공간 - General Area",
+        items,
+        supply: t.supply, vat: t.vat, total: t.total,
+        note,
+        source: "common-mapped",
+        batchId,
+        createdAt,
+        createdBy,
+      });
+    });
+
+    dsAddEditLog("5. 안분표 생성", `공통 패키지 「${baseName}」 ${items.length}개 상품을 ${targetPyeongs.length}개 평형(${targetPyeongs.join(", ")})에 일괄 생성`);
+    renderPackageHistory();
+    packageMapModal.hidden = true;
+    showToast(`${targetPyeongs.length}개 평형에 일괄 생성되었습니다.`);
+  });
+}
+
+document.getElementById("packageMapMenuItem").addEventListener("click", () => {
+  allocationSettingsMenu.hidden = true;
+  renderPackageMapModal();
+  packageMapModal.hidden = false;
+});
+document.getElementById("packageMapModalClose").addEventListener("click", () => { packageMapModal.hidden = true; });
+
+/* ---- 패키지 생성 이력 (현재안/개선안 공통) ---- */
+const packageHistoryBtn = document.getElementById("packageHistoryBtn");
+const packageHistoryPanel = document.getElementById("packageHistoryPanel");
+
+function renderPackageHistory() {
+  if (packages.length === 0) {
+    packageHistoryPanel.innerHTML = `<div class="pkg-history-empty">아직 생성된 패키지가 없습니다.</div>`;
+    return;
+  }
+  packageHistoryPanel.innerHTML = `
+    <div class="notif-panel-title">패키지 생성 이력 (전체 ${packages.length}건)</div>
+    ${packages.map((p) => `
+      <div class="pkg-history-item">
+        <div class="pkg-history-item-title">
+          <span>${p.code} · ${p.name}</span>
+          <span class="pkg-history-tag ${p.source === "common-mapped" ? "mapped" : ""}">${p.source === "common-mapped" ? "공통매핑" : "개별생성"}</span>
+        </div>
+        <div class="muted">평형 ${p.pyeong} · 상품 ${p.items.length}건 · 합계 ${p.total}원</div>
+        <div class="muted">${p.createdBy} · ${p.createdAt}</div>
+      </div>
+    `).join("")}
+  `;
+}
+renderPackageHistory();
+
+packageHistoryBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  packageHistoryPanel.hidden = !packageHistoryPanel.hidden;
+});
+packageHistoryPanel.addEventListener("click", (e) => e.stopPropagation());
+document.addEventListener("click", () => { packageHistoryPanel.hidden = true; });
+
 /* ===================== 내비게이션: 상단 5단계 + 상품구성 5개 서브탭 ===================== */
 document.querySelectorAll(".nav-step").forEach((link) => {
   link.addEventListener("click", (e) => {
