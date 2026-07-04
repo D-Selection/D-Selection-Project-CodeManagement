@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<title>mBASS 모바일 점검</title>
+<link rel="stylesheet" href="mobile.css" />
+</head>
+<body>
+  <div class="phone">
+    <div class="app-m">
+
+      <!-- Header -->
+      <header class="header-m">
+        <button class="back-btn" id="backBtn" hidden>
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M12.5 4.5L6 11l6.5 6.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <h1 class="header-title" id="headerTitle">mBASS</h1>
+        <button class="menu-btn" id="menuBtn">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none"><path d="M2.5 5h15M2.5 10h15M2.5 15h15" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </header>
+
+      <main class="screens">
+
+        <!-- 1. 홈 -->
+        <section class="screen-m active" id="screen-home">
+          <div class="site-card">
+            <p class="site-card-label">선택된 권한현장</p>
+            <h2 class="site-card-name" id="siteName">아크로 리츠카운티 현장(19C)</h2>
+            <p class="site-card-desc">아래 버튼을 이용하여 신규등록된 현장정보를<br/>다운로드 할 수 있습니다.</p>
+            <button class="download-btn" id="siteDownloadBtn">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none"><path d="M10 3v9m0 0l-3.5-3.5M10 12l3.5-3.5M4 15.5h12" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              현장정보 자료받기
+            </button>
+          </div>
+
+          <div class="menu-grid">
+            <button class="menu-tile" data-action="placeholder">
+              <span class="tile-icon" id="icon-gongjong"></span>
+              <span class="tile-label">공종점검</span>
+            </button>
+            <button class="menu-tile" data-nav="hp-type">
+              <span class="tile-icon" id="icon-hp"></span>
+              <span class="tile-label">HP점검</span>
+            </button>
+            <button class="menu-tile" data-action="placeholder">
+              <span class="tile-icon" id="icon-quality"></span>
+              <span class="tile-label">품질점검</span>
+            </button>
+            <button class="menu-tile" data-action="placeholder">
+              <span class="tile-icon" id="icon-send"></span>
+              <span class="tile-label">점검전송</span>
+            </button>
+            <button class="menu-tile" data-nav="option-status">
+              <span class="tile-icon" id="icon-option"></span>
+              <span class="tile-label">별매품 시공점검</span>
+            </button>
+            <button class="menu-tile" data-nav="hp-status">
+              <span class="tile-icon" id="icon-search"></span>
+              <span class="tile-label">점검조회</span>
+            </button>
+          </div>
+
+          <div class="menu-grid menu-grid-gray">
+            <button class="menu-tile" data-action="placeholder">
+              <span class="tile-icon" id="icon-fetch"></span>
+              <span class="tile-label">점검자료받기</span>
+            </button>
+            <button class="menu-tile" data-action="placeholder">
+              <span class="tile-icon" id="icon-confirm"></span>
+              <span class="tile-label">확검</span>
+            </button>
+            <button class="menu-tile" data-action="placeholder">
+              <span class="tile-icon" id="icon-confirm-send"></span>
+              <span class="tile-label">확검전송</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- 2. HP점검유형선택 -->
+        <section class="screen-m" id="screen-hp-type">
+          <div class="segmented">
+            <button class="seg-btn" data-seg="general">일반</button>
+            <button class="seg-btn active" data-seg="option">별매품</button>
+          </div>
+          <div class="radio-list" id="hpTypeList"></div>
+          <div class="bottom-bar single">
+            <button class="primary-btn full" id="hpTypeConfirmBtn">확인</button>
+          </div>
+        </section>
+
+        <!-- 3. HP점검 동층호 선택 -->
+        <section class="screen-m" id="screen-hp-select">
+          <button class="dropdown-bar" id="hpSelectDropdown">
+            <span id="hpSelectDropdownLabel">-</span>
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="info-strip" id="hpSelectInfoStrip">-</div>
+          <div class="select-grid">
+            <div class="select-col select-col-dong">
+              <div class="select-col-head">동</div>
+              <div class="select-col-body" id="dongCol"></div>
+            </div>
+            <div class="select-col select-col-floor">
+              <div class="select-col-head">층</div>
+              <div class="select-col-body" id="floorCol"></div>
+            </div>
+            <div class="select-col select-col-unit">
+              <div class="select-col-head">호수</div>
+              <div class="select-col-body" id="unitCol"></div>
+            </div>
+          </div>
+          <div class="bottom-bar dual">
+            <button class="secondary-btn" id="hpStatusLinkBtn">점검현황</button>
+            <button class="primary-btn" id="hpSelectConfirmBtn">확인</button>
+          </div>
+        </section>
+
+        <!-- 4. HP점검 상세 -->
+        <section class="screen-m" id="screen-hp-detail">
+          <button class="dropdown-bar" id="hpDetailDropdown">
+            <span id="hpDetailDropdownLabel">-</span>
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="unit-head-row">
+            <div class="unit-head-label" id="hpDetailUnitLabel">-</div>
+            <button class="chip-btn" data-nav="option-status">별매품</button>
+            <button class="chip-btn" id="hpDetailPlanBtn">평면</button>
+          </div>
+          <div class="table-wrap-m">
+            <table class="table-m">
+              <thead><tr><th>위치</th><th>부위</th><th>유형</th></tr></thead>
+              <tbody id="hpDetailTableBody"></tbody>
+            </table>
+          </div>
+          <div class="detail-bottom-panel">
+            <p class="vendor-line" id="hpDetailVendor">&gt; -</p>
+            <button class="complete-btn" id="hpDetailCompleteBtn">점검완료</button>
+            <div class="note-row">
+              <input type="text" id="hpDetailNote" placeholder="점검 내용을 입력 하세요." />
+              <span class="qty-label">물량</span>
+            </div>
+            <div class="icon-action-row">
+              <button class="icon-action" data-action="reclassify">
+                <span class="icon-action-glyph" id="icon-flag"></span>
+                <span>재분류</span>
+              </button>
+              <button class="icon-action" data-action="attach">
+                <span class="icon-action-glyph" id="icon-attach"></span>
+                <span>첨부</span>
+              </button>
+              <button class="icon-action" data-action="camera">
+                <span class="icon-action-glyph" id="icon-camera"></span>
+                <span>촬영</span>
+              </button>
+              <button class="icon-action" data-action="save">
+                <span class="icon-action-glyph" id="icon-save"></span>
+                <span>저장</span>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <!-- 5. HP점검현황 -->
+        <section class="screen-m" id="screen-hp-status">
+          <button class="dropdown-bar" id="hpStatusItemDropdown">
+            <span id="hpStatusItemLabel">-</span>
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="dropdown-bar" id="hpStatusDongDropdown">
+            <span id="hpStatusDongLabel">101동</span>
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="legend-row" id="hpLegend"></div>
+          <div class="heatmap-wrap" id="hpHeatmap"></div>
+        </section>
+
+        <!-- 6. 별매품 시공점검 히트맵 -->
+        <section class="screen-m" id="screen-option-status">
+          <button class="dropdown-bar" id="optionStatusItemDropdown">
+            <span id="optionStatusItemLabel">-</span>
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button class="dropdown-bar" id="optionStatusProductDropdown">
+            <span id="optionStatusProductLabel">-</span>
+            <svg width="14" height="14" viewBox="0 0 20 20" fill="none"><path d="M5 8l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="legend-row small" id="optionLegend"></div>
+          <div class="option-status-toolbar">
+            <span class="dong-label" id="optionDongLabel">101동</span>
+            <button class="target-set-btn" id="optionTargetSetBtn">점검대상설정(전체)</button>
+          </div>
+          <div class="heatmap-wrap" id="optionHeatmap"></div>
+        </section>
+
+        <!-- 7. 별매품 시공점검 상세 -->
+        <section class="screen-m" id="screen-option-detail">
+          <div class="unit-title-box" id="optionDetailUnitTitle">-</div>
+
+          <h3 class="section-heading">별매품 내역</h3>
+          <div class="option-item-list" id="optionItemList"></div>
+
+          <h3 class="section-heading">Product 목록</h3>
+          <div class="table-wrap-m">
+            <table class="table-m product-table">
+              <thead><tr><th>하자</th><th>Product 명</th><th>시공점검</th></tr></thead>
+              <tbody id="productTableBody"></tbody>
+            </table>
+          </div>
+
+          <textarea class="request-textarea" id="optionRequestNote" placeholder="점검 요청 내역"></textarea>
+
+          <div class="option-detail-buttons">
+            <button class="outline-btn" id="thumbnailBtn">디버추얼<br/>썸네일</button>
+            <button class="outline-btn" id="defectRegisterBtn">하자등록</button>
+            <button class="primary-btn" id="optionSaveBtn">저장</button>
+          </div>
+        </section>
+
+        <!-- 8. 디버추얼 썸네일보기 -->
+        <section class="screen-m" id="screen-thumbnail">
+          <div class="thumb-viewer">
+            <div class="thumb-image" id="thumbMainImage"></div>
+          </div>
+          <h3 class="section-heading gallery-heading">썸네일 갤러리</h3>
+          <div class="thumb-gallery" id="thumbGallery"></div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+<script src="mobile.js"></script>
+</body>
+</html>
