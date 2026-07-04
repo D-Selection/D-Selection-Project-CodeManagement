@@ -579,19 +579,22 @@ const ITEM_PRODUCT_CODE = {
 };
 allocationRows.forEach((r) => {
   r.productCode = ITEM_PRODUCT_CODE[r.item] || "SL000";
-  r.sent = false;
-  r.sentBatch = null;
-  r.sentAt = null;
-  r.sentBy = null;
+  r.sendLog = []; // 세일즈코드 기준 발송 기록 — 여러 번 발송해도 계속 누적만 됨 (재발송 제한 없음)
 });
 
 const allocationTableBody = document.getElementById("allocationTableBody");
 const allocationSelectAll = document.getElementById("allocationSelectAll");
 
 function renderAllocationTable() {
-  allocationTableBody.innerHTML = allocationRows.map((r) => `
-    <tr class="${r.sent ? "row-disabled" : ""}" data-seq="${r.seq}">
-      <td class="checkbox-col"><input type="checkbox" class="allocation-row-check" ${r.sent ? "disabled" : ""} /></td>
+  allocationTableBody.innerHTML = allocationRows.map((r) => {
+    const count = r.sendLog.length;
+    const last = count ? r.sendLog[count - 1] : null;
+    const statusHtml = count
+      ? `<span class="send-status-badge sent" title="${r.sendLog.map((l) => `${l.batchName} · ${l.sentAt}`).join("\n")}">✔ 발송 ${count}회 (최근: ${last.batchName})</span>`
+      : `<span class="send-status-badge unsent">미발송</span>`;
+    return `
+    <tr data-seq="${r.seq}">
+      <td class="checkbox-col"><input type="checkbox" class="allocation-row-check" /></td>
       <td>${r.seq}</td>
       <td class="code-cell">${r.sales}</td>
       <td>조합 - Union</td>
@@ -607,18 +610,17 @@ function renderAllocationTable() {
       <td class="code-cell">${r.productCode}</td>
       <td>${r.item}</td>
       <td>${r.detail}</td>
-      <td>${r.sent
-        ? `<span class="send-status-badge sent" title="${r.sentAt} · ${r.sentBy}">✔ ${r.sentBatch}</span>`
-        : `<span class="send-status-badge unsent">미발송</span>`}</td>
+      <td>${statusHtml}</td>
     </tr>
-  `).join("");
+  `;
+  }).join("");
   allocationSelectAll.checked = false;
   allocationSelectAll.indeterminate = false;
 }
 renderAllocationTable();
 
 allocationSelectAll.addEventListener("change", () => {
-  document.querySelectorAll(".allocation-row-check:not(:disabled)").forEach((cb) => { cb.checked = allocationSelectAll.checked; });
+  document.querySelectorAll(".allocation-row-check").forEach((cb) => { cb.checked = allocationSelectAll.checked; });
 });
 
 /* ===================== 안분표 발송: 상품별 차수 분할 발송 ===================== */
@@ -691,30 +693,25 @@ function openSendModal() {
     const sentAt = dsNowKorean();
     const sentBy = dsRoleName(dsGetCurrentRole());
 
-    rows.forEach((r) => { r.sent = true; r.sentBatch = name; r.sentAt = sentAt; r.sentBy = sentBy; });
-
-    // 상품코드별 건수 집계 — 발송 기록을 상품 단위로도 조회/관리할 수 있게 함
-    const productMap = {};
+    // 재발송 제한 없음: 기존 발송 여부와 무관하게 매번 새 발송 기록만 누적한다
     rows.forEach((r) => {
-      if (!productMap[r.productCode]) productMap[r.productCode] = { productCode: r.productCode, item: r.item, count: 0 };
-      productMap[r.productCode].count++;
+      r.sendLog.push({ batchName: name, sentAt, sentBy });
+      recordSalesSend(r.sales, r.productCode, r.item, name, sentAt, sentBy);
     });
-    const products = Object.values(productMap);
 
     const batch = {
       id: sendBatchSeq++,
       name,
       count: rows.length,
       pyeongs,
-      products,
+      salesCodes: rows.map((r) => r.sales),
       sentAt,
       sentBy,
     };
     sendBatches.unshift(batch);
-    recordProductSendHistory(products, name, sentAt, sentBy);
     dsAddEditLog(
       "5. 안분표 생성",
-      `「${name}」 ${rows.length}건을 분양수금 시스템으로 발송 (상품코드 ${products.map((p) => `${p.productCode}×${p.count}`).join(", ")})`
+      `「${name}」 ${rows.length}건을 분양수금 시스템으로 발송 (세일즈코드: ${rows.map((r) => r.sales).join(", ")})`
     );
     renderAllocationTable();
     renderSendHistory();
@@ -725,21 +722,12 @@ function openSendModal() {
   sendModal.hidden = false;
 }
 
-// 상품코드별 누적 발송 기록 — "상품별 기록 관리" 필드. 어떤 상품이 언제, 어느 차수로,
-// 몇 건 발송되었는지를 배치와 무관하게 상품코드 기준으로 계속 누적한다.
-const productSendHistory = {}; // productCode -> [{ batchName, count, sentAt, sentBy }]
-function recordProductSendHistory(products, batchName, sentAt, sentBy) {
-  products.forEach((p) => {
-    if (!productSendHistory[p.productCode]) productSendHistory[p.productCode] = [];
-    productSendHistory[p.productCode].push({ item: p.item, batchName, count: p.count, sentAt, sentBy });
-  });
-}
-
-function productTotalSentCount(productCode) {
-  return allocationRows.filter((r) => r.productCode === productCode && r.sent).length;
-}
-function productTotalCount(productCode) {
-  return allocationRows.filter((r) => r.productCode === productCode).length;
+// 세일즈코드별 발송 기록 — "발송 기록 관리" 필드. 재발송을 막지 않고 매번의 발송을
+// 세일즈코드 기준으로 계속 누적 기록한다 (몇 번 보냈는지, 언제·어느 차수로 보냈는지).
+const salesSendHistory = {}; // sales -> [{ productCode, item, batchName, sentAt, sentBy }]
+function recordSalesSend(sales, productCode, item, batchName, sentAt, sentBy) {
+  if (!salesSendHistory[sales]) salesSendHistory[sales] = [];
+  salesSendHistory[sales].push({ productCode, item, batchName, sentAt, sentBy });
 }
 
 document.getElementById("allocationSendMenuItem").addEventListener("click", openSendModal);
@@ -749,27 +737,27 @@ const sendHistoryBtn = document.getElementById("sendHistoryBtn");
 const sendHistoryPanel = document.getElementById("sendHistoryPanel");
 
 function renderSendHistory() {
-  const productCodes = Object.keys(productSendHistory);
+  const salesCodes = Object.keys(salesSendHistory);
 
   if (sendBatches.length === 0) {
     sendHistoryPanel.innerHTML = `<div class="notif-panel-title">안분표 발송 이력</div><div class="notif-item-empty">아직 발송한 차수가 없습니다.</div>`;
     return;
   }
 
-  const productSummaryHtml = `
-    <div class="notif-panel-title">상품별 발송 현황 (${productCodes.length}개 상품)</div>
-    ${productCodes.map((code) => {
-      const sent = productTotalSentCount(code);
-      const total = productTotalCount(code);
-      const logs = productSendHistory[code];
-      const lastLog = logs[logs.length - 1];
+  const salesSummaryHtml = `
+    <div class="notif-panel-title">세일즈코드별 발송 기록 (${salesCodes.length}건 발송됨)</div>
+    ${salesCodes.map((sales) => {
+      const logs = salesSendHistory[sales];
+      const last = logs[logs.length - 1];
       return `
         <div class="notif-item">
           <div class="notif-item-text">
-            <span class="code-cell">${code}</span> ${lastLog.item}
-            — <strong>${sent}/${total}건 발송</strong>${sent < total ? ` (미발송 ${total - sent}건)` : ""}
+            <span class="code-cell">${sales}</span> (${last.productCode} ${last.item})
+            — <strong>발송 ${logs.length}회</strong>
           </div>
-          <div class="notif-item-meta">최근 발송 : 「${lastLog.batchName}」 ${lastLog.sentAt} · ${lastLog.sentBy} (누적 ${logs.length}회 발송)</div>
+          <div class="notif-item-meta">
+            ${logs.map((l) => `「${l.batchName}」 ${l.sentAt}`).join(" · ")}
+          </div>
         </div>`;
     }).join("")}
   `;
@@ -779,15 +767,13 @@ function renderSendHistory() {
     ${sendBatches.map((b) => `
       <div class="notif-item">
         <div class="notif-item-text">「${b.name}」 ${b.count}건 · 평형 ${b.pyeongs.join(", ")}</div>
-        <div class="notif-item-meta">
-          ${b.products.map((p) => `${p.productCode}(${p.item}) ${p.count}건`).join(" · ")}
-        </div>
+        <div class="notif-item-meta">세일즈코드: ${b.salesCodes.join(", ")}</div>
         <div class="notif-item-meta">${b.sentBy} · ${b.sentAt}</div>
       </div>
     `).join("")}
   `;
 
-  sendHistoryPanel.innerHTML = productSummaryHtml + batchHistoryHtml;
+  sendHistoryPanel.innerHTML = salesSummaryHtml + batchHistoryHtml;
 }
 renderSendHistory();
 
