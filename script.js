@@ -1056,9 +1056,9 @@ function openSendModal() {
   sendModalBody.innerHTML = `
     <div class="send-summary">
       선택 <strong>${rows.length}건</strong>을 새 발송 차수로 「분양수금 시스템」에 전송합니다.<br/>
-      대상 평형 : ${pyeongs.length}종
+      대상 세일즈코드 : ${rows.length}건 (평형 ${pyeongs.length}종)
     </div>
-    <div class="send-pyeong-tags">${pyeongs.map((p) => `<span class="send-pyeong-tag">${p}</span>`).join("")}</div>
+    <div class="send-pyeong-tags">${rows.map((r) => `<span class="send-pyeong-tag">${r.sales}</span>`).join("")}</div>
     <div class="send-field" style="margin-top:14px;">
       <label>발송 차수명</label>
       <input type="text" id="sendBatchNameInput" value="${defaultName}" />
