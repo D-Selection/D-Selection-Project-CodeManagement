@@ -203,6 +203,14 @@
         <div class="lock-overlay" id="stage14FullLockOverlay" hidden>
           <div class="lock-overlay-msg"></div>
         </div>
+        <div class="area-subtabs">
+          <button class="area-subtab active" data-view="current">현재 방식</button>
+          <button class="area-subtab" data-view="pivot">개선1안 · 상품×평형 매트릭스</button>
+          <button class="area-subtab" data-view="template">개선2안 · 템플릿 복제</button>
+          <button class="area-subtab" data-view="review">검수 화면</button>
+        </div>
+
+        <div class="area-subview active" id="areaSubview-current">
         <div class="area-layout">
           <div class="area-col area-col-narrow">
             <div class="area-col-header">
@@ -291,6 +299,65 @@
                 <tbody id="areaRightBody"></tbody>
               </table>
             </div>
+          </div>
+        </div>
+        </div>
+
+        <!-- 개선 1안 : 상품 × 평형 매트릭스 -->
+        <div class="area-subview" id="areaSubview-pivot">
+          <div class="area-pivot-toolbar">
+            <span class="area-pivot-title">상품 × 평형 매트릭스 <span class="round-badge" id="pivotProductCount">0개</span></span>
+            <span class="area-pivot-hint">상품별로 어느 평형에 배정되는지 한눈에 확인하고 체크박스로 바로 배정/해제할 수 있습니다.</span>
+          </div>
+          <div class="area-pivot-scroll">
+            <table class="mini-table pivot-table" id="pivotTable">
+              <thead><tr id="pivotTableHeadRow"></tr></thead>
+              <tbody id="pivotTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 개선 2안 : 대표 타입 복제 후 수정 -->
+        <div class="area-subview" id="areaSubview-template">
+          <div class="area-template-layout">
+            <div class="area-template-side">
+              <div class="area-col-header"><span>대표 타입 복제</span></div>
+              <div class="area-template-form">
+                <label class="area-template-label">대표 타입(원본 평형)
+                  <select class="mapping-editable-control" id="templateSourceSelect"></select>
+                </label>
+                <label class="area-template-label">복제 대상 평형 (복수 선택)</label>
+                <div class="area-template-targets" id="templateTargetList"></div>
+                <button class="ghost-btn blue-fill mapping-editable-control" id="templateCloneBtn">⧉ 선택 평형에 복제하기</button>
+                <p class="area-note" id="templateCloneNote">대표 타입의 상품 구성을 선택한 평형에 그대로 복제한 뒤, 오른쪽에서 개별 수정할 수 있습니다.</p>
+              </div>
+              <div class="area-template-log-title">복제 이력</div>
+              <div class="area-template-log" id="templateCloneLog"></div>
+            </div>
+            <div class="area-template-main">
+              <div class="area-col-header">
+                <span>복제 결과 편집 <span class="round-badge" id="templateEditCount">0개</span></span>
+                <select class="mapping-editable-control" id="templateEditTargetSelect"></select>
+              </div>
+              <div class="area-col-body">
+                <table class="mini-table">
+                  <thead><tr><th></th><th>공간</th><th>상품코드</th><th>항목명</th><th>항목명 (고객용)</th></tr></thead>
+                  <tbody id="templateEditBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 검수 화면 : 안내문 초안 뷰어 -->
+        <div class="area-subview" id="areaSubview-review">
+          <div class="area-review-toolbar">
+            <span class="area-review-title">검수 화면 (안내문 초안 뷰어)</span>
+            <select id="reviewPyeongSelect"></select>
+            <span class="area-review-hint">판매가 · 패키지 정보 없이, 평형별 · 공간별 배정 상품만 고객 안내문과 유사한 형식으로 확인합니다.</span>
+          </div>
+          <div class="area-review-doc-wrap">
+            <div class="area-review-doc" id="reviewDoc"></div>
           </div>
         </div>
       </section>

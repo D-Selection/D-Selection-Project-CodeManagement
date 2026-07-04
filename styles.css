@@ -625,6 +625,172 @@ tbody tr:hover { background: #eef4ff; }
 }
 .area-subpanel .mini-table { display: block; overflow: auto; }
 
+/* ===== 1.4 평형그룹매핑 개선 뷰 : 서브탭 ===== */
+.area-subtabs {
+  display: flex;
+  gap: 6px;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--border);
+  background: #f7f8fb;
+  flex-shrink: 0;
+}
+.area-subtab {
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text-sub);
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.area-subtab:hover { border-color: var(--blue); color: var(--blue); }
+.area-subtab.active { background: var(--navy); border-color: var(--navy); color: #fff; }
+
+.area-subview { display: none; flex: 1; min-height: 0; flex-direction: column; overflow: auto; }
+.area-subview.active { display: flex; }
+
+/* ---- 개선 1안 : 상품×평형 매트릭스 ---- */
+.area-pivot-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.area-pivot-title { font-weight: 700; font-size: 13px; }
+.area-pivot-hint { color: var(--text-sub); font-size: 11.5px; }
+.area-pivot-scroll { flex: 1; overflow: auto; min-height: 0; }
+.pivot-table { font-size: 11.5px; }
+.pivot-table th, .pivot-table td { text-align: center; white-space: nowrap; }
+table.pivot-table thead th {
+  position: sticky;
+  top: 0;
+  background: var(--navy);
+  color: #fff;
+  z-index: 2;
+}
+.pivot-product-col {
+  text-align: left !important;
+  white-space: normal !important;
+  min-width: 220px;
+  position: sticky;
+  left: 0;
+  background: #fff;
+  z-index: 1;
+  border-right: 1px solid var(--border);
+}
+table.pivot-table thead th.pivot-product-col { background: var(--navy); z-index: 3; }
+.pivot-space-tag { color: var(--text-sub); font-size: 10.5px; margin-top: 2px; }
+.pivot-cell { padding: 6px 10px; }
+.pivot-check { width: 15px; height: 15px; cursor: pointer; }
+.pivot-check:disabled { cursor: not-allowed; opacity: .5; }
+
+/* ---- 개선 2안 : 대표 타입 복제 ---- */
+.area-template-layout { display: flex; flex: 1; min-height: 0; }
+.area-template-side {
+  width: 300px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  overflow: auto;
+}
+.area-template-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.area-template-form { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.area-template-label { font-size: 12px; font-weight: 600; color: var(--text-main); display: flex; flex-direction: column; gap: 4px; }
+.area-template-label select {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 12.5px;
+  font-weight: 400;
+}
+.area-template-targets {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 160px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 8px;
+}
+.area-template-target-item { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+.area-template-log-title {
+  padding: 8px 14px;
+  font-weight: 700;
+  font-size: 12.5px;
+  background: var(--navy);
+  color: #fff;
+}
+.area-template-log { flex: 1; overflow: auto; padding: 8px 12px; display: flex; flex-direction: column; gap: 8px; }
+.area-template-log-item { border: 1px solid var(--border); border-radius: 6px; padding: 8px; font-size: 11.5px; }
+.area-template-log-item-title { font-weight: 700; margin-bottom: 3px; }
+.area-template-log-empty { text-align: center; color: var(--text-sub); padding: 24px 0; font-size: 12.5px; }
+#templateEditTargetSelect {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 5px 8px;
+  font-size: 12px;
+}
+
+/* ---- 검수 화면 : 안내문 초안 뷰어 ---- */
+.area-review-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+.area-review-title { font-weight: 700; font-size: 13px; }
+.area-review-hint { color: var(--text-sub); font-size: 11.5px; }
+#reviewPyeongSelect { border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 12px; }
+.area-review-doc-wrap { flex: 1; overflow: auto; background: #eef0f4; padding: 24px; }
+.area-review-doc {
+  max-width: 720px;
+  margin: 0 auto;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 36px 42px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+.review-doc-title { text-align: center; font-size: 18px; font-weight: 800; color: var(--navy); margin-bottom: 4px; }
+.review-doc-subtitle { text-align: center; font-size: 11.5px; color: var(--text-sub); margin-bottom: 24px; }
+.review-doc-space {
+  margin-bottom: 22px;
+  padding-bottom: 18px;
+  border-bottom: 1px dashed var(--border);
+}
+.review-doc-space:last-child { border-bottom: none; }
+.review-doc-space-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #fff;
+  background: var(--navy);
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 3px;
+  margin-bottom: 10px;
+}
+.review-doc-item-list { list-style: none; padding: 0; margin: 0; }
+.review-doc-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 7px 4px;
+  border-bottom: 1px solid #f0f1f4;
+  font-size: 12.5px;
+}
+.review-doc-item:last-child { border-bottom: none; }
+.review-doc-item-name { color: var(--text-main); }
+.review-doc-item-code { color: var(--text-sub); font-size: 11px; }
+.review-doc-empty { text-align: center; color: var(--text-sub); padding: 40px 0; font-size: 12.5px; }
+
 .map-btn {
   margin: 10px 14px 0;
   background: #1a9a52;

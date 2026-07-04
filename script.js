@@ -432,6 +432,212 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
+/* ===================== STEP 1 · PANEL 4 개선 뷰 (서브탭) =====================
+   1) 현재 방식(.area-layout)은 그대로 유지.
+   2) 아래 3개는 "상품이 어느 평형에 배정되는지"를 다루는 공용 데이터(pivotAssignments)를
+      함께 보고 편집하는 새로운 보조 화면으로, 기존 화면과는 독립적으로 동작한다. */
+document.querySelectorAll(".area-subtab").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".area-subtab").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll("#panel-area .area-subview").forEach((v) => v.classList.remove("active"));
+    document.getElementById(`areaSubview-${btn.dataset.view}`).classList.add("active");
+    if (btn.dataset.view === "pivot") renderPivotTable();
+    if (btn.dataset.view === "template") renderTemplateView();
+    if (btn.dataset.view === "review") renderReviewDoc();
+  });
+});
+
+const pyeongList = [...new Set(areaGroups.map((g) => g.pyeong))];
+
+const pivotProducts = [
+  ...areaConfigRows.map((r) => ({ code: r.code, item: r.item, itemCustomer: r.itemCustomer, space: r.space })),
+  ...areaRightRows.map((r) => ({ code: r.code, item: r.item, itemCustomer: r.itemCustomer, space: spaceCodeToName(r.space) })),
+];
+
+const PIVOT_CORE_CODES = ["SL001", "SL003", "SL031"];
+const pivotAssignments = {};
+pyeongList.forEach((p, idx) => {
+  if (p === "059A") {
+    pivotAssignments[p] = new Set(areaConfigRows.map((r) => r.code));
+    return;
+  }
+  const extraCount = 2 + (idx % 3);
+  const extraPool = pivotProducts.map((x) => x.code).filter((c) => !PIVOT_CORE_CODES.includes(c));
+  const extras = extraPool.slice(idx, idx + extraCount);
+  pivotAssignments[p] = new Set([...PIVOT_CORE_CODES, ...extras]);
+});
+
+/* ---- 개선 1안 : 상품 × 평형 매트릭스 ---- */
+function renderPivotTable() {
+  const editable = dsLoad().stages.s14.status === "editable";
+
+  document.getElementById("pivotTableHeadRow").innerHTML =
+    `<th class="pivot-product-col">상품명</th>` + pyeongList.map((p) => `<th>${p}</th>`).join("");
+
+  document.getElementById("pivotTableBody").innerHTML = pivotProducts.map((prod) => `
+    <tr>
+      <td class="pivot-product-col">
+        <span class="code-cell">${prod.code}</span> ${prod.itemCustomer}
+        <div class="pivot-space-tag">${prod.space}</div>
+      </td>
+      ${pyeongList.map((p) => `
+        <td class="pivot-cell">
+          <input type="checkbox" class="pivot-check mapping-editable-control"
+            data-pyeong="${p}" data-code="${prod.code}"
+            ${pivotAssignments[p].has(prod.code) ? "checked" : ""} ${editable ? "" : "disabled"} />
+        </td>
+      `).join("")}
+    </tr>
+  `).join("");
+
+  document.getElementById("pivotProductCount").textContent = `${pivotProducts.length}개`;
+
+  document.querySelectorAll(".pivot-check").forEach((cb) => {
+    cb.addEventListener("change", () => {
+      const { pyeong, code } = cb.dataset;
+      if (cb.checked) pivotAssignments[pyeong].add(code);
+      else pivotAssignments[pyeong].delete(code);
+      dsAddEditLog("1.4 평형그룹매핑(매트릭스)", `${pyeong} · ${code} ${cb.checked ? "배정" : "배정 해제"}`);
+    });
+  });
+}
+
+/* ---- 개선 2안 : 대표 타입 복제 후 수정 ---- */
+const templateCloneLogEntries = [];
+let templateEditTarget = pyeongList.find((p) => p !== "059A") || pyeongList[0];
+
+function renderTemplateTargetList() {
+  const sourceSelect = document.getElementById("templateSourceSelect");
+  const source = sourceSelect.value;
+  document.getElementById("templateTargetList").innerHTML = pyeongList
+    .filter((p) => p !== source)
+    .map((p) => `
+      <label class="area-template-target-item">
+        <input type="checkbox" class="mapping-editable-control template-target-check" value="${p}" /> ${p}
+      </label>
+    `).join("");
+}
+
+function renderTemplateCloneLog() {
+  const el = document.getElementById("templateCloneLog");
+  if (templateCloneLogEntries.length === 0) {
+    el.innerHTML = `<div class="area-template-log-empty">아직 복제 이력이 없습니다.</div>`;
+    return;
+  }
+  el.innerHTML = templateCloneLogEntries.map((e) => `
+    <div class="area-template-log-item">
+      <div class="area-template-log-item-title">${e.source} → ${e.targets.join(", ")}</div>
+      <div class="muted">${e.count}개 항목 복제 · ${e.time}</div>
+    </div>
+  `).join("");
+}
+
+function renderTemplateEditTargetSelect() {
+  const select = document.getElementById("templateEditTargetSelect");
+  select.innerHTML = pyeongList.map((p) => `<option value="${p}" ${p === templateEditTarget ? "selected" : ""}>${p}</option>`).join("");
+}
+
+function renderTemplateEditBody() {
+  const editable = dsLoad().stages.s14.status === "editable";
+  const assigned = pivotAssignments[templateEditTarget];
+  document.getElementById("templateEditBody").innerHTML = pivotProducts.map((prod) => `
+    <tr>
+      <td><input type="checkbox" class="mapping-editable-control template-edit-check" data-code="${prod.code}"
+        ${assigned.has(prod.code) ? "checked" : ""} ${editable ? "" : "disabled"} /></td>
+      <td>${prod.space}</td>
+      <td class="code-cell">${prod.code}</td>
+      <td>${prod.item}</td>
+      <td>${prod.itemCustomer}</td>
+    </tr>
+  `).join("");
+  document.getElementById("templateEditCount").textContent = `${assigned.size}개`;
+
+  document.querySelectorAll(".template-edit-check").forEach((cb) => {
+    cb.addEventListener("change", () => {
+      const code = cb.dataset.code;
+      if (cb.checked) assigned.add(code);
+      else assigned.delete(code);
+      dsAddEditLog("1.4 평형그룹매핑(템플릿편집)", `${templateEditTarget} · ${code} ${cb.checked ? "추가" : "제거"}`);
+      document.getElementById("templateEditCount").textContent = `${assigned.size}개`;
+    });
+  });
+}
+
+function renderTemplateView() {
+  renderTemplateTargetList();
+  renderTemplateCloneLog();
+  renderTemplateEditTargetSelect();
+  renderTemplateEditBody();
+}
+
+document.getElementById("templateSourceSelect").innerHTML = pyeongList.map((p) => `<option value="${p}">${p}</option>`).join("");
+document.getElementById("templateSourceSelect").addEventListener("change", renderTemplateTargetList);
+
+document.getElementById("templateEditTargetSelect").addEventListener("change", (e) => {
+  templateEditTarget = e.target.value;
+  renderTemplateEditBody();
+});
+
+document.getElementById("templateCloneBtn").addEventListener("click", () => {
+  if (dsLoad().stages.s14.status !== "editable") return;
+  const source = document.getElementById("templateSourceSelect").value;
+  const targets = [...document.querySelectorAll(".template-target-check:checked")].map((cb) => cb.value);
+  if (targets.length === 0) return;
+
+  targets.forEach((t) => { pivotAssignments[t] = new Set(pivotAssignments[source]); });
+
+  const count = pivotAssignments[source].size;
+  templateCloneLogEntries.unshift({ source, targets, count, time: dsNowKorean() });
+  dsAddEditLog("1.4 평형그룹매핑(템플릿복제)", `${source} 상품구성(${count}개)을 ${targets.join(", ")}에 복제`);
+
+  templateEditTarget = targets[0];
+  renderTemplateView();
+});
+
+/* ---- 검수 화면 : 안내문 초안 뷰어 (판매가·패키지 정보 없이 평형별/공간별 배정만 확인) ---- */
+document.getElementById("reviewPyeongSelect").innerHTML = pyeongList.map((p) => `<option value="${p}">${p}</option>`).join("");
+document.getElementById("reviewPyeongSelect").addEventListener("change", renderReviewDoc);
+
+function renderReviewDoc() {
+  const pyeong = document.getElementById("reviewPyeongSelect").value || pyeongList[0];
+  const assigned = pivotAssignments[pyeong];
+  const items = pivotProducts.filter((p) => assigned.has(p.code));
+
+  if (items.length === 0) {
+    document.getElementById("reviewDoc").innerHTML = `<div class="review-doc-empty">배정된 상품이 없습니다.</div>`;
+    return;
+  }
+
+  const bySpace = {};
+  items.forEach((it) => {
+    if (!bySpace[it.space]) bySpace[it.space] = [];
+    bySpace[it.space].push(it);
+  });
+
+  document.getElementById("reviewDoc").innerHTML = `
+    <div class="review-doc-title">${pyeong} 세대 마감재 안내문 (초안)</div>
+    <div class="review-doc-subtitle">본 안내문은 검수용 초안이며 판매가 · 패키지 구성 정보는 포함하지 않습니다.</div>
+    ${Object.keys(bySpace).map((space) => `
+      <div class="review-doc-space">
+        <div class="review-doc-space-title">${space}</div>
+        <ul class="review-doc-item-list">
+          ${bySpace[space].map((it) => `
+            <li class="review-doc-item">
+              <span class="review-doc-item-name">${it.itemCustomer}</span>
+              <span class="review-doc-item-code">${it.code}</span>
+            </li>
+          `).join("")}
+        </ul>
+      </div>
+    `).join("")}
+  `;
+}
+
+renderPivotTable();
+renderTemplateView();
+renderReviewDoc();
+
 /* ===================== STEP 1 · PANEL 5: 대분류/중분류/제조사 ===================== */
 const majorCats = [
   { name: "스타일", code: "00" }, { name: "현관", code: "01" }, { name: "거실", code: "02" },
