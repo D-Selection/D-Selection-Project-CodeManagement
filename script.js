@@ -148,11 +148,6 @@ mappingTableBody.innerHTML = skuData.map((s) => `
     <td>${s.style}</td>
     <td>본사</td>
     <td>${s.item}</td>
-    <td class="muted">-</td>
-    <td class="muted">-</td>
-    <td class="muted">-</td>
-    <td class="muted">-</td>
-    <td class="muted">-</td>
   </tr>
 `).join("");
 
@@ -656,15 +651,18 @@ const makers = [
   { name: "KCC", code: "07" }, { name: "한샘", code: "08" }, { name: "라이히트", code: "09" },
 ];
 
-document.getElementById("majorCatBody").innerHTML = majorCats.map((c, i) => `
-  <tr class="${i === 0 ? "selected" : ""}"><td>${c.name}</td><td>${c.code}</td></tr>
-`).join("");
-document.getElementById("midCatBody").innerHTML = midCats.map((c, i) => `
-  <tr class="${i === 0 ? "selected" : ""}"><td>${c.major}</td><td>${c.name}</td><td>${c.code}</td></tr>
-`).join("");
-document.getElementById("makerBody").innerHTML = makers.map((c, i) => `
-  <tr class="${i === 0 ? "selected" : ""}"><td>${c.name}</td><td>${c.code}</td></tr>
-`).join("");
+function renderCategoryTables() {
+  document.getElementById("majorCatBody").innerHTML = majorCats.map((c, i) => `
+    <tr class="${i === 0 ? "selected" : ""}"><td>${c.name}</td><td>${c.code}</td></tr>
+  `).join("");
+  document.getElementById("midCatBody").innerHTML = midCats.map((c, i) => `
+    <tr class="${i === 0 ? "selected" : ""}"><td>${c.major}</td><td>${c.name}</td><td>${c.code}</td></tr>
+  `).join("");
+  document.getElementById("makerBody").innerHTML = makers.map((c, i) => `
+    <tr class="${i === 0 ? "selected" : ""}"><td>${c.name}</td><td>${c.code}</td></tr>
+  `).join("");
+}
+renderCategoryTables();
 
 /* ===================== STEPS 2-4 공용 데이터 (원가 / 고객언어 / 판매가) ===================== */
 const flatRows = [
@@ -692,7 +690,11 @@ const flatRows = [
   { seq: 22, code: "SL052", detailCode: "FM-115-01", style: "스타일 미적용 - None", space: "전체 공간 - General Area", item: "세라믹 탄성코트", itemCustomer: "세라믹 탄성코트", detail: "세라믹 탄성코트", detailCustomer: "세라믹 탄성코트", price: 10 },
   { seq: 23, code: "SL054", detailCode: "FN-551-01", style: "미니멀 - Minimal", space: "침실1 - Bedroom 1", item: "침실1 와이드 붙박이장_MM", itemCustomer: "침실1 와이드 붙박이장_MM", detail: "도어형 붙박이장/미니멀", detailCustomer: "도어형 붙박이장/미니멀", price: 10 },
   { seq: 24, code: "SL055", detailCode: "FN-552-01", style: "내추럴 모던 - Natural Modern", space: "침실1 - Bedroom 1", item: "침실1 와이드 붙박이장_NM", itemCustomer: "침실1 와이드 붙박이장_NM", detail: "도어형 붙박이장/내추럴 모던", detailCustomer: "도어형 붙박이장/내추럴 모던", price: 10 },
-].map((r) => ({ customer: "일반 - Customer", pyeong: "059A", hq: "본사", option: "기본", plan: "미적용", ...r }));
+].map((r) => ({
+  customer: "일반 - Customer", pyeong: "059A", hq: "본사", option: "기본", plan: "미적용",
+  majorCode: "", majorName: "", midCode: "", midName: "", makerCode: "", makerName: "",
+  ...r,
+}));
 
 document.getElementById("costTableBody").innerHTML = flatRows.map((r) => `
   <tr>
@@ -708,48 +710,221 @@ document.getElementById("costTableBody").innerHTML = flatRows.map((r) => `
   </tr>
 `).join("");
 
-document.getElementById("langTableBody").innerHTML = flatRows.map((r) => `
-  <tr>
-    <td>${r.seq}</td>
-    <td>${r.customer}</td>
-    <td>${r.pyeong}</td>
-    <td>${r.hq}</td>
-    <td>${r.style}</td>
-    <td>${r.option}</td>
-    <td>${r.plan}</td>
-    <td>${r.space}</td>
-    <td class="muted">-</td>
-    <td class="muted">-</td>
-    <td class="muted">-</td>
-    <td class="code-cell">${r.code}</td>
-    <td>${r.item}</td>
-    <td>${r.itemCustomer}</td>
-    <td>${r.detailCode}</td>
-    <td>${r.detail}</td>
-    <td>${r.detailCustomer}</td>
-  </tr>
-`).join("");
+function renderLangTable() {
+  document.getElementById("langTableBody").innerHTML = flatRows.map((r) => `
+    <tr>
+      <td><input type="checkbox" class="lang-row-check stage3-editable-control" data-seq="${r.seq}" /></td>
+      <td>${r.seq}</td>
+      <td>${r.customer}</td>
+      <td>${r.pyeong}</td>
+      <td>${r.hq}</td>
+      <td>${r.style}</td>
+      <td>${r.option}</td>
+      <td>${r.plan}</td>
+      <td>${r.space}</td>
+      <td class="${r.majorName ? "" : "muted"}">${r.majorName || "-"}</td>
+      <td class="${r.midName ? "" : "muted"}">${r.midName || "-"}</td>
+      <td class="${r.makerName ? "" : "muted"}">${r.makerName || "-"}</td>
+      <td class="code-cell">${r.code}</td>
+      <td>${r.item}</td>
+      <td>${r.itemCustomer}</td>
+      <td>${r.detailCode}</td>
+      <td>${r.detail}</td>
+      <td>${r.detailCustomer}</td>
+    </tr>
+  `).join("");
+  renderStage3ExtraLock();
+}
+renderLangTable();
 
-document.getElementById("priceTableBody").innerHTML = flatRows.map((r) => `
-  <tr>
-    <td>${r.seq}</td>
-    <td>${r.customer}</td>
-    <td>${r.pyeong}</td>
-    <td>${r.hq}</td>
-    <td>${r.style}</td>
-    <td>${r.option}</td>
-    <td>${r.plan}</td>
-    <td>${r.space}</td>
-    <td class="code-cell">${r.code}</td>
-    <td>${r.detailCode}</td>
-    <td>${r.item}</td>
-    <td>${r.itemCustomer}</td>
-    <td class="muted">-</td>
-    <td class="muted">-</td>
-    <td class="muted">-</td>
-    <td>${r.price === "" ? "" : r.price}</td>
-  </tr>
-`).join("");
+function renderPriceTable() {
+  document.getElementById("priceTableBody").innerHTML = flatRows.map((r) => `
+    <tr>
+      <td>${r.seq}</td>
+      <td>${r.customer}</td>
+      <td>${r.pyeong}</td>
+      <td>${r.hq}</td>
+      <td>${r.style}</td>
+      <td>${r.option}</td>
+      <td>${r.plan}</td>
+      <td>${r.space}</td>
+      <td class="code-cell">${r.code}</td>
+      <td>${r.detailCode}</td>
+      <td>${r.item}</td>
+      <td>${r.itemCustomer}</td>
+      <td class="${r.majorName ? "" : "muted"}">${r.majorName || "-"}</td>
+      <td class="${r.midName ? "" : "muted"}">${r.midName || "-"}</td>
+      <td class="${r.makerName ? "" : "muted"}">${r.makerName || "-"}</td>
+      <td>${r.price === "" ? "" : r.price}</td>
+    </tr>
+  `).join("");
+}
+renderPriceTable();
+
+/* ===================== STEP 4 개선 : 선택 항목 일괄수정(대분류/중분류/제조사명 검증) + 정렬순서 설정 ===================== */
+const langEditModal = document.getElementById("langEditModal");
+const langEditModalBody = document.getElementById("langEditModalBody");
+const langEditBtn = document.getElementById("langEditBtn");
+
+document.getElementById("langEditModalClose").addEventListener("click", () => { langEditModal.hidden = true; });
+
+langEditBtn.addEventListener("click", () => {
+  if (dsLoad().stages.s3.status !== "editable") return;
+  const checkedSeqs = [...document.querySelectorAll(".lang-row-check:checked")].map((cb) => Number(cb.dataset.seq));
+  if (checkedSeqs.length === 0) { showToast("수정할 항목을 먼저 선택해주세요."); return; }
+
+  langEditModalBody.innerHTML = `
+    <div class="lang-edit-summary">선택 ${checkedSeqs.length}건에 아래 입력값을 동일하게 적용합니다. 비워두면 해당 항목은 변경하지 않습니다.</div>
+    <div class="lang-edit-field">
+      <label>상품 대분류명</label>
+      <input type="text" id="langEditMajor" placeholder="예: 현관" />
+      <div class="field-hint">분양수금 시스템에 등록된 대분류명과 정확히 일치해야 합니다.</div>
+      <div class="lang-edit-error" id="langEditMajorError" hidden></div>
+    </div>
+    <div class="lang-edit-field">
+      <label>상품 중분류명</label>
+      <input type="text" id="langEditMid" placeholder="예: 블랑클래식" />
+      <div class="field-hint">분양수금 시스템에 등록된 중분류명과 정확히 일치해야 합니다.</div>
+      <div class="lang-edit-error" id="langEditMidError" hidden></div>
+    </div>
+    <div class="lang-edit-field">
+      <label>상품 제조사명</label>
+      <input type="text" id="langEditMaker" placeholder="예: LX하우시스" />
+      <div class="field-hint">분양수금 시스템에 등록된 제조사명과 정확히 일치해야 합니다.</div>
+      <div class="lang-edit-error" id="langEditMakerError" hidden></div>
+    </div>
+    <div class="lang-edit-field">
+      <label>항목명(고객용)</label>
+      <input type="text" id="langEditItemCustomer" placeholder="자유롭게 입력 (데이터 검증 없음)" />
+    </div>
+    <div class="lang-edit-field">
+      <label>세부사항(고객용)</label>
+      <input type="text" id="langEditDetailCustomer" placeholder="자유롭게 입력 (데이터 검증 없음)" />
+    </div>
+    <div class="lang-edit-actions">
+      <button class="toolbar-btn" id="langEditCancelBtn" type="button">취소</button>
+      <button class="primary-btn" id="langEditSaveBtn" type="button">저장</button>
+    </div>
+  `;
+  langEditModal.hidden = false;
+
+  document.getElementById("langEditCancelBtn").addEventListener("click", () => { langEditModal.hidden = true; });
+
+  document.getElementById("langEditSaveBtn").addEventListener("click", () => {
+    ["langEditMajorError", "langEditMidError", "langEditMakerError"].forEach((id) => { document.getElementById(id).hidden = true; });
+
+    const majorInput = document.getElementById("langEditMajor").value.trim();
+    const midInput = document.getElementById("langEditMid").value.trim();
+    const makerInput = document.getElementById("langEditMaker").value.trim();
+    const itemCustomerInput = document.getElementById("langEditItemCustomer").value.trim();
+    const detailCustomerInput = document.getElementById("langEditDetailCustomer").value.trim();
+
+    let hasError = false;
+    let majorMatch = null, midMatch = null, makerMatch = null;
+
+    if (majorInput) {
+      majorMatch = majorCats.find((c) => c.name === majorInput);
+      if (!majorMatch) {
+        document.getElementById("langEditMajorError").hidden = false;
+        document.getElementById("langEditMajorError").textContent = `❌ '${majorInput}'은(는) 분양수금 시스템에 없는 상품 대분류명입니다.`;
+        hasError = true;
+      }
+    }
+    if (midInput) {
+      midMatch = midCats.find((c) => c.name === midInput);
+      if (!midMatch) {
+        document.getElementById("langEditMidError").hidden = false;
+        document.getElementById("langEditMidError").textContent = `❌ '${midInput}'은(는) 분양수금 시스템에 없는 상품 중분류명입니다.`;
+        hasError = true;
+      }
+    }
+    if (makerInput) {
+      makerMatch = makers.find((c) => c.name === makerInput);
+      if (!makerMatch) {
+        document.getElementById("langEditMakerError").hidden = false;
+        document.getElementById("langEditMakerError").textContent = `❌ '${makerInput}'은(는) 분양수금 시스템에 없는 상품 제조사명입니다.`;
+        hasError = true;
+      }
+    }
+    if (hasError) return;
+
+    const changed = [];
+    flatRows.forEach((r) => {
+      if (!checkedSeqs.includes(r.seq)) return;
+      if (majorMatch) { r.majorName = majorMatch.name; r.majorCode = majorMatch.code; }
+      if (midMatch) { r.midName = midMatch.name; r.midCode = midMatch.code; }
+      if (makerMatch) { r.makerName = makerMatch.name; r.makerCode = makerMatch.code; }
+      if (itemCustomerInput) r.itemCustomer = itemCustomerInput;
+      if (detailCustomerInput) r.detailCustomer = detailCustomerInput;
+      changed.push(r.seq);
+    });
+
+    dsAddEditLog("4. 상품고객언어", `${changed.length}건 수정 (순번: ${changed.join(", ")})`);
+    renderLangTable();
+    renderPriceTable();
+    langEditModal.hidden = true;
+    showToast(`${changed.length}건이 수정되었습니다.`);
+  });
+});
+
+// 대분류/중분류/제조사 정렬순서 설정 : ▲▼로 배열 순서를 바꾸면 전사공통코드(5.대분류/중분류/제조사) 표시 순서에도 그대로 반영된다.
+const sortOrderModal = document.getElementById("sortOrderModal");
+const sortOrderModalBody = document.getElementById("sortOrderModalBody");
+const SORT_ORDER_ARRAYS = { major: majorCats, mid: midCats, maker: makers };
+
+function renderSortOrderColumn(title, arr, key) {
+  return `
+    <div class="sort-order-col">
+      <div class="sort-order-col-title">${title} <span class="muted">${arr.length}개</span></div>
+      <div class="sort-order-list">
+        ${arr.map((c, i) => `
+          <div class="sort-order-item">
+            <span class="sort-order-item-name">${c.name}</span>
+            <span class="sort-order-item-btns">
+              <button type="button" data-list="${key}" data-idx="${i}" data-dir="up" ${i === 0 ? "disabled" : ""}>▲</button>
+              <button type="button" data-list="${key}" data-idx="${i}" data-dir="down" ${i === arr.length - 1 ? "disabled" : ""}>▼</button>
+            </span>
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderSortOrderModal() {
+  sortOrderModalBody.innerHTML = `
+    <div class="sort-order-columns">
+      ${renderSortOrderColumn("대분류", majorCats, "major")}
+      ${renderSortOrderColumn("중분류", midCats, "mid")}
+      ${renderSortOrderColumn("제조사", makers, "maker")}
+    </div>
+    <div class="sort-order-actions">
+      <button class="primary-btn" id="sortOrderSaveBtn" type="button">저장 후 닫기</button>
+    </div>
+  `;
+  sortOrderModalBody.querySelectorAll(".sort-order-item-btns button").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const arr = SORT_ORDER_ARRAYS[btn.dataset.list];
+      const idx = Number(btn.dataset.idx);
+      const swapWith = btn.dataset.dir === "up" ? idx - 1 : idx + 1;
+      if (swapWith < 0 || swapWith >= arr.length) return;
+      [arr[idx], arr[swapWith]] = [arr[swapWith], arr[idx]];
+      renderSortOrderModal();
+    });
+  });
+  document.getElementById("sortOrderSaveBtn").addEventListener("click", () => {
+    renderCategoryTables();
+    dsAddEditLog("4. 상품고객언어", "대분류/중분류/제조사 정렬순서 변경");
+    sortOrderModal.hidden = true;
+    showToast("정렬순서가 저장되었습니다.");
+  });
+}
+
+document.getElementById("sortOrderBtn").addEventListener("click", () => {
+  renderSortOrderModal();
+  sortOrderModal.hidden = false;
+});
+document.getElementById("sortOrderModalClose").addEventListener("click", () => { sortOrderModal.hidden = true; });
 
 /* ===================== STEP 5: 안분표 생성 ===================== */
 const allocationRows = [
@@ -1111,12 +1286,12 @@ function renderStep1StageBox() {
   renderMappingLock();
 }
 
-function renderStageBox(stageKey, containerId, verb, badgeText) {
+function renderStageBox(stageKey, containerId, verb, badgeText, upstreamKey, overlayId, toolbarLeftId) {
   const box = document.getElementById(containerId);
   const stages = dsLoad().stages;
   const s = stages[stageKey];
   const isOwner = dsGetCurrentRole() === s.owner;
-  const upstream = stageKey === "s2" ? stages.s14 : stages.s2;
+  const upstream = stages[upstreamKey];
 
   if (s.status === "locked") {
     box.innerHTML = lockedBadgeHtml(s, upstream.label);
@@ -1144,8 +1319,6 @@ function renderStageBox(stageKey, containerId, verb, badgeText) {
     document.getElementById(`${stageKey}CancelReopenBtn`).addEventListener("click", () => { dsCancelReopenRequest(stageKey); renderEverything(); });
   }
 
-  const overlayId = stageKey === "s2" ? "stage2LockOverlay" : "stage4LockOverlay";
-  const toolbarLeftId = stageKey === "s2" ? "stage2ToolbarLeft" : "stage4ToolbarLeft";
   const overlay = document.getElementById(overlayId);
   const toolbarLeft = document.getElementById(toolbarLeftId);
 
@@ -1159,10 +1332,19 @@ function renderStageBox(stageKey, containerId, verb, badgeText) {
   }
 }
 
+// 4. 상품고객언어 : 체크박스/일괄수정 버튼처럼 lockable 영역 밖(floating-action)에
+// 있는 개별 컨트롤은 stage3-editable-control 클래스로 별도 잠금 처리한다.
+function renderStage3ExtraLock() {
+  const editable = dsLoad().stages.s3.status === "editable";
+  document.querySelectorAll(".stage3-editable-control").forEach((el) => { el.disabled = !editable; });
+}
+
 function renderAll() {
   renderStep1StageBox();
-  renderStageBox("s2", "stage2Box", "원가", "원 가");
-  renderStageBox("s4", "stage4Box", "판매가", "판매가");
+  renderStageBox("s2", "stage2Box", "원가", "원 가", "s14", "stage2LockOverlay", "stage2ToolbarLeft");
+  renderStageBox("s4", "stage4Box", "판매가", "판매가", "s2", "stage4LockOverlay", "stage4ToolbarLeft");
+  renderStageBox("s3", "stage3Box", "상품고객언어", "고객언어", "s4", "stage3LockOverlay", "stage3ToolbarLeft");
+  renderStage3ExtraLock();
 }
 
 // 공용 상태바(단계 현황/역할전환/알림/이력/수정로그)까지 함께 다시 그린다

@@ -21,8 +21,8 @@
         <span class="dept-tag">※ 메뉴별 담당부서</span>
         <a href="#" class="nav-step active" data-step="1">1. 상품구성</a>
         <a href="#" class="nav-step" data-step="2">2. 원가 수정</a>
-        <a href="#" class="nav-step" data-step="3">3. 상품고객언어</a>
-        <a href="#" class="nav-step" data-step="4">4. 판매가 수정</a>
+        <a href="#" class="nav-step" data-step="3">3. 판매가 수정</a>
+        <a href="#" class="nav-step" data-step="4">4. 상품고객언어</a>
         <a href="#" class="nav-step" data-step="5">5. 안분표 생성</a>
         <button class="close-btn" type="button" id="closeBtn">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1L13 13M13 1L1 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -184,11 +184,6 @@
                     <th>스타일명</th>
                     <th>현장본사구분</th>
                     <th>항목명</th>
-                    <th>상품 대분류코드</th>
-                    <th>상품 대분류명</th>
-                    <th>상품 중분류코드</th>
-                    <th>상품 중분류명</th>
-                    <th>상품 제조사코드</th>
                   </tr>
                 </thead>
                 <tbody id="mappingTableBody"></tbody>
@@ -419,7 +414,7 @@
         </div>
         <div class="section-title-bar">
           <div class="section-title-left">
-            <h2>3. 원가 수정 <span class="count-pill">5398개</span></h2>
+            <h2>2. 원가 수정 <span class="count-pill">5398개</span></h2>
           </div>
           <div class="filterbar-right">
             <button class="filter-chip">평형그룹명</button>
@@ -448,65 +443,8 @@
       </div>
     </section>
 
-    <!-- ============ STEP 3: 상품고객언어 ============ -->
+    <!-- ============ STEP 3: 판매가 수정 ============ -->
     <section class="view" id="view-3">
-      <div class="toolbar">
-        <div class="toolbar-left">
-          <button class="toolbar-btn">⭣ 고객언어 Excel 양식 다운로드</button>
-          <button class="toolbar-btn">⭱ 고객언어 Excel 업로드</button>
-          <button class="toolbar-btn">↕1 순번정렬</button>
-        </div>
-        <div class="info-box">
-          1.「순번」,「항목명(고객용)」,「세부사항(고객용)」,「비고」를 수정할 수 있어요.<br/>
-          2. 만약 상품 엑셀업로드에 "고객용" 데이터를 업로드 하지 않았다면 이곳에서 수정하세요.<br/>
-          3. 이곳에서 설정한 "고객용" 데이터는 안분표를 생성/재생성 하여야 안분표에 반영됩니다.
-        </div>
-      </div>
-      <div class="section-title-bar">
-        <div class="section-title-left">
-          <h2>4. 「상품별」 고객언어 수정 <span class="count-pill">2036개</span></h2>
-        </div>
-        <div class="filterbar-right">
-          <button class="filter-chip">평형명</button>
-          <button class="filter-chip">상품코드</button>
-          <button class="filter-chip">항목명</button>
-          <button class="filter-chip">항목명 (고객용)</button>
-          <button class="filter-chip add-filter">+ Add filter</button>
-        </div>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th class="sortable">순번 <span class="sort-icon">⇅</span></th>
-              <th>고객명</th>
-              <th>평형명</th>
-              <th>현장본사구분</th>
-              <th>스타일명</th>
-              <th>평형옵션명</th>
-              <th>선택형평면명</th>
-              <th>공간명</th>
-              <th>상품 대분류명</th>
-              <th>상품 중분류명</th>
-              <th>상품 제조사명</th>
-              <th class="sortable">공간코드 <span class="sort-icon">⇅</span></th>
-              <th>항목명</th>
-              <th>항목명 (고객용)</th>
-              <th>세부사항 구성코드</th>
-              <th>세부사항</th>
-              <th>세부사항 (고객용)</th>
-            </tr>
-          </thead>
-          <tbody id="langTableBody"></tbody>
-        </table>
-      </div>
-      <div class="floating-action">
-        <button class="primary-btn">✎ 항목명(고객용) / 세부사항(고객용) 수정</button>
-      </div>
-    </section>
-
-    <!-- ============ STEP 4: 판매가 수정 ============ -->
-    <section class="view" id="view-4">
       <div class="toolbar">
         <div class="toolbar-left" id="stage4ToolbarLeft">
           <button class="toolbar-btn">⭣ 판매가 Excel 양식 다운로드</button>
@@ -522,7 +460,7 @@
         </div>
         <div class="section-title-bar">
           <div class="section-title-left">
-            <h2>4. 「상품별」 판매가 수정 <span class="count-pill">2036개</span></h2>
+            <h2>3. 「상품별」 판매가 수정 <span class="count-pill">2036개</span></h2>
           </div>
           <div class="filterbar-right">
             <button class="filter-chip">평형명</button>
@@ -559,6 +497,72 @@
         </div>
         <div class="floating-action">
           <button class="primary-btn">✎ 수정하기</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STEP 4: 상품고객언어 ============ -->
+    <section class="view" id="view-4">
+      <div class="toolbar">
+        <div class="toolbar-left" id="stage3ToolbarLeft">
+          <button class="toolbar-btn">⭣ 고객언어 Excel 양식 다운로드</button>
+          <button class="toolbar-btn">⭱ 고객언어 Excel 업로드</button>
+          <button class="toolbar-btn">↕1 순번정렬</button>
+          <button class="toolbar-btn" id="sortOrderBtn">🔃 대분류 · 중분류 · 제조사 정렬순서 설정</button>
+        </div>
+        <div class="toolbar-right" id="stage3Box"></div>
+      </div>
+      <div class="info-box">
+        1.「순번」,「항목명(고객용)」,「세부사항(고객용)」,「비고」를 수정할 수 있어요.<br/>
+        2. 상품 대분류명 · 상품 중분류명 · 상품 제조사명은 분양수금 시스템에 이미 등록된 코드/명칭과 일치해야 하며, 일치하지 않는 값을 입력하면 업로드 시 오류가 발생합니다.<br/>
+        3. 항목명(고객용) · 세부사항(고객용)은 분양수금 시스템에 데이터가 없는 항목으로, 입력한 값 그대로 저장됩니다.<br/>
+        4. 이곳에서 설정한 "고객용" 데이터는 안분표를 생성/재생성 하여야 안분표에 반영됩니다.
+      </div>
+      <div class="lockable" id="stage3Lockable">
+        <div class="lock-overlay" id="stage3LockOverlay" hidden>
+          <div class="lock-overlay-msg"></div>
+        </div>
+        <div class="section-title-bar">
+          <div class="section-title-left">
+            <h2>4. 「상품별」 고객언어 수정 <span class="count-pill">2036개</span></h2>
+          </div>
+          <div class="filterbar-right">
+            <button class="filter-chip">평형명</button>
+            <button class="filter-chip">상품코드</button>
+            <button class="filter-chip">항목명</button>
+            <button class="filter-chip">항목명 (고객용)</button>
+            <button class="filter-chip add-filter">+ Add filter</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th class="sortable">순번 <span class="sort-icon">⇅</span></th>
+                <th>고객명</th>
+                <th>평형명</th>
+                <th>현장본사구분</th>
+                <th>스타일명</th>
+                <th>평형옵션명</th>
+                <th>선택형평면명</th>
+                <th>공간명</th>
+                <th>상품 대분류명</th>
+                <th>상품 중분류명</th>
+                <th>상품 제조사명</th>
+                <th class="sortable">공간코드 <span class="sort-icon">⇅</span></th>
+                <th>항목명</th>
+                <th>항목명 (고객용)</th>
+                <th>세부사항 구성코드</th>
+                <th>세부사항</th>
+                <th>세부사항 (고객용)</th>
+              </tr>
+            </thead>
+            <tbody id="langTableBody"></tbody>
+          </table>
+        </div>
+        <div class="floating-action">
+          <button class="primary-btn stage3-editable-control" id="langEditBtn">✎ 선택 항목 수정 (대분류/중분류/제조사명 · 항목명(고객용) · 세부사항(고객용))</button>
         </div>
       </div>
     </section>
@@ -640,6 +644,22 @@
       </div>
     </div>
     <div class="toast" id="sendToast" hidden></div>
+
+    <!-- 4. 상품고객언어 : 선택 항목 일괄 수정 모달 -->
+    <div class="cmodal-backdrop" id="langEditModal" hidden>
+      <div class="send-modal">
+        <div class="cmodal-header">✎ 선택 항목 수정 <button class="cmodal-close" id="langEditModalClose" type="button">✕</button></div>
+        <div class="cmodal-body" id="langEditModalBody"></div>
+      </div>
+    </div>
+
+    <!-- 4. 상품고객언어 : 대분류/중분류/제조사 정렬순서 설정 모달 -->
+    <div class="cmodal-backdrop" id="sortOrderModal" hidden>
+      <div class="send-modal">
+        <div class="cmodal-header">🔃 대분류 · 중분류 · 제조사 정렬순서 설정 <button class="cmodal-close" id="sortOrderModalClose" type="button">✕</button></div>
+        <div class="cmodal-body" id="sortOrderModalBody"></div>
+      </div>
+    </div>
   </div>
 
 <script src="shared-state.js"></script>

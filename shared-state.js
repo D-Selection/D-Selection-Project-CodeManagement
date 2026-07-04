@@ -4,7 +4,7 @@
    localStorage에 저장되어 페이지를 이동해도(현장별코드 <-> 1~5단계)
    같은 상태를 이어서 볼 수 있다.
    작업순서 : 0. 현장별코드 → 1.3 프로덕트×상품구성코드 → 1.4 평형그룹매핑
-              → 2. 원가 수정 → 4. 판매가 수정
+              → 2. 원가 수정 → 3. 판매가 수정 → 4. 상품고객언어
    ===================================================================== */
 const DS_STORAGE_KEY = "dselection_shared_state_v2";
 
@@ -13,9 +13,10 @@ const DS_ROLES = [
   { key: "owner13", name: "이도윤", team: "데이터관리팀", stageLabel: "1.3 프로덕트×상품구성코드" },
   { key: "owner14", name: "안은철", team: "설계팀", stageLabel: "1.4 평형그룹매핑" },
   { key: "owner2", name: "김민준", team: "원가팀", stageLabel: "2. 원가 수정" },
-  { key: "owner4", name: "박서연", team: "영업팀", stageLabel: "4. 판매가 수정" },
+  { key: "owner4", name: "박서연", team: "영업팀", stageLabel: "3. 판매가 수정" },
+  { key: "owner3", name: "장하윤", team: "고객언어팀", stageLabel: "4. 상품고객언어" },
 ];
-const DS_STAGE_ORDER = ["s0", "s13", "s14", "s2", "s4"];
+const DS_STAGE_ORDER = ["s0", "s13", "s14", "s2", "s4", "s3"];
 
 function dsRoleName(key) {
   const r = DS_ROLES.find((x) => x.key === key);
@@ -32,7 +33,8 @@ function dsDefaultStages() {
     s13: { key: "s13", label: "1.3 프로덕트×상품구성코드", owner: "owner13", downstream: ["s14"], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오전 11:02:10", pendingApprovals: [], justUnlocked: false },
     s14: { key: "s14", label: "1.4 평형그룹매핑", owner: "owner14", downstream: ["s2"], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오후 1:31:21", pendingApprovals: [], justUnlocked: false },
     s2: { key: "s2", label: "2. 원가 수정", owner: "owner2", downstream: ["s4"], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오후 5:30:20", pendingApprovals: [], justUnlocked: false },
-    s4: { key: "s4", label: "4. 판매가 수정", owner: "owner4", downstream: [], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오후 5:30:03", pendingApprovals: [], justUnlocked: false },
+    s4: { key: "s4", label: "3. 판매가 수정", owner: "owner4", downstream: ["s3"], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오후 5:30:03", pendingApprovals: [], justUnlocked: false },
+    s3: { key: "s3", label: "4. 상품고객언어", owner: "owner3", downstream: [], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오후 6:10:45", pendingApprovals: [], justUnlocked: false },
   };
 }
 
@@ -59,10 +61,14 @@ function dsLoad() {
       const parsed = JSON.parse(raw);
       const fresh = dsFreshState();
       dsState = Object.assign(fresh, parsed);
-      // 이전 버전 저장값에 새 단계(s0)가 없을 수 있으므로 보정
+      // 이전 버전 저장값에 새 단계(s0, s3)가 없을 수 있으므로 보정
       if (!dsState.stages.s0) dsState.stages.s0 = dsFreshState().stages.s0;
+      if (!dsState.stages.s3) dsState.stages.s3 = dsFreshState().stages.s3;
       dsState.stages.s13.downstream = ["s14"];
       dsState.stages.s0.downstream = ["s13"];
+      dsState.stages.s4.downstream = ["s3"];
+      dsState.stages.s4.label = "3. 판매가 수정";
+      dsState.stages.s3.label = "4. 상품고객언어";
       return dsState;
     }
   } catch (e) {}
