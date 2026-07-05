@@ -45,35 +45,107 @@ document.getElementById("spaceBody").innerHTML = spaces.map((s) => `
   <tr class="${s.code === "EN" ? "selected" : ""}"><td>${s.code}</td><td>${s.name}</td></tr>
 `).join("");
 
-const majors = [
-  { code: "AC", name: "악세서리" },
-  { code: "CW", name: "공사성(창호 등)" },
-  { code: "EE", name: "전기설비" },
-  { code: "FM", name: "마감재(바닥/벽 등)" },
-  { code: "FN", name: "가구" },
-  { code: "AP", name: "가전" },
-];
-document.getElementById("majorBody").innerHTML = majors.map((m) => `
-  <tr class="${m.code === "AC" ? "selected" : ""}"><td>${m.code}</td><td>${m.name}</td></tr>
-`).join("");
+/* ===================== 전사공통코드: 대분류 / 중분류 =====================
+   1.1 프로덕트(script.js의 DS_PRODUCT_MASTER_CATALOG)와 동일한 체계를
+   shared-state.js에서 함께 참조한다. 신규 체계가 기본값이고, 개편 이전부터
+   있던 현장을 위해 구버전 체계도 그대로 조회할 수 있게 남겨둔다 — 기존
+   현장 데이터는 구버전 방식대로, 신규 현장 데이터만 신규 방식으로 관리. */
+let categoryScheme = "new";
+let selectedMajorCode = null;
 
-const mids = [
-  { top: "AC", code: "200", name: "국산 주방수전/워터워스유진" },
-  { top: "AC", code: "201", name: "국산 주방수전/대림바스" },
-  { top: "AC", code: "202", name: "국산 다용도실 하부장 수전/대림바스" },
-  { top: "AC", code: "203", name: "국산 일반 세면기 수전/대림바스" },
-  { top: "AC", code: "204", name: "국산 언더볼 세면기 수전/대림바스" },
-  { top: "AC", code: "205", name: "국산 선반형 샤워수전/대림바스" },
-  { top: "AC", code: "206", name: "국산 선반형 욕조수전/대림바스" },
-  { top: "AC", code: "207", name: "국산 슬라이드바/대림바스" },
-  { top: "AC", code: "208", name: "국산 안마샤워헤드/대림바스" },
-  { top: "AC", code: "209", name: "국산 일반 세면기(공용욕실)/대림바스" },
-  { top: "AC", code: "210", name: "국산 일반 세면기(부부욕실)/대림바스" },
-  { top: "AC", code: "211", name: "국산 언더볼 세면기/대림바스" },
+function currentMajors() { return categoryScheme === "new" ? DS_PRODUCT_MAJORS_NEW : DS_PRODUCT_MAJORS_LEGACY; }
+function currentMids() { return categoryScheme === "new" ? DS_PRODUCT_MIDS_NEW : DS_PRODUCT_MIDS_LEGACY; }
+
+function renderMajorBody() {
+  const majors = currentMajors();
+  document.getElementById("majorCount").textContent = majors.length;
+  document.getElementById("majorBody").innerHTML = majors.map((m) => `
+    <tr class="${m.code === selectedMajorCode ? "selected" : ""}" data-code="${m.code}"><td>${m.code}</td><td>${m.name}</td></tr>
+  `).join("");
+}
+
+function renderMidBody() {
+  const mids = currentMids().filter((m) => !selectedMajorCode || m.majorCode === selectedMajorCode);
+  document.getElementById("midCount").textContent = mids.length;
+  document.getElementById("midBody").innerHTML = mids.map((m) => `
+    <tr><td>${m.majorCode}</td><td>${m.code}</td><td>${m.name}</td></tr>
+  `).join("");
+}
+
+function renderCategoryScheme() {
+  document.querySelectorAll(".cscheme-btn").forEach((btn) => btn.classList.toggle("active", btn.dataset.scheme === categoryScheme));
+  document.getElementById("categorySchemeNote").hidden = categoryScheme !== "legacy";
+  renderMajorBody();
+  renderMidBody();
+}
+
+document.getElementById("majorBody").addEventListener("click", (e) => {
+  const tr = e.target.closest("tr[data-code]");
+  if (!tr) return;
+  selectedMajorCode = selectedMajorCode === tr.dataset.code ? null : tr.dataset.code;
+  renderMajorBody();
+  renderMidBody();
+});
+
+document.querySelectorAll(".cscheme-btn").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    if (btn.dataset.scheme === categoryScheme) return;
+    categoryScheme = btn.dataset.scheme;
+    selectedMajorCode = null;
+    renderCategoryScheme();
+  });
+});
+
+renderCategoryScheme();
+
+/* ===================== 전사공통코드: 소분류(PK) 전체 현장 집계 =====================
+   소분류(PK)는 여전히 "현장별 관리 항목"이라 표준은 아니지만, 실제로 각 현장이
+   입력해 쓰고 있는 소분류를 현장명은 빼고 사용 현장 수만 모아 참고용으로 보여준다.
+   DS_PRODUCT_MASTER_CATALOG(1.1 프로덕트 소분류 마스터)와 현장별 배정 데모
+   데이터(DS_OTHER_SITE_PRODUCT_SETS)를 합쳐서 코드별 사용 현장 수를 집계한다. */
+const SUB_AGG_SITE_SETS = [
+  { codes: DS_PRODUCT_MASTER_CATALOG.map((r) => r.code) }, // 현재 현장(아크로 서초) : 마스터 전량 보유
+  ...DS_OTHER_SITE_PRODUCT_SETS.map((s) => ({ codes: s.codes })),
 ];
-document.getElementById("midBody").innerHTML = mids.map((m) => `
-  <tr class="${m.code === "200" ? "selected" : ""}"><td>${m.top}</td><td>${m.code}</td><td>${m.name}</td></tr>
-`).join("");
+
+function buildSubCategoryAggregate() {
+  const usageCount = {};
+  SUB_AGG_SITE_SETS.forEach((set) => {
+    set.codes.forEach((code) => { usageCount[code] = (usageCount[code] || 0) + 1; });
+  });
+  return DS_PRODUCT_MASTER_CATALOG
+    .filter((r) => usageCount[r.code])
+    .map((r) => Object.assign({}, r, { siteUsage: usageCount[r.code] }));
+}
+const subCategoryAggregate = buildSubCategoryAggregate();
+
+function renderSubAggBody(list) {
+  document.getElementById("subAggCount").textContent = list.length;
+  document.getElementById("subAggBody").innerHTML = list.map((r) => `
+    <tr>
+      <td>${r.majorCode}</td><td>${r.majorName}</td><td>${r.midCode}</td><td>${r.midName}</td>
+      <td class="ccode-cell">${r.code}</td><td>${r.name}</td><td>${r.siteUsage}개 현장</td>
+    </tr>
+  `).join("");
+}
+renderSubAggBody(subCategoryAggregate);
+
+let subAggSortAsc = true;
+document.querySelector("#subAggTable .sortable").addEventListener("click", () => {
+  subAggSortAsc = !subAggSortAsc;
+  const sorted = [...subCategoryAggregate].sort((a, b) =>
+    subAggSortAsc ? a.code.localeCompare(b.code) : b.code.localeCompare(a.code)
+  );
+  renderSubAggBody(sorted);
+});
+
+document.getElementById("subAggSearch").addEventListener("input", (e) => {
+  const q = e.target.value.trim().toLowerCase();
+  const filtered = !q ? subCategoryAggregate : subCategoryAggregate.filter((r) =>
+    [r.code, r.name, r.majorName, r.midName].join(" ").toLowerCase().includes(q)
+  );
+  renderSubAggBody(filtered);
+});
 
 /* =====================================================================
    전사공통코드: 고객스타일 / 스타일 / 평형 / 평형옵션 / 선택형평면 마스터
