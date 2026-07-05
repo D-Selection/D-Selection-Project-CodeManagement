@@ -52,35 +52,6 @@
           </div>
         </aside>
 
-        <aside class="ccol ccol-narrow">
-          <div class="ccol-title">
-            <span class="ccol-icon">🔎</span> 프로덕트코드
-            <span class="cscheme-toggle">
-              <button type="button" class="cscheme-btn active" data-scheme="new">신규체계</button>
-              <button type="button" class="cscheme-btn" data-scheme="legacy">구버전체계</button>
-            </span>
-          </div>
-          <div class="ccategory-scheme-note" id="categorySchemeNote" hidden>
-            구버전 체계입니다. 개편 이전부터 있던 현장은 계속 이 체계로 조회 · 관리하고, 신규 현장은 신규체계를 사용합니다.
-          </div>
-          <div class="cmini-section">
-            <div class="cmini-header">대분류 <span class="ccount" id="majorCount">0</span></div>
-            <table class="cmini-table">
-              <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
-              <tbody id="majorBody"></tbody>
-            </table>
-          </div>
-          <div class="cmini-section cmini-scroll">
-            <div class="cmini-header">중분류 <span class="ccount" id="midCount">0</span> <span class="cexpand">⌄ ⤢</span></div>
-            <div class="cmini-table-scroll">
-              <table class="cmini-table">
-                <thead><tr><th>위코드 <span class="sort-icon">⇅</span></th><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
-                <tbody id="midBody"></tbody>
-              </table>
-            </div>
-          </div>
-        </aside>
-
         <aside class="ccol ccol-narrow ccol-scrollable">
           <div class="ccol-title"><span class="ccol-icon">🔎</span> 현장코드 (고객스타일/스타일/평형 등)</div>
           <div class="cmini-section" id="masterCustStyleSection">
@@ -117,6 +88,35 @@
               <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
               <tbody id="masterPlanBody"></tbody>
             </table>
+          </div>
+        </aside>
+
+        <aside class="ccol ccol-narrow">
+          <div class="ccol-title">
+            <span class="ccol-icon">🔎</span> 프로덕트코드
+            <span class="cscheme-toggle">
+              <button type="button" class="cscheme-btn active" data-scheme="new">신규체계</button>
+              <button type="button" class="cscheme-btn" data-scheme="legacy">구버전체계</button>
+            </span>
+          </div>
+          <div class="ccategory-scheme-note" id="categorySchemeNote" hidden>
+            구버전 체계입니다. 개편 이전부터 있던 현장은 계속 이 체계로 조회 · 관리하고, 신규 현장은 신규체계를 사용합니다.
+          </div>
+          <div class="cmini-section">
+            <div class="cmini-header">대분류 <span class="ccount" id="majorCount">0</span></div>
+            <table class="cmini-table">
+              <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
+              <tbody id="majorBody"></tbody>
+            </table>
+          </div>
+          <div class="cmini-section cmini-scroll">
+            <div class="cmini-header">중분류 <span class="ccount" id="midCount">0</span> <span class="cexpand">⌄ ⤢</span></div>
+            <div class="cmini-table-scroll">
+              <table class="cmini-table">
+                <thead><tr><th>위코드 <span class="sort-icon">⇅</span></th><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
+                <tbody id="midBody"></tbody>
+              </table>
+            </div>
           </div>
         </aside>
 
