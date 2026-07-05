@@ -51,48 +51,56 @@
         <div class="stage-box" id="stage14Box"></div>
       </div>
 
-      <!-- Panel 1: 프로덕트 -->
+      <!-- Panel 1: 프로덕트 (대분류/중분류는 전사공통코드, 소분류(PK)는 현장별 관리 항목) -->
       <section class="tab-panel active" id="panel-product">
-        <div class="filterbar">
-          <div class="filterbar-left">
-            <span class="section-label">소분류</span>
-            <span class="count-badge" id="rowCount">474</span>
+        <div class="toolbar">
+          <div class="toolbar-left" id="stage11ToolbarLeft">
+            <button class="toolbar-btn" id="productExcelUploadBtn">⭱ 프로덕트 Excel 업로드</button>
+            <button class="toolbar-btn" id="productLoadOtherSiteBtn">📥 다른현장 불러오기</button>
           </div>
-          <div class="filterbar-right">
-            <button class="filter-chip active" id="searchToggle">
-              <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.6"/><path d="M14.5 14.5L18 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-              검색
-            </button>
-            <button class="filter-chip">코드</button>
-            <button class="filter-chip">명칭</button>
-            <button class="filter-chip">대·중분류</button>
-            <button class="filter-chip">제조사</button>
-            <button class="filter-chip">모델명</button>
-            <button class="filter-chip">마감재</button>
-            <button class="filter-chip">사용여부</button>
-            <button class="filter-chip add-filter">+ Add filter</button>
+          <button class="toolbar-btn" id="productExcelDownloadBtn">⭣ 프로덕트 Excel 다운로드</button>
+          <div class="toolbar-right" id="stage11Box"></div>
+        </div>
+        <div class="lockable" id="stage11Lockable">
+          <div class="lock-overlay" id="stage11LockOverlay" hidden>
+            <div class="lock-overlay-msg"></div>
           </div>
-        </div>
-        <div class="search-row" id="searchRow">
-          <input type="text" id="searchInput" placeholder="상품코드, 명칭, 제조사, 모델명으로 검색" />
-        </div>
-        <div class="table-wrap">
-          <table id="productTable">
-            <thead>
-              <tr>
-                <th class="sortable">상품코드 <span class="sort-icon">⇅</span></th>
-                <th>연번</th>
-                <th>Product 소분류명</th>
-                <th>Product 소분류명 (고객용)</th>
-                <th>제조사</th>
-                <th>모델명</th>
-                <th>마감재</th>
-                <th>사이즈</th>
-                <th>사용</th>
-              </tr>
-            </thead>
-            <tbody id="tableBody"></tbody>
-          </table>
+          <div class="filterbar">
+            <div class="filterbar-left">
+              <span class="section-label">소분류 (현장별 관리)</span>
+              <span class="count-badge" id="rowCount">452</span>
+            </div>
+            <div class="filterbar-right">
+              <button class="filter-chip active" id="searchToggle">
+                <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.6"/><path d="M14.5 14.5L18 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                검색
+              </button>
+              <button class="filter-chip">코드</button>
+              <button class="filter-chip">명칭</button>
+              <button class="filter-chip">대분류</button>
+              <button class="filter-chip">중분류</button>
+              <button class="filter-chip add-filter">+ Add filter</button>
+            </div>
+          </div>
+          <div class="search-row" id="searchRow">
+            <input type="text" id="searchInput" placeholder="소분류코드(PK), 상품명, 대분류명, 중분류명으로 검색" />
+          </div>
+          <div class="table-wrap">
+            <table id="productTable">
+              <thead>
+                <tr>
+                  <th>연번</th>
+                  <th>대분류코드</th>
+                  <th>대분류명</th>
+                  <th>중분류코드</th>
+                  <th>중분류명</th>
+                  <th class="sortable">소분류코드(PK) <span class="sort-icon">⇅</span></th>
+                  <th>상품명</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
         </div>
       </section>
 
@@ -652,6 +660,14 @@
       </div>
     </div>
     <div class="toast" id="sendToast" hidden></div>
+
+    <!-- 1.1 프로덕트 : 다른현장 소분류 목록 불러오기 모달 -->
+    <div class="cmodal-backdrop" id="productLoadSiteModal" hidden>
+      <div class="send-modal">
+        <div class="cmodal-header">📥 다른현장 소분류 불러오기 <button class="cmodal-close" id="productLoadSiteModalClose" type="button">✕</button></div>
+        <div class="cmodal-body" id="productLoadSiteModalBody"></div>
+      </div>
+    </div>
 
     <!-- 4. 상품고객언어 : 선택 항목 일괄 수정 모달 -->
     <div class="cmodal-backdrop" id="langEditModal" hidden>

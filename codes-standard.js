@@ -75,18 +75,6 @@ document.getElementById("midBody").innerHTML = mids.map((m) => `
   <tr class="${m.code === "200" ? "selected" : ""}"><td>${m.top}</td><td>${m.code}</td><td>${m.name}</td></tr>
 `).join("");
 
-document.getElementById("subcatBody").innerHTML = `
-  <tr class="selected">
-    <td class="ccode-cell">AC-200-01</td>
-    <td>01</td>
-    <td>D007-AC-200 ｜ D007-AC</td>
-    <td>악세서리</td>
-    <td>국산 주방수전/워터워스유진</td>
-    <td>국산 주방수전/워터워스유진</td>
-    <td>국산 주방수전/워터워스유진</td>
-  </tr>
-`;
-
 /* =====================================================================
    전사공통코드: 고객스타일 / 스타일 / 평형 / 평형옵션 / 선택형평면 마스터
    -> 현장별코드에서는 이 마스터 목록 중에서 "선택"해서 배정한다.

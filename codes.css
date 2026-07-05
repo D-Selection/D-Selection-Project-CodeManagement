@@ -308,6 +308,17 @@ table { border-collapse: collapse; width: 100%; }
 .ccol-title-inline .ccount { color: #9fb0d6; }
 .csub-toolbar-right { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 
+.csubcat-moved-note {
+  background: #fff5e8;
+  border: 1px solid #ffdca8;
+  color: #9a5b13;
+  font-size: 12px;
+  padding: 14px 16px;
+  line-height: 1.8;
+  margin: 14px;
+  border-radius: 6px;
+}
+
 .cfilter-chip {
   border: 1px solid #3a4560;
   background: #16233d;
