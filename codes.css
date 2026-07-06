@@ -178,9 +178,24 @@ table { border-collapse: collapse; width: 100%; }
   font-size: 13px;
   white-space: nowrap;
 }
-.csite-table tbody tr:hover { background: #f5f8ff; cursor: pointer; }
+.csite-table tbody tr:hover { background: #f5f8ff; }
 .csite-table tbody tr.selected { background: var(--c-blue-light); }
 .value-empty { color: #b6bac4; font-style: italic; }
+
+.csite-goto-cell { display: flex; gap: 6px; white-space: nowrap; }
+.csite-goto-btn {
+  border: 1px solid var(--c-border);
+  background: #fff;
+  color: var(--c-text);
+  font-size: 11.5px;
+  font-weight: 600;
+  padding: 5px 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.csite-goto-btn:hover { border-color: var(--c-blue); color: var(--c-blue); }
+.csite-goto-btn[data-goto="site"]:hover { border-color: #1a9a52; color: #1a9a52; }
 .sort-icon { color: #a7adbb; font-size: 11px; margin-left: 2px; font-weight: 400; }
 
 /* Common-code 3-column layout */

@@ -6,7 +6,12 @@
    작업순서 : 0. 현장별코드 → 1.1 프로덕트 → 1.3 프로덕트×상품구성코드 → 1.4 평형그룹매핑
               → 2. 원가 수정 → 3. 판매가 수정 → 4. 상품고객언어
    ===================================================================== */
-const DS_STORAGE_KEY = "dselection_shared_state_v2";
+// 현장 메뉴(site-menu.html)는 본사 확정 데이터를 "가져오기(복사)"한 뒤 독립적으로
+// 관리해야 하므로, 본사 워크플로우와는 별도의 localStorage 키를 쓴다. 현장 메뉴는
+// shared-state.js를 불러오기 전에 window.DS_STORAGE_KEY_OVERRIDE를 지정해 이 기본값을
+// 덮어쓴다 — 본사 화면(index.html/codes-standard.html)은 이 값을 설정하지 않으므로
+// 기존 동작에는 영향이 없다.
+const DS_STORAGE_KEY = (typeof window !== "undefined" && window.DS_STORAGE_KEY_OVERRIDE) || "dselection_shared_state_v2";
 
 /* =====================================================================
    상품 대분류/중분류 코드체계 (전사공통코드 <-> 1.1 프로덕트 공유)

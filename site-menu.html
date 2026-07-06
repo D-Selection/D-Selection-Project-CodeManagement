@@ -1,0 +1,767 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>현장 메뉴 | 아크로드 서초 현장</title>
+<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="site-menu.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- Top bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="logo">▤</span>
+        <div class="topbar-titles">
+          <h1 id="pageTitle">현장 메뉴 <span class="round">🏗 현장 관리</span></h1>
+          <p>아크로드 서초 현장 <span class="site-code">(170020)</span></p>
+        </div>
+      </div>
+      <nav class="topbar-nav">
+        <a href="#" class="nav-step active" data-step="1">1. 상품구성</a>
+        <a href="#" class="nav-step hq-only" data-step="2">2. 원가 수정</a>
+        <a href="#" class="nav-step hq-only" data-step="3">3. 판매가 수정</a>
+        <a href="#" class="nav-step" data-step="4">2. 상품고객언어</a>
+        <a href="#" class="nav-step" data-step="6">3. 가감조건 관리</a>
+        <a href="#" class="nav-step" data-step="5">4. 안분표 생성</a>
+        <button class="close-btn" type="button" id="closeBtn">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M1 1L13 13M13 1L1 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+          닫기
+        </button>
+      </nav>
+    </header>
+
+    <!-- 본사 확정 데이터를 가져와 현장이 독립적으로 관리 중임을 알리는 안내 배너.
+         (dsStatusStrip과 달리 이 화면 전용이며, 본사 담당부서 승인 워크플로우 UI는 표시하지 않는다) -->
+    <div class="site-banner">
+      <span>🏗 본사에서 확정된 상품구성 데이터를 가져와(복사) 현장에서 독립적으로 관리하고 있습니다. 원가 · 판매가는 본사에서만 관리하며, 이 화면에는 표시되지 않습니다.</span>
+    </div>
+
+    <!-- ============ STEP 1: 상품구성 ============ -->
+    <section class="view active" id="view-1">
+      <div class="subbar">
+        <div class="subbar-title">
+          <span class="grid-icon">▦</span>
+          <h2>상품업로드 <span class="round-badge">14 차수</span></h2>
+        </div>
+        <div class="step-tabs">
+          <button class="step-tab active" data-tab="product"><span class="num">1</span>프로덕트</button>
+          <button class="step-tab" data-tab="sku"><span class="num">2</span>상품구성코드</button>
+          <button class="step-tab" data-tab="mapping"><span class="num">3</span>프로덕트×상품구성코드</button>
+          <button class="step-tab" data-tab="area"><span class="num">4</span>평형그룹매핑</button>
+          <button class="step-tab" data-tab="category"><span class="num">5</span>대분류/중분류/제조사</button>
+        </div>
+        <div class="stage-box" id="stage14Box"></div>
+      </div>
+
+      <!-- Panel 1: 프로덕트 (대분류/중분류는 전사공통코드, 소분류(PK)는 현장별 관리 항목) -->
+      <section class="tab-panel active" id="panel-product">
+        <div class="toolbar">
+          <div class="toolbar-left" id="stage11ToolbarLeft">
+            <button class="toolbar-btn" id="productExcelUploadBtn">⭱ 프로덕트 Excel 업로드</button>
+            <button class="toolbar-btn" id="productLoadOtherSiteBtn">📥 다른현장 불러오기</button>
+            <button class="toolbar-btn" id="reloadFromHqBtn">🏢 본사 데이터 다시 불러오기</button>
+          </div>
+          <button class="toolbar-btn" id="productExcelDownloadBtn">⭣ 프로덕트 Excel 다운로드</button>
+          <div class="toolbar-right" id="stage11Box"></div>
+        </div>
+        <div class="lockable" id="stage11Lockable">
+          <div class="lock-overlay" id="stage11LockOverlay" hidden>
+            <div class="lock-overlay-msg"></div>
+          </div>
+          <div class="filterbar">
+            <div class="filterbar-left">
+              <span class="section-label">소분류 (현장별 관리)</span>
+              <span class="count-badge" id="rowCount">452</span>
+            </div>
+            <div class="filterbar-right">
+              <button class="filter-chip active" id="searchToggle">
+                <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><circle cx="9" cy="9" r="7" stroke="currentColor" stroke-width="1.6"/><path d="M14.5 14.5L18 18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                검색
+              </button>
+              <button class="filter-chip">코드</button>
+              <button class="filter-chip">명칭</button>
+              <button class="filter-chip">대분류</button>
+              <button class="filter-chip">중분류</button>
+              <button class="filter-chip add-filter">+ Add filter</button>
+            </div>
+          </div>
+          <div class="search-row" id="searchRow">
+            <input type="text" id="searchInput" placeholder="소분류코드(PK), 상품명, 대분류명, 중분류명으로 검색" />
+          </div>
+          <div class="table-wrap">
+            <table id="productTable">
+              <thead>
+                <tr>
+                  <th>연번</th>
+                  <th>대분류코드</th>
+                  <th>대분류명</th>
+                  <th>중분류코드</th>
+                  <th>중분류명</th>
+                  <th class="sortable">소분류코드(PK) <span class="sort-icon">⇅</span></th>
+                  <th>상품명</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 2: 상품구성코드 -->
+      <section class="tab-panel" id="panel-sku">
+        <div class="cha-layout">
+          <aside class="cha-sidebar" id="chaSidebarSku"></aside>
+          <div class="cha-main">
+            <div class="filterbar">
+              <div class="filterbar-left">
+                <span class="section-icon">▤</span>
+                <span class="section-label">상품구성코드</span>
+              </div>
+              <div class="filterbar-right">
+                <button class="filter-chip">상품 코드</button>
+                <button class="filter-chip">공간명</button>
+                <button class="filter-chip">스타일명</button>
+                <button class="filter-chip">상품 대분류명</button>
+                <button class="filter-chip">상품 중분류명</button>
+                <button class="filter-chip">상품 제조사명</button>
+                <button class="filter-chip">항목명</button>
+                <button class="filter-chip">항목명(고객용)</button>
+                <button class="filter-chip add-filter">+ Add filter</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="sortable">상품 코드 <span class="sort-icon">⇅</span></th>
+                    <th>공간코드</th>
+                    <th>공간명</th>
+                    <th>스타일코드</th>
+                    <th>스타일명</th>
+                    <th>현장본사구분</th>
+                    <th>상품 대분류코드</th>
+                    <th>상품 대분류명</th>
+                    <th>상품 중분류코드</th>
+                    <th>상품 중분류명</th>
+                    <th>상품 제조사코드</th>
+                    <th>항목명</th>
+                    <th>항목명 (고객용)</th>
+                  </tr>
+                </thead>
+                <tbody id="skuTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 3: 프로덕트 × 상품구성코드 -->
+      <section class="tab-panel" id="panel-mapping">
+        <div class="cha-layout">
+          <aside class="cha-sidebar" id="chaSidebarMapping"></aside>
+          <div class="cha-main">
+            <div class="toolbar">
+              <div class="toolbar-left">
+                <button class="toolbar-btn primary-toggle active stage13-editable-control">
+                  <svg width="13" height="13" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="7" stroke="currentColor" stroke-width="1.6"/></svg>
+                  엑셀 업로드 원본
+                </button>
+                <button class="toolbar-btn success-toggle stage13-editable-control">
+                  <span class="dot dot-sm"></span>
+                  업로드 결과 보기
+                </button>
+                <span class="count-pill">219건</span>
+                <span class="stage-lock-tag" id="stage13LockTag" hidden>🔒 확정됨(잠금)</span>
+              </div>
+              <div class="toolbar-right">
+                <button class="toolbar-btn dark">👁 안내문코드</button>
+                <button class="toolbar-btn dark">공통코드보기</button>
+                <button class="filter-chip">공간명</button>
+                <button class="filter-chip">스타일명</button>
+                <button class="filter-chip">항목명</button>
+                <button class="filter-chip add-filter">+ Add filter</button>
+                <button class="toolbar-btn stage13-editable-control">⭣ 양식 다운로드</button>
+                <button class="toolbar-btn stage13-editable-control">⭱ Excel 업로드</button>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th class="sortable">상품코드 <span class="sort-icon">⇅</span></th>
+                    <th>공간코드</th>
+                    <th>공간명</th>
+                    <th>스타일코드</th>
+                    <th>스타일명</th>
+                    <th>현장본사구분</th>
+                    <th>항목명</th>
+                  </tr>
+                </thead>
+                <tbody id="mappingTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 4: 평형그룹매핑 -->
+      <section class="tab-panel" id="panel-area">
+        <div class="lock-overlay" id="stage14FullLockOverlay" hidden>
+          <div class="lock-overlay-msg"></div>
+        </div>
+        <div class="area-subtabs">
+          <button class="area-subtab active" data-view="current">현재 방식</button>
+          <button class="area-subtab" data-view="pivot">개선1안 · 상품×평형 매트릭스</button>
+          <button class="area-subtab" data-view="template">개선2안 · 템플릿 복제</button>
+          <button class="area-subtab" data-view="review">검수 화면</button>
+        </div>
+
+        <div class="area-subview active" id="areaSubview-current">
+        <div class="area-layout">
+          <div class="area-col area-col-narrow">
+            <div class="area-col-header">
+              <span>평형 그룹 <span class="round-badge">28개</span></span>
+              <span class="header-icons">▤ ⤢</span>
+            </div>
+            <div class="area-search">
+              <input type="text" placeholder="검색어를 입력해주세요." />
+            </div>
+            <div class="area-chip-row">
+              <button class="filter-chip small">고객명</button>
+              <button class="filter-chip small">평형</button>
+              <button class="filter-chip small">평형옵션명</button>
+              <button class="filter-chip small">선택형평면명</button>
+            </div>
+            <div class="area-col-body">
+              <table class="mini-table">
+                <thead>
+                  <tr><th></th><th>고객</th><th>평형</th><th>평형옵션명</th></tr>
+                </thead>
+                <tbody id="areaGroupBody"></tbody>
+              </table>
+            </div>
+            <div class="area-col-footer">
+              <button class="pill-btn green mapping-editable-control">평형추가</button>
+              <button class="pill-btn mapping-editable-control">평형삭제</button>
+              <button class="pill-btn pink mapping-editable-control">상품삭제</button>
+            </div>
+          </div>
+
+          <div class="area-col area-col-wide">
+            <div class="area-col-header">
+              <span>상품 구성 <span class="round-badge" id="areaConfigCount">103개</span> <span class="info-dot">ⓘ</span> <span class="stage-lock-tag" id="stage14LockTag" hidden>🔒 확정됨(잠금)</span></span>
+              <span class="header-icons-text">
+                <button class="undo-btn" id="undoBtn" disabled title="Ctrl+Z">↩ 뒤로가기</button>
+                <button class="undo-btn" id="mappingHistoryBtn" type="button">🕘 매핑 이력</button>
+                <button class="toolbar-btn">⭣ Excel 다운로드</button>
+                <button class="toolbar-btn icon-only">⟳</button>
+                <button class="danger-btn small mapping-editable-control" id="unmapBtn">⊘ 평형그룹 매핑해제</button>
+              </span>
+            </div>
+            <div class="area-col-body area-col-body-relative">
+              <table class="mini-table">
+                <thead>
+                  <tr>
+                    <th></th><th>상품<br/>차수</th><th>평형명</th><th>상품코드</th><th>항목명</th><th>비고</th>
+                    <th>항목명 (고객용)</th><th>공간명</th><th>현장<br/>본사<br/>구분</th><th>프로<br/>덕트<br/>수</th><th>소분류명</th>
+                  </tr>
+                </thead>
+                <tbody id="areaConfigBody"></tbody>
+              </table>
+              <div class="mapping-history-panel" id="mappingHistoryPanel" hidden>
+                <div class="mapping-history-header">
+                  <span>매핑 이력</span>
+                  <button class="mapping-history-close" id="mappingHistoryClose" type="button">✕</button>
+                </div>
+                <div class="mapping-history-list" id="mappingHistoryList"></div>
+              </div>
+            </div>
+            <div class="area-subpanel">
+              <div class="area-subpanel-header">프로덕트 코드 <span class="round-badge">1개</span></div>
+              <table class="mini-table">
+                <thead>
+                  <tr><th>프로덕트 컬랩구분</th><th>상품코드</th><th>가감품목</th><th>특이사항</th><th>소분류코드</th><th>소분류명</th><th>제조사</th><th>모델명</th></tr>
+                </thead>
+                <tbody id="areaProductCodeBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="area-col area-col-wide">
+            <div class="area-col-header">
+              <span>상품코드 <span class="round-badge">업로드14차수(116개)</span></span>
+              <span class="header-icons-text">
+                <button class="filter-chip small">항목명</button>
+                <button class="filter-chip small add-filter">+ Add filter</button>
+              </span>
+            </div>
+            <button class="map-btn mapping-editable-control" id="mapBtn">⇄ 평형그룹과 매핑</button>
+            <p class="area-note">선택 0건 &nbsp; <span class="check-ok">✓</span> "상품코드"에는 상품업로드 「마지막 차수」만 표시됩니다.</p>
+            <div class="area-col-body">
+              <table class="mini-table">
+                <thead>
+                  <tr><th></th><th>공간코드</th><th>상품코드</th><th>항목명</th><th>항목명 (고객용)</th><th>프로덕트<br/>연결수</th></tr>
+                </thead>
+                <tbody id="areaRightBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        </div>
+
+        <!-- 개선 1안 : 상품 × 평형 매트릭스 -->
+        <div class="area-subview" id="areaSubview-pivot">
+          <div class="area-pivot-toolbar">
+            <span class="area-pivot-title">상품 × 평형 매트릭스 <span class="round-badge" id="pivotProductCount">0개</span></span>
+            <span class="area-pivot-hint">상품별로 어느 평형에 배정되는지 한눈에 확인하고 체크박스로 바로 배정/해제할 수 있습니다.</span>
+          </div>
+          <div class="area-pivot-scroll">
+            <table class="mini-table pivot-table" id="pivotTable">
+              <thead><tr id="pivotTableHeadRow"></tr></thead>
+              <tbody id="pivotTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 개선 2안 : 대표 타입 복제 후 수정 -->
+        <div class="area-subview" id="areaSubview-template">
+          <div class="area-template-layout">
+            <div class="area-template-side">
+              <div class="area-col-header"><span>대표 타입 복제</span></div>
+              <div class="area-template-form">
+                <label class="area-template-label">대표 타입(원본 평형)
+                  <select class="mapping-editable-control" id="templateSourceSelect"></select>
+                </label>
+                <label class="area-template-label">복제 대상 평형 (복수 선택)</label>
+                <div class="area-template-targets" id="templateTargetList"></div>
+                <button class="ghost-btn blue-fill mapping-editable-control" id="templateCloneBtn">⧉ 선택 평형에 복제하기</button>
+                <p class="area-note" id="templateCloneNote">대표 타입의 상품 구성을 선택한 평형에 그대로 복제한 뒤, 오른쪽에서 개별 수정할 수 있습니다.</p>
+              </div>
+              <div class="area-template-log-title">복제 이력</div>
+              <div class="area-template-log" id="templateCloneLog"></div>
+            </div>
+            <div class="area-template-main">
+              <div class="area-col-header">
+                <span>복제 결과 편집 <span class="round-badge" id="templateEditCount">0개</span></span>
+                <select class="mapping-editable-control" id="templateEditTargetSelect"></select>
+              </div>
+              <div class="area-col-body">
+                <table class="mini-table">
+                  <thead><tr><th></th><th>공간</th><th>상품코드</th><th>항목명</th><th>항목명 (고객용)</th></tr></thead>
+                  <tbody id="templateEditBody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 검수 화면 : 안내문 초안 뷰어 -->
+        <div class="area-subview" id="areaSubview-review">
+          <div class="area-review-toolbar">
+            <span class="area-review-title">검수 화면 (안내문 초안 뷰어)</span>
+            <select id="reviewPyeongSelect"></select>
+            <span class="area-review-hint">판매가 · 패키지 정보 없이, 평형별 · 공간별 배정 상품만 고객 안내문과 유사한 형식으로 확인합니다.</span>
+          </div>
+          <div class="area-review-doc-wrap">
+            <div class="area-review-doc" id="reviewDoc"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Panel 5: 대분류/중분류/제조사 -->
+      <section class="tab-panel" id="panel-category">
+        <div class="cat-layout">
+          <aside class="cat-sidebar">
+            <div class="cat-sidebar-title">분양수금 공통 코드 동기화<br/><span>최신</span></div>
+            <div class="cat-source-card">
+              <div class="cat-source-name">📄 [PRD D-Sel] 별매... <span class="muted">5 hours ago</span> ⋯</div>
+              <table class="mini-table">
+                <thead><tr><th>SOURCE NAME</th><th>LAST UPDATED</th></tr></thead>
+                <tbody><tr><td>🗂 분양수금 공통코드</td><td>5 hours ago</td></tr></tbody>
+              </table>
+            </div>
+          </aside>
+          <div class="cat-col">
+            <h3>대분류</h3>
+            <table class="mini-table">
+              <thead><tr><th>이름</th><th>코드 <span class="sort-icon">⇅</span></th></tr></thead>
+              <tbody id="majorCatBody"></tbody>
+            </table>
+          </div>
+          <div class="cat-col">
+            <h3>중분류</h3>
+            <table class="mini-table">
+              <thead><tr><th>대분류</th><th>이름</th><th>코드 <span class="sort-icon">⇅</span></th></tr></thead>
+              <tbody id="midCatBody"></tbody>
+            </table>
+          </div>
+          <div class="cat-col">
+            <h3>제조사</h3>
+            <table class="mini-table">
+              <thead><tr><th>이름</th><th>코드 <span class="sort-icon">⇅</span></th></tr></thead>
+              <tbody id="makerBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- ============ STEP 2: 원가 수정 (본사 전용 · 현장 메뉴에서는 숨김) ============ -->
+    <section class="view" id="view-2">
+      <div class="toolbar">
+        <div class="toolbar-left" id="stage2ToolbarLeft">
+          <button class="toolbar-btn">⭣ 원가 Excel 양식 다운로드</button>
+          <button class="toolbar-btn">⭱ 원가 Excel 업로드</button>
+          <button class="toolbar-btn">↕1 순번정렬</button>
+        </div>
+        <div class="toolbar-right">
+          <button class="ghost-btn">👁 원가 합산결과</button>
+          <div id="stage2Box" class="stage-box-inline"></div>
+        </div>
+      </div>
+      <div class="lockable" id="stage2Lockable">
+        <div class="lock-overlay" id="stage2LockOverlay" hidden>
+          <div class="lock-overlay-msg"></div>
+        </div>
+        <div class="section-title-bar">
+          <div class="section-title-left">
+            <h2>2. 원가 수정 <span class="count-pill">5398개</span></h2>
+          </div>
+          <div class="filterbar-right">
+            <button class="filter-chip">평형그룹명</button>
+            <button class="filter-chip">항목명</button>
+            <button class="filter-chip add-filter">+ Add filter</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="sortable">순번 <span class="sort-icon">⇅</span></th>
+                <th>평형그룹</th>
+                <th>비고</th>
+                <th>상품코드</th>
+                <th class="sortable">프로덕트코드 <span class="sort-icon">⇅</span></th>
+                <th>항목명</th>
+                <th>항목명 (고객용)</th>
+                <th>세부사항</th>
+                <th>세부사항 (고객용)</th>
+              </tr>
+            </thead>
+            <tbody id="costTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STEP 3: 판매가 수정 (본사 전용 · 현장 메뉴에서는 숨김) ============ -->
+    <section class="view" id="view-3">
+      <div class="toolbar">
+        <div class="toolbar-left" id="stage4ToolbarLeft">
+          <button class="toolbar-btn">⭣ 판매가 Excel 양식 다운로드</button>
+          <button class="toolbar-btn">⭱ 판매가 Excel 업로드</button>
+          <button class="toolbar-btn">▦ 프로덕트 원가합산표</button>
+          <button class="toolbar-btn">↕1 순번정렬</button>
+        </div>
+        <div class="toolbar-right" id="stage4Box"></div>
+      </div>
+      <div class="lockable" id="stage4Lockable">
+        <div class="lock-overlay" id="stage4LockOverlay" hidden>
+          <div class="lock-overlay-msg"></div>
+        </div>
+        <div class="section-title-bar">
+          <div class="section-title-left">
+            <h2>3. 「상품별」 판매가 수정 <span class="count-pill">2036개</span></h2>
+          </div>
+          <div class="filterbar-right">
+            <button class="filter-chip">평형명</button>
+            <button class="filter-chip">상품코드</button>
+            <button class="filter-chip">항목명</button>
+            <button class="filter-chip">항목명 (고객용)</button>
+            <button class="filter-chip add-filter">+ Add filter</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th class="sortable">순번 <span class="sort-icon">⇅</span></th>
+                <th>고객명</th>
+                <th>평형명</th>
+                <th>현장본사구분</th>
+                <th>스타일명</th>
+                <th>평형옵션명</th>
+                <th>선택형평면명</th>
+                <th>공간명</th>
+                <th class="sortable">공간코드 <span class="sort-icon">⇅</span></th>
+                <th>세부사항 구성코드</th>
+                <th>항목명</th>
+                <th>항목명 (고객용)</th>
+                <th>상품 대분류명</th>
+                <th>상품 중분류명</th>
+                <th>상품 제조사명</th>
+                <th>해당품목원가</th>
+              </tr>
+            </thead>
+            <tbody id="priceTableBody"></tbody>
+          </table>
+        </div>
+        <div class="floating-action">
+          <button class="primary-btn">✎ 수정하기</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STEP 4: 상품고객언어 (+ 현장 전용 고객언어 오버레이) ============ -->
+    <section class="view" id="view-4">
+      <div class="toolbar">
+        <div class="toolbar-left" id="stage3ToolbarLeft">
+          <button class="toolbar-btn">⭣ 고객언어 Excel 양식 다운로드</button>
+          <button class="toolbar-btn">⭱ 고객언어 Excel 업로드</button>
+          <button class="toolbar-btn">↕1 순번정렬</button>
+        </div>
+        <button class="toolbar-btn" id="sortOrderBtn">🗂 대분류 · 중분류 · 제조사 조회/편집</button>
+        <div class="toolbar-right" id="stage3Box"></div>
+      </div>
+      <div class="info-box">
+        1.「순번」,「항목명(고객용)」,「세부사항(고객용)」,「비고」를 수정할 수 있어요.<br/>
+        2. 상품 대분류명 · 상품 중분류명 · 상품 제조사명은 분양수금 시스템에 이미 등록된 코드/명칭과 일치해야 하며, 일치하지 않는 값을 입력하면 업로드 시 오류가 발생합니다.<br/>
+        3. 항목명(고객용) · 세부사항(고객용)은 분양수금 시스템에 데이터가 없는 항목으로, 입력한 값 그대로 저장됩니다.<br/>
+        4. 별매품 단계(1/2/3)는 엑셀 업로드 또는 아래 「선택 항목 수정」으로 설정하며, 4.안분표 생성의 같은 상품코드 행에도 그대로 반영됩니다.<br/>
+        5. 맨 오른쪽 <strong>「현장 표기명 / 현장 세부사항」</strong> 2개 컬럼은 분양 시 사용한 고객언어를 현장 사정에 맞게 다시 표현하는 <strong>현장 전용 오버레이</strong>입니다. 분양 시 값(원본)은 그대로 남아있고, 이 칸만 별도로 저장 · 초기화할 수 있습니다.
+      </div>
+      <div class="lockable" id="stage3Lockable">
+        <div class="lock-overlay" id="stage3LockOverlay" hidden>
+          <div class="lock-overlay-msg"></div>
+        </div>
+        <div class="section-title-bar">
+          <div class="section-title-left">
+            <h2>2. 「상품별」 고객언어 수정 <span class="count-pill">2036개</span></h2>
+          </div>
+          <div class="filterbar-right">
+            <button class="filter-chip">평형명</button>
+            <button class="filter-chip">상품코드</button>
+            <button class="filter-chip">항목명</button>
+            <button class="filter-chip">항목명 (고객용)</button>
+            <button class="filter-chip add-filter">+ Add filter</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th></th>
+                <th class="sortable">순번 <span class="sort-icon">⇅</span></th>
+                <th>고객명</th>
+                <th>평형명</th>
+                <th>현장본사구분</th>
+                <th>스타일명</th>
+                <th>평형옵션명</th>
+                <th>선택형평면명</th>
+                <th>공간명</th>
+                <th>상품 대분류명</th>
+                <th>상품 중분류명</th>
+                <th>상품 제조사명</th>
+                <th>별매품 단계</th>
+                <th class="sortable">공간코드 <span class="sort-icon">⇅</span></th>
+                <th>항목명</th>
+                <th>항목명 (고객용)</th>
+                <th>세부사항 구성코드</th>
+                <th>세부사항</th>
+                <th>세부사항 (고객용)</th>
+                <th class="site-overlay-col">현장 표기명 <span class="site-overlay-tag">현장 전용</span></th>
+                <th class="site-overlay-col">현장 세부사항 <span class="site-overlay-tag">현장 전용</span></th>
+              </tr>
+            </thead>
+            <tbody id="langTableBody"></tbody>
+          </table>
+        </div>
+        <div class="floating-action">
+          <button class="primary-btn stage3-editable-control" id="langEditBtn">✎ 선택 항목 수정 (대분류/중분류/제조사명 · 별매품 단계 · 항목명(고객용) · 세부사항(고객용))</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ STEP (신규): 가감조건 관리 ============ -->
+    <section class="view" id="view-6">
+      <div class="info-box">
+        상품을 선택했을 때 함께 자동으로 추가되거나 제외되어야 하는 다른 상품(가감품목) 규칙을 현장에서 직접 관리합니다.<br/>
+        예: 「AC-001-01 국산 주방수전/워터웍스유진」을 선택하면 「AC-005-01 국산 일반 수건걸이/대림바스」를 자동 추가.
+      </div>
+      <div class="section-title-bar">
+        <div class="section-title-left">
+          <h2>가감조건 <span class="count-pill" id="gagamCount">0개</span></h2>
+        </div>
+        <div class="filterbar-right">
+          <input type="text" id="gagamSearchInput" class="gagam-search-input" placeholder="기준/대상 상품코드, 상품명, 비고로 검색" />
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>순번</th>
+              <th>기준 상품코드</th>
+              <th>기준 상품명</th>
+              <th>조건구분</th>
+              <th>대상 상품코드</th>
+              <th>대상 상품명</th>
+              <th>비고</th>
+              <th>등록일</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="gagamTableBody"></tbody>
+        </table>
+      </div>
+      <div class="floating-action">
+        <button class="primary-btn" id="gagamAddBtn">+ 가감조건 추가</button>
+      </div>
+    </section>
+
+    <!-- ============ STEP 5: 안분표 생성 ============ -->
+    <section class="view" id="view-5">
+      <div class="section-title-bar">
+        <div class="section-title-left">
+          <h2>4. 안분표 <span class="count-pill">5771건</span></h2>
+          <button class="toolbar-btn icon-only">⟳</button>
+          <button class="pill-btn selected">전체컬럼</button>
+          <button class="pill-btn yellow">필수컬럼</button>
+        </div>
+        <div class="filterbar-right">
+          <span class="filter-icon">▽ 0</span>
+          <button class="filter-chip">고객</button>
+          <button class="filter-chip">평형</button>
+          <button class="filter-chip">고객타입명</button>
+          <button class="filter-chip">공간</button>
+          <button class="filter-chip">패키지구분</button>
+          <button class="filter-chip">상품코드</button>
+          <button class="filter-chip add-filter">+ Add filter</button>
+        </div>
+      </div>
+      <div class="toolbar toolbar-slim">
+        <div></div>
+        <div class="toolbar-right">
+          <button class="ghost-btn green">◉ 1. 안분표 가생성</button>
+          <div class="dropdown-wrap">
+            <button class="ghost-btn blue-fill" id="allocationSettingsBtn">☰ 2. 안분표 설정 ⌄</button>
+            <div class="dropdown-menu" id="allocationSettingsMenu" hidden>
+              <button class="dropdown-item" id="packageMenuItem">📦 패키지 만들기</button>
+              <button class="dropdown-item" id="packageMapMenuItem">📦 공통 패키지 만들기 (평형 일괄 매핑) 🆕</button>
+              <button class="dropdown-item" data-action="step">🔢 스텝설정</button>
+              <button class="dropdown-item" data-action="reorder">⇄ 품목/항목 열변경</button>
+              <button class="dropdown-item" data-action="select-package">👁 선택 패키지 구성품</button>
+              <button class="dropdown-item" data-action="delete">🗑 패키지/상품 삭제</button>
+              <button class="dropdown-item accent" id="allocationSendMenuItem">➤ 안분표발송</button>
+            </div>
+          </div>
+          <div class="notif-wrap">
+            <button class="notif-bell" id="packageHistoryBtn" type="button" title="패키지 생성 이력">📦 패키지 이력</button>
+            <div class="notif-panel history-panel" id="packageHistoryPanel" hidden></div>
+          </div>
+          <div class="notif-wrap">
+            <button class="notif-bell" id="sendHistoryBtn" type="button" title="안분표 발송 이력">📮 발송 이력</button>
+            <div class="notif-panel history-panel" id="sendHistoryPanel" hidden></div>
+          </div>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th class="checkbox-col"><input type="checkbox" id="allocationSelectAll" /></th>
+              <th class="sortable">순번 <span class="sort-icon">⇅</span></th>
+              <th>영업별매물코드(세일즈코드)</th>
+              <th class="sortable">고객 타입명 <span class="sort-icon">⇅</span></th>
+              <th>평형</th>
+              <th>현장본<br/>사구분</th>
+              <th class="sortable">고객스타일명 <span class="sort-icon">⇅</span></th>
+              <th>스타일</th>
+              <th>평형옵션명</th>
+              <th>선택형면명</th>
+              <th>공간명</th>
+              <th>승탁일패키지선물여부</th>
+              <th>품목/항목<br/>열번호</th>
+              <th class="sortable">상품코드 <span class="sort-icon">⇅</span></th>
+              <th>품목명</th>
+              <th>항목명</th>
+              <th>별매품 단계</th>
+              <th>발송상태</th>
+            </tr>
+          </thead>
+          <tbody id="allocationTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 안분표 발송(상품별 차수 분할 발송) 모달 -->
+    <div class="cmodal-backdrop" id="sendModal" hidden>
+      <div class="send-modal">
+        <div class="cmodal-header">➤ 안분표 발송 — 상품별 차수 분할 발송</div>
+        <div class="cmodal-body" id="sendModalBody"></div>
+      </div>
+    </div>
+    <div class="toast" id="sendToast" hidden></div>
+
+    <!-- 1.1 프로덕트 : 다른현장 소분류 목록 불러오기 모달 -->
+    <div class="cmodal-backdrop" id="productLoadSiteModal" hidden>
+      <div class="send-modal">
+        <div class="cmodal-header">📥 다른현장 소분류 불러오기 <button class="cmodal-close" id="productLoadSiteModalClose" type="button">✕</button></div>
+        <div class="cmodal-body" id="productLoadSiteModalBody"></div>
+      </div>
+    </div>
+
+    <!-- 4. 상품고객언어 : 선택 항목 일괄 수정 모달 -->
+    <div class="cmodal-backdrop" id="langEditModal" hidden>
+      <div class="send-modal">
+        <div class="cmodal-header">✎ 선택 항목 수정 <button class="cmodal-close" id="langEditModalClose" type="button">✕</button></div>
+        <div class="cmodal-body" id="langEditModalBody"></div>
+      </div>
+    </div>
+
+    <!-- 4. 상품고객언어 : 대분류/중분류/제조사 정렬순서 설정 모달 -->
+    <div class="cmodal-backdrop" id="sortOrderModal" hidden>
+      <div class="send-modal">
+        <div class="cmodal-header">🗂 대분류 · 중분류 · 제조사 조회/편집 (1.5 대분류/중분류/제조사와 동일한 데이터) <button class="cmodal-close" id="sortOrderModalClose" type="button">✕</button></div>
+        <div class="cmodal-body" id="sortOrderModalBody"></div>
+      </div>
+    </div>
+
+    <!-- 5. 안분표 생성 : 패키지 만들기 (현재안 - 평형 1개씩) -->
+    <div class="cmodal-backdrop" id="packageModal" hidden>
+      <div class="send-modal pkg-modal">
+        <div class="cmodal-header">📦 안분표 패키지 생성 <button class="cmodal-close" id="packageModalClose" type="button">✕</button></div>
+        <div class="cmodal-body" id="packageModalBody"></div>
+      </div>
+    </div>
+
+    <!-- 5. 안분표 생성 : 공통 패키지 만들기 (개선안 - 상품 선택 후 평형 일괄 매핑) -->
+    <div class="cmodal-backdrop" id="packageMapModal" hidden>
+      <div class="send-modal pkg-modal">
+        <div class="cmodal-header">📦 공통 패키지 생성 — 평형 일괄 매핑 <button class="cmodal-close" id="packageMapModalClose" type="button">✕</button></div>
+        <div class="cmodal-body" id="packageMapModalBody"></div>
+      </div>
+    </div>
+
+    <!-- 가감조건 관리 : 조건 추가/수정 모달 -->
+    <div class="cmodal-backdrop" id="gagamModal" hidden>
+      <div class="send-modal">
+        <div class="cmodal-header" id="gagamModalHeader">➕ 가감조건 추가 <button class="cmodal-close" id="gagamModalClose" type="button">✕</button></div>
+        <div class="cmodal-body" id="gagamModalBody"></div>
+      </div>
+    </div>
+    <datalist id="gagamProductList"></datalist>
+  </div>
+
+<script>
+  // 현장 메뉴는 본사 확정 데이터를 가져와(복사) 독립적으로 관리하므로,
+  // 본사(index.html)와는 다른 localStorage 키를 쓴다 (shared-state.js가 참조).
+  window.DS_STORAGE_KEY_OVERRIDE = "dselection_site_state_v1";
+</script>
+<script src="shared-state.js"></script>
+<script src="script.js"></script>
+<script src="site-menu.js"></script>
+</body>
+</html>
