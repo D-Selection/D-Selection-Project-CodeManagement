@@ -13,7 +13,7 @@
   padding: 8px 24px;
 }
 
-/* 4. 상품고객언어 : 현장 전용 오버레이 컬럼(현장 표기명/현장 세부사항) */
+/* 1.1 프로덕트 / 1.2 상품구성코드 : 현장 전용 "현장 표기명" 오버레이 컬럼 */
 .site-overlay-col { background: #fff8e6; }
 .site-overlay-tag {
   display: inline-block;
@@ -80,3 +80,22 @@
 }
 .gagam-edit-btn:hover { border-color: var(--blue); color: var(--blue); }
 .gagam-delete-btn:hover { border-color: #d64545; color: #d64545; }
+.gagam-level-tag {
+  display: inline-block;
+  background: #eef1f6;
+  color: var(--text-sub);
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.gagam-priority-input {
+  width: 52px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 12.5px;
+  text-align: center;
+}
+.gagam-priority-input:focus { border-color: var(--blue); outline: none; }

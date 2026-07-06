@@ -11,8 +11,8 @@
    1) 현장 메뉴는 본사 승인 워크플로우(담당부서 확정/재작업)를 쓰지 않는다.
       별매 행사가 끝난 뒤에는 그 워크플로우 자체가 의미가 없으므로, 이
       현장 전용 저장소(dselection_site_state_v1)에서만 관련 단계를
-      "editable"로 맞춰 두어 프로덕트/평형그룹매핑/고객언어 등 모든 편집
-      컨트롤이 항상 활성화되도록 한다. 본사 저장소는 건드리지 않는다.
+      "editable"로 맞춰 두어 프로덕트/평형그룹매핑 등 모든 편집 컨트롤이
+      항상 활성화되도록 한다. 본사 저장소는 건드리지 않는다.
    --------------------------------------------------------------------- */
 (function ensureSiteStagesEditable() {
   const s = dsLoad();
@@ -65,104 +65,154 @@ document.getElementById("reloadFromHqBtn").addEventListener("click", () => {
 });
 
 /* ---------------------------------------------------------------------
-   3) 4. 상품고객언어 : 현장 전용 고객언어 오버레이
-      분양 시 값(flatRows의 itemCustomer/detailCustomer)은 그대로 두고,
-      "현장 표기명/현장 세부사항" 2개 컬럼만 별도 상태(siteLangOverrides)로
-      관리한다. 처음에는 분양 시 값을 그대로 복사해 보여주고, 현장에서
-      수정하면 그 값만 바뀌며 원본은 영향받지 않는다.
+   3) 현장용 언어 재가공 — "분양 시 활용했던 용어를 현장에 맞게 재가공"하는
+      기능은 1.1 프로덕트(소분류 단위)와 1.2 상품구성코드(상품 단위) 화면에
+      각각 "현장 표기명" 오버레이 컬럼으로 둔다. 원본(본사 상품명/항목명
+      (고객용))은 그대로 두고, 오버레이 값만 별도로 저장·초기화(↺)한다.
    --------------------------------------------------------------------- */
-const siteLangOverrides = {};
-function getSiteLangOverride(row) {
-  if (!siteLangOverrides[row.seq]) {
-    siteLangOverrides[row.seq] = { itemCustomer: row.itemCustomer, detailCustomer: row.detailCustomer };
-  }
-  return siteLangOverrides[row.seq];
-}
-function isSiteLangOverridden(row) {
-  const o = siteLangOverrides[row.seq];
-  return !!o && (o.itemCustomer !== row.itemCustomer || o.detailCustomer !== row.detailCustomer);
-}
 
-function siteOverlayCellHtml(seq, field, value, overridden) {
-  return `
-    <td class="site-overlay-col">
-      <div class="site-overlay-cell">
-        <input type="text" class="site-overlay-input" data-seq="${seq}" data-field="${field}" value="${value.replace(/"/g, "&quot;")}" />
-        <button class="site-overlay-reset-btn" data-reset-seq="${seq}" data-reset-field="${field}" ${overridden ? "" : "disabled"} title="분양 시 값으로 초기화">↺</button>
-      </div>
-    </td>`;
+/* 3-1) 1.1 프로덕트 — 소분류(PK) 단위 현장 표기명 */
+const siteProductNameOverrides = {};
+function getSiteProductName(p) {
+  if (!(p.code in siteProductNameOverrides)) siteProductNameOverrides[p.code] = p.name;
+  return siteProductNameOverrides[p.code];
 }
-
-function renderLangTable() {
-  document.getElementById("langTableBody").innerHTML = flatRows.map((r) => {
-    const o = getSiteLangOverride(r);
+function isSiteProductNameOverridden(p) {
+  return p.code in siteProductNameOverrides && siteProductNameOverrides[p.code] !== p.name;
+}
+function renderRows(list) {
+  tableBody.innerHTML = list.map((p) => {
+    const siteName = getSiteProductName(p);
     return `
     <tr>
-      <td><input type="checkbox" class="lang-row-check stage3-editable-control" data-seq="${r.seq}" /></td>
-      <td>${r.seq}</td>
-      <td>${r.customer}</td>
-      <td>${r.pyeong}</td>
-      <td>${r.hq}</td>
-      <td>${r.style}</td>
-      <td>${r.option}</td>
-      <td>${r.plan}</td>
-      <td>${r.space}</td>
-      <td class="${r.majorName ? "" : "muted"}">${r.majorName || "-"}</td>
-      <td class="${r.midName ? "" : "muted"}">${r.midName || "-"}</td>
-      <td class="${r.makerName ? "" : "muted"}">${r.makerName || "-"}</td>
-      <td>${PRODUCT_OPTION_TIER[r.code] ? `${PRODUCT_OPTION_TIER[r.code]}단계` : "-"}</td>
-      <td class="code-cell">${r.code}</td>
-      <td>${r.item}</td>
-      <td>${r.itemCustomer}</td>
-      <td>${r.detailCode}</td>
-      <td>${r.detail}</td>
-      <td>${r.detailCustomer}</td>
-      ${siteOverlayCellHtml(r.seq, "itemCustomer", o.itemCustomer, isSiteLangOverridden(r))}
-      ${siteOverlayCellHtml(r.seq, "detailCustomer", o.detailCustomer, isSiteLangOverridden(r))}
+      <td>${p.no}</td>
+      <td class="code-cell">${p.majorCode}</td>
+      <td>${p.majorName}</td>
+      <td>${p.midCode}</td>
+      <td>${p.midName}</td>
+      <td class="code-cell">${p.code}</td>
+      <td>${p.name}</td>
+      <td class="site-overlay-col">
+        <div class="site-overlay-cell">
+          <input type="text" class="site-overlay-input" data-code="${p.code}" data-kind="product" value="${siteName.replace(/"/g, "&quot;")}" />
+          <button class="site-overlay-reset-btn" data-reset-code="${p.code}" data-reset-kind="product" ${isSiteProductNameOverridden(p) ? "" : "disabled"} title="본사 상품명으로 초기화">↺</button>
+        </div>
+      </td>
     </tr>`;
   }).join("");
-  renderStage3ExtraLock();
+  rowCount.textContent = list.length;
 }
-renderLangTable();
+renderRows(products);
 
-document.getElementById("langTableBody").addEventListener("change", (e) => {
-  const input = e.target.closest(".site-overlay-input");
+document.getElementById("tableBody").addEventListener("change", (e) => {
+  const input = e.target.closest(".site-overlay-input[data-kind='product']");
   if (!input) return;
-  const row = flatRows.find((r) => r.seq === Number(input.dataset.seq));
-  const o = getSiteLangOverride(row);
-  o[input.dataset.field] = input.value;
-  dsAddEditLog("현장 상품고객언어", `순번 ${row.seq} · ${input.dataset.field === "itemCustomer" ? "현장 표기명" : "현장 세부사항"} → "${input.value}"`);
-  renderLangTable();
+  siteProductNameOverrides[input.dataset.code] = input.value;
+  dsAddEditLog("1.1 프로덕트(현장)", `${input.dataset.code} · 현장 표기명 → "${input.value}"`);
+  renderRows(products);
+});
+document.getElementById("tableBody").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-reset-kind='product']");
+  if (!btn || btn.disabled) return;
+  const p = PRODUCT_MASTER_CATALOG.find((x) => x.code === btn.dataset.resetCode);
+  if (!p) return;
+  siteProductNameOverrides[p.code] = p.name;
+  dsAddEditLog("1.1 프로덕트(현장)", `${p.code} · 현장 표기명을 본사 상품명으로 초기화`);
+  renderRows(products);
 });
 
-document.getElementById("langTableBody").addEventListener("click", (e) => {
-  const btn = e.target.closest("[data-reset-seq]");
+/* 3-2) 1.2 상품구성코드 — 상품(SKU) 단위 현장 표기명.
+   script.js에는 skuTableBody를 다시 그리는 함수가 없고(최초 1회만 렌더),
+   여기서 별도 렌더 함수를 새로 만들어 그 자리를 대체한다. */
+const siteSkuNameOverrides = {};
+function getSiteSkuName(s) {
+  if (!(s.code in siteSkuNameOverrides)) siteSkuNameOverrides[s.code] = s.itemCustomer;
+  return siteSkuNameOverrides[s.code];
+}
+function isSiteSkuNameOverridden(s) {
+  return s.code in siteSkuNameOverrides && siteSkuNameOverrides[s.code] !== s.itemCustomer;
+}
+function renderSkuTableSite() {
+  document.getElementById("skuTableBody").innerHTML = skuData.map((s) => {
+    const siteName = getSiteSkuName(s);
+    return `
+    <tr>
+      <td class="code-cell">${s.code}</td>
+      <td>${s.spaceCode}</td>
+      <td>${s.space}</td>
+      <td>${s.styleCode}</td>
+      <td>${s.style}</td>
+      <td>본사</td>
+      <td class="muted">-</td>
+      <td class="muted">-</td>
+      <td class="muted">-</td>
+      <td class="muted">-</td>
+      <td class="muted">-</td>
+      <td>${s.item}</td>
+      <td>${s.itemCustomer}</td>
+      <td class="site-overlay-col">
+        <div class="site-overlay-cell">
+          <input type="text" class="site-overlay-input" data-code="${s.code}" data-kind="sku" value="${siteName.replace(/"/g, "&quot;")}" />
+          <button class="site-overlay-reset-btn" data-reset-code="${s.code}" data-reset-kind="sku" ${isSiteSkuNameOverridden(s) ? "" : "disabled"} title="본사 항목명(고객용)으로 초기화">↺</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join("");
+}
+renderSkuTableSite();
+
+document.getElementById("skuTableBody").addEventListener("change", (e) => {
+  const input = e.target.closest(".site-overlay-input[data-kind='sku']");
+  if (!input) return;
+  siteSkuNameOverrides[input.dataset.code] = input.value;
+  dsAddEditLog("1.2 상품구성코드(현장)", `${input.dataset.code} · 현장 표기명 → "${input.value}"`);
+  renderSkuTableSite();
+});
+document.getElementById("skuTableBody").addEventListener("click", (e) => {
+  const btn = e.target.closest("[data-reset-kind='sku']");
   if (!btn || btn.disabled) return;
-  const row = flatRows.find((r) => r.seq === Number(btn.dataset.resetSeq));
-  const o = getSiteLangOverride(row);
-  o[btn.dataset.resetField] = row[btn.dataset.resetField];
-  dsAddEditLog("현장 상품고객언어", `순번 ${row.seq} · ${btn.dataset.resetField === "itemCustomer" ? "현장 표기명" : "현장 세부사항"}을 분양 시 값으로 초기화`);
-  renderLangTable();
+  const s = skuData.find((x) => x.code === btn.dataset.resetCode);
+  if (!s) return;
+  siteSkuNameOverrides[s.code] = s.itemCustomer;
+  dsAddEditLog("1.2 상품구성코드(현장)", `${s.code} · 현장 표기명을 본사 항목명(고객용)으로 초기화`);
+  renderSkuTableSite();
 });
 
 /* ---------------------------------------------------------------------
-   4) 가감조건 관리 — 상품 간 자동 추가/제외 규칙.
-      DS_PRODUCT_MASTER_CATALOG(1.1 프로덕트 소분류 마스터)에서 기준/대상
-      상품을 코드로 찾아 이름을 함께 보여준다.
+   4) 가감조건 관리 — 상품(소분류) 간, 그리고 프로덕트(대분류/중분류) 간
+      자동 추가/제외 규칙을 함께 관리하고, 같은 기준에 여러 조건이 겹칠 때
+      적용 순서를 정하는 우선순위를 둔다.
    --------------------------------------------------------------------- */
 document.getElementById("gagamProductList").innerHTML = DS_PRODUCT_MASTER_CATALOG
   .map((p) => `<option value="${p.code}">${p.code} ${p.name}</option>`)
   .join("");
 
-function findGagamProduct(code) {
-  return DS_PRODUCT_MASTER_CATALOG.find((p) => p.code === code);
+const GAGAM_LEVEL_LABEL = { sub: "소분류", major: "대분류", mid: "중분류" };
+
+function resolveGagamEntity(level, code) {
+  if (!code) return null;
+  if (level === "sub") {
+    const p = DS_PRODUCT_MASTER_CATALOG.find((x) => x.code === code);
+    return p ? { code: p.code, name: p.name } : null;
+  }
+  if (level === "major") {
+    const m = DS_PRODUCT_MAJORS_NEW.find((x) => x.code === code);
+    return m ? { code: m.code, name: m.name } : null;
+  }
+  if (level === "mid") {
+    const [majorCode, midCode] = code.split("-");
+    const m = DS_PRODUCT_MIDS_NEW.find((x) => x.majorCode === majorCode && x.code === midCode);
+    return m ? { code, name: `${m.majorCode} · ${m.name}` } : null;
+  }
+  return null;
 }
 
 let gagamSeq = 1;
 const gagamConditions = [
-  { id: gagamSeq++, triggerCode: "AC-001-01", type: "add", targetCode: "AC-005-01", note: "주방수전 선택 시 수건걸이 기본 제공", createdAt: "2026-07-01" },
-  { id: gagamSeq++, triggerCode: "AC-003-04", type: "remove", targetCode: "AC-003-06", note: "비데일체형 양변기 선택 시 분리형 비데는 제외", createdAt: "2026-07-01" },
-  { id: gagamSeq++, triggerCode: "FN-002-04", type: "add", targetCode: "FN-002-01", note: "슬라이딩 도어 선택 시 예비 스윙 도어 부속 추가", createdAt: "2026-07-02" },
+  { id: gagamSeq++, priority: 1, triggerLevel: "sub", triggerCode: "AC-001-01", type: "add", targetLevel: "sub", targetCode: "AC-005-01", note: "주방수전 선택 시 수건걸이 기본 제공", createdAt: "2026-07-01" },
+  { id: gagamSeq++, priority: 2, triggerLevel: "major", triggerCode: "CW", type: "remove", targetLevel: "mid", targetCode: "FN-002", note: "구조변경/창호 대분류 선택 시 현관중문 중분류는 전체 제외", createdAt: "2026-07-01" },
+  { id: gagamSeq++, priority: 3, triggerLevel: "sub", triggerCode: "AC-003-04", type: "remove", targetLevel: "sub", targetCode: "AC-003-06", note: "비데일체형 양변기 선택 시 분리형 비데는 제외", createdAt: "2026-07-01" },
+  { id: gagamSeq++, priority: 4, triggerLevel: "sub", triggerCode: "FN-002-04", type: "add", targetLevel: "sub", targetCode: "FN-002-01", note: "슬라이딩 도어 선택 시 예비 스윙 도어 부속 추가", createdAt: "2026-07-02" },
 ];
 
 function gagamToday() {
@@ -175,15 +225,37 @@ const gagamModal = document.getElementById("gagamModal");
 const gagamModalBody = document.getElementById("gagamModalBody");
 const gagamModalHeader = document.getElementById("gagamModalHeader");
 
+function gagamValueFieldHtml(prefix, fieldId, level, code) {
+  if (level === "major") {
+    return `<label>${prefix} 대분류</label>
+      <select id="${fieldId}">
+        ${DS_PRODUCT_MAJORS_NEW.map((m) => `<option value="${m.code}" ${m.code === code ? "selected" : ""}>${m.code} · ${m.name}</option>`).join("")}
+      </select>`;
+  }
+  if (level === "mid") {
+    return `<label>${prefix} 중분류</label>
+      <select id="${fieldId}">
+        ${DS_PRODUCT_MIDS_NEW.map((m) => {
+          const v = `${m.majorCode}-${m.code}`;
+          return `<option value="${v}" ${v === code ? "selected" : ""}>${m.majorCode} · ${m.code} ${m.name}</option>`;
+        }).join("")}
+      </select>`;
+  }
+  return `<label>${prefix} 소분류코드(PK)</label>
+    <input type="text" id="${fieldId}" list="gagamProductList" placeholder="예: AC-001-01" value="${code || ""}" />`;
+}
+
 function gagamRowHtml(c) {
-  const trigger = findGagamProduct(c.triggerCode);
-  const target = findGagamProduct(c.targetCode);
+  const trigger = resolveGagamEntity(c.triggerLevel, c.triggerCode);
+  const target = resolveGagamEntity(c.targetLevel, c.targetCode);
   return `
     <tr data-id="${c.id}">
-      <td>${c.id}</td>
+      <td><input type="number" class="gagam-priority-input" data-id="${c.id}" value="${c.priority}" min="1" /></td>
+      <td><span class="gagam-level-tag">${GAGAM_LEVEL_LABEL[c.triggerLevel]}</span></td>
       <td class="code-cell">${c.triggerCode}</td>
       <td>${trigger ? trigger.name : `<span class="muted">알 수 없음</span>`}</td>
       <td><span class="tag-condition ${c.type}">${c.type === "add" ? "추가" : "제외"}</span></td>
+      <td><span class="gagam-level-tag">${GAGAM_LEVEL_LABEL[c.targetLevel]}</span></td>
       <td class="code-cell">${c.targetCode}</td>
       <td>${target ? target.name : `<span class="muted">알 수 없음</span>`}</td>
       <td>${c.note || `<span class="muted">-</span>`}</td>
@@ -197,9 +269,10 @@ function gagamRowHtml(c) {
 
 function renderGagamTable(filterText) {
   const q = (filterText || "").trim().toLowerCase();
-  const list = !q ? gagamConditions : gagamConditions.filter((c) => {
-    const trigger = findGagamProduct(c.triggerCode);
-    const target = findGagamProduct(c.targetCode);
+  const sorted = [...gagamConditions].sort((a, b) => a.priority - b.priority);
+  const list = !q ? sorted : sorted.filter((c) => {
+    const trigger = resolveGagamEntity(c.triggerLevel, c.triggerCode);
+    const target = resolveGagamEntity(c.targetLevel, c.targetCode);
     return [c.triggerCode, c.targetCode, c.note, trigger && trigger.name, target && target.name]
       .filter(Boolean).join(" ").toLowerCase().includes(q);
   });
@@ -210,13 +283,34 @@ renderGagamTable("");
 
 document.getElementById("gagamSearchInput").addEventListener("input", (e) => renderGagamTable(e.target.value));
 
+document.getElementById("gagamTableBody").addEventListener("change", (e) => {
+  const input = e.target.closest(".gagam-priority-input");
+  if (!input) return;
+  const row = gagamConditions.find((c) => c.id === Number(input.dataset.id));
+  const newPriority = Math.max(1, Number(input.value) || 1);
+  row.priority = newPriority;
+  dsAddEditLog("가감조건 관리", `${row.triggerCode} → ${row.targetCode} 조건의 우선순위를 ${newPriority}(으)로 변경`);
+  renderGagamTable(document.getElementById("gagamSearchInput").value);
+});
+
 function openGagamModal(editing) {
   gagamEditingId = editing ? editing.id : null;
+  const triggerLevel = editing ? editing.triggerLevel : "sub";
+  const targetLevel = editing ? editing.targetLevel : "sub";
+  const nextPriority = gagamConditions.length ? Math.max(...gagamConditions.map((c) => c.priority)) + 1 : 1;
+
   gagamModalHeader.innerHTML = `${editing ? "✎ 가감조건 수정" : "➕ 가감조건 추가"} <button class="cmodal-close" id="gagamModalClose" type="button">✕</button>`;
   gagamModalBody.innerHTML = `
     <div class="lang-edit-field">
-      <label>기준 상품코드 (조건이 발생하는 상품)</label>
-      <input type="text" id="gagamTriggerCode" list="gagamProductList" placeholder="예: AC-001-01" value="${editing ? editing.triggerCode : ""}" />
+      <label>기준 단위 (조건이 발생하는 대상)</label>
+      <select id="gagamTriggerLevel">
+        <option value="sub" ${triggerLevel === "sub" ? "selected" : ""}>소분류(PK)</option>
+        <option value="major" ${triggerLevel === "major" ? "selected" : ""}>대분류</option>
+        <option value="mid" ${triggerLevel === "mid" ? "selected" : ""}>중분류</option>
+      </select>
+    </div>
+    <div class="lang-edit-field" id="gagamTriggerValueWrap">
+      ${gagamValueFieldHtml("기준", "gagamTriggerCode", triggerLevel, editing ? editing.triggerCode : "")}
     </div>
     <div class="lang-edit-field">
       <label>조건구분</label>
@@ -226,8 +320,20 @@ function openGagamModal(editing) {
       </select>
     </div>
     <div class="lang-edit-field">
-      <label>대상 상품코드 (자동으로 추가/제외될 상품)</label>
-      <input type="text" id="gagamTargetCode" list="gagamProductList" placeholder="예: AC-005-01" value="${editing ? editing.targetCode : ""}" />
+      <label>대상 단위 (자동으로 추가/제외될 대상)</label>
+      <select id="gagamTargetLevel">
+        <option value="sub" ${targetLevel === "sub" ? "selected" : ""}>소분류(PK)</option>
+        <option value="major" ${targetLevel === "major" ? "selected" : ""}>대분류</option>
+        <option value="mid" ${targetLevel === "mid" ? "selected" : ""}>중분류</option>
+      </select>
+    </div>
+    <div class="lang-edit-field" id="gagamTargetValueWrap">
+      ${gagamValueFieldHtml("대상", "gagamTargetCode", targetLevel, editing ? editing.targetCode : "")}
+    </div>
+    <div class="lang-edit-field">
+      <label>우선순위</label>
+      <input type="number" id="gagamPriority" min="1" value="${editing ? editing.priority : nextPriority}" />
+      <div class="field-hint">숫자가 작을수록 먼저 적용됩니다. 같은 기준상품에 여러 조건이 겹칠 때 순서를 정합니다.</div>
     </div>
     <div class="lang-edit-field">
       <label>비고</label>
@@ -240,38 +346,48 @@ function openGagamModal(editing) {
     </div>
   `;
   gagamModal.hidden = false;
+
   document.getElementById("gagamModalClose").addEventListener("click", () => { gagamModal.hidden = true; });
   document.getElementById("gagamCancelBtn").addEventListener("click", () => { gagamModal.hidden = true; });
   document.getElementById("gagamSaveBtn").addEventListener("click", saveGagamModal);
+  document.getElementById("gagamTriggerLevel").addEventListener("change", (e) => {
+    document.getElementById("gagamTriggerValueWrap").innerHTML = gagamValueFieldHtml("기준", "gagamTriggerCode", e.target.value, "");
+  });
+  document.getElementById("gagamTargetLevel").addEventListener("change", (e) => {
+    document.getElementById("gagamTargetValueWrap").innerHTML = gagamValueFieldHtml("대상", "gagamTargetCode", e.target.value, "");
+  });
 }
 
 function saveGagamModal() {
   const errorEl = document.getElementById("gagamError");
   errorEl.hidden = true;
+  const triggerLevel = document.getElementById("gagamTriggerLevel").value;
   const triggerCode = document.getElementById("gagamTriggerCode").value.trim();
   const type = document.getElementById("gagamType").value;
+  const targetLevel = document.getElementById("gagamTargetLevel").value;
   const targetCode = document.getElementById("gagamTargetCode").value.trim();
+  const priority = Math.max(1, Number(document.getElementById("gagamPriority").value) || 1);
   const note = document.getElementById("gagamNote").value.trim();
 
-  const trigger = findGagamProduct(triggerCode);
-  const target = findGagamProduct(targetCode);
+  const trigger = resolveGagamEntity(triggerLevel, triggerCode);
+  const target = resolveGagamEntity(targetLevel, targetCode);
   if (!trigger || !target) {
     errorEl.hidden = false;
-    errorEl.textContent = `❌ 기준/대상 상품코드는 1.1 프로덕트에 등록된 소분류코드(PK)여야 합니다.`;
+    errorEl.textContent = `❌ 기준/대상 코드는 선택한 단위(소분류/대분류/중분류)에 실제로 등록된 코드여야 합니다.`;
     return;
   }
-  if (triggerCode === targetCode) {
+  if (triggerLevel === targetLevel && triggerCode === targetCode) {
     errorEl.hidden = false;
-    errorEl.textContent = `❌ 기준 상품과 대상 상품은 서로 달라야 합니다.`;
+    errorEl.textContent = `❌ 기준과 대상은 서로 달라야 합니다.`;
     return;
   }
 
   if (gagamEditingId) {
     const row = gagamConditions.find((c) => c.id === gagamEditingId);
-    Object.assign(row, { triggerCode, type, targetCode, note });
+    Object.assign(row, { triggerLevel, triggerCode, type, targetLevel, targetCode, priority, note });
     dsAddEditLog("가감조건 관리", `${triggerCode} → ${targetCode} (${type === "add" ? "추가" : "제외"}) 조건 수정`);
   } else {
-    gagamConditions.unshift({ id: gagamSeq++, triggerCode, type, targetCode, note, createdAt: gagamToday() });
+    gagamConditions.push({ id: gagamSeq++, priority, triggerLevel, triggerCode, type, targetLevel, targetCode, note, createdAt: gagamToday() });
     dsAddEditLog("가감조건 관리", `${triggerCode} → ${targetCode} (${type === "add" ? "추가" : "제외"}) 조건 신규 등록`);
   }
   gagamModal.hidden = true;
