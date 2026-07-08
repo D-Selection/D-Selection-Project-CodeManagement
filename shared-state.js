@@ -635,13 +635,13 @@ function dsStatusLabel(status) {
 
 function dsDefaultStages() {
   return {
-    s0: { key: "s0", label: "0. 현장별코드", owner: "owner0", downstream: ["s11"], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오전 9:15:00", pendingApprovals: [], justUnlocked: false },
-    s11: { key: "s11", label: "1.1 프로덕트", owner: "owner11", downstream: ["s13"], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오전 10:20:00", pendingApprovals: [], justUnlocked: false },
-    s13: { key: "s13", label: "1.3 프로덕트×상품구성코드", owner: "owner13", downstream: ["s14"], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오전 11:02:10", pendingApprovals: [], justUnlocked: false },
-    s14: { key: "s14", label: "1.4 평형그룹매핑", owner: "owner14", downstream: ["s2"], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오후 1:31:21", pendingApprovals: [], justUnlocked: false },
-    s2: { key: "s2", label: "2. 원가 수정", owner: "owner2", downstream: ["s4"], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오후 5:30:20", pendingApprovals: [], justUnlocked: false },
-    s4: { key: "s4", label: "3. 판매가 수정", owner: "owner4", downstream: ["s3"], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오후 5:30:03", pendingApprovals: [], justUnlocked: false },
-    s3: { key: "s3", label: "4. 상품고객언어", owner: "owner3", downstream: [], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오후 6:10:45", pendingApprovals: [], justUnlocked: false },
+    s0: { key: "s0", label: "0. 현장별코드", owner: "owner0", downstream: ["s11"], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오전 9:15:00", pendingApprovals: [], justUnlocked: false, round: 1 },
+    s11: { key: "s11", label: "1.1 프로덕트", owner: "owner11", downstream: ["s13"], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오전 10:20:00", pendingApprovals: [], justUnlocked: false, round: 1 },
+    s13: { key: "s13", label: "1.3 프로덕트×상품구성코드", owner: "owner13", downstream: ["s14"], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오전 11:02:10", pendingApprovals: [], justUnlocked: false, round: 1 },
+    s14: { key: "s14", label: "1.4 평형그룹매핑", owner: "owner14", downstream: ["s2"], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오후 1:31:21", pendingApprovals: [], justUnlocked: false, round: 1 },
+    s2: { key: "s2", label: "2. 원가 수정", owner: "owner2", downstream: ["s4"], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오후 5:30:20", pendingApprovals: [], justUnlocked: false, round: 1 },
+    s4: { key: "s4", label: "3. 판매가 수정", owner: "owner4", downstream: ["s3"], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오후 5:30:03", pendingApprovals: [], justUnlocked: false, round: 1 },
+    s3: { key: "s3", label: "4. 상품고객언어", owner: "owner3", downstream: [], status: "confirmed", confirmedAt: "2026년 6월 29일 (월) 오후 6:10:45", pendingApprovals: [], justUnlocked: false, round: 1 },
   };
 }
 
@@ -678,6 +678,10 @@ function dsLoad() {
       dsState.stages.s4.downstream = ["s3"];
       dsState.stages.s4.label = "3. 판매가 수정";
       dsState.stages.s3.label = "4. 상품고객언어";
+      // 이전 버전 저장값에는 확정 차수(round)가 없을 수 있으므로 보정
+      DS_STAGE_ORDER.forEach((k) => {
+        if (typeof dsState.stages[k].round !== "number") dsState.stages[k].round = 1;
+      });
       return dsState;
     }
   } catch (e) {}
@@ -715,22 +719,45 @@ function dsAddNotification(toRoleKey, kind, text, stageKey) {
   return n;
 }
 
-function dsAddHistory(stageKey, text) {
+function dsAddHistory(stageKey, text, extra) {
   const s = dsLoad();
-  s.workflowHistory.unshift({ id: s.historySeq++, stageKey, text, time: dsNowKorean() });
+  s.workflowHistory.unshift(Object.assign({ id: s.historySeq++, stageKey, text, time: dsNowKorean() }, extra || {}));
 }
 
 // 실제 데이터 수정(코드 배정/매핑 등) 로그. 확정/재작업 이력과는 별도로,
-// 1-5번 작업화면과 현장별코드 화면에 공통으로 표시된다.
+// 1-5번 작업화면과 현장별코드 화면에 공통으로 표시된다. 현재 담당자 본인
+// 단계의 "확정 차수"를 함께 남겨, 페이지별 변경이 몇 차수에 발생했는지 추적한다.
 function dsAddEditLog(scope, text) {
   const s = dsLoad();
-  s.editHistory.unshift({ id: s.editSeq++, scope, text, time: dsNowKorean(), by: dsRoleName(s.currentRole) });
+  const myStage = Object.values(s.stages).find((st) => st.owner === s.currentRole);
+  s.editHistory.unshift({
+    id: s.editSeq++,
+    scope,
+    text,
+    time: dsNowKorean(),
+    by: dsRoleName(s.currentRole),
+    round: myStage ? (myStage.round || 1) : null,
+  });
   dsSave();
 }
 
+// 단계 순서(DS_STAGE_ORDER) 상에서 이 단계보다 뒤(후행)/앞(선행)에 있는
+// 모든 단계 키를 돌려준다. 이 파이프라인은 선형이라 "후행"은 직접 다음
+// 단계 하나가 아니라 그 뒤에 있는 모든 단계를 뜻한다.
+function dsAllDownstreamKeys(stageKey) {
+  const idx = DS_STAGE_ORDER.indexOf(stageKey);
+  return idx === -1 ? [] : DS_STAGE_ORDER.slice(idx + 1);
+}
+function dsAllUpstreamKeys(stageKey) {
+  const idx = DS_STAGE_ORDER.indexOf(stageKey);
+  return idx <= 0 ? [] : DS_STAGE_ORDER.slice(0, idx);
+}
+
+// 잠금(locked, 아직 시작 전) 상태가 아닌 후행 단계만 "관련자"로 본다 —
+// 이미 시작했거나 확정된 단계는 선행 작업이 바뀌면 영향을 받기 때문이다.
 function dsDownstreamNeedingApproval(stage) {
   const s = dsLoad();
-  return stage.downstream.filter((k) => s.stages[k].status !== "locked");
+  return dsAllDownstreamKeys(stage.key).filter((k) => s.stages[k].status !== "locked");
 }
 
 function dsAutoResolvePendingApprovalsFor(stageKey) {
@@ -753,8 +780,9 @@ function dsAutoResolvePendingApprovalsFor(stageKey) {
       up.status = "editable";
       up.confirmedAt = null;
       up.justUnlocked = true;
-      dsAddNotification(up.owner, "reopen_approved", `모든 후속 작업 담당자의 잠금 해제가 완료되었습니다. 「${up.label}」을(를) 다시 수정할 수 있습니다.`, up.key);
-      dsAddHistory(up.key, `🔓 잠금 해제가 모두 완료되어 「${up.label}」 재작업이 가능합니다.`);
+      up.round = (up.round || 1) + 1;
+      dsAddNotification(up.owner, "reopen_approved", `모든 후속 작업 담당자의 잠금 해제가 완료되었습니다. 「${up.label}」을(를) 다시 수정할 수 있습니다. (${up.round}차)`, up.key);
+      dsAddHistory(up.key, `🔓 잠금 해제가 모두 완료되어 「${up.label}」 재작업이 가능합니다. (${up.round}차)`);
     }
   });
 }
@@ -766,7 +794,7 @@ function dsConfirmStage(stageKey) {
   stage.status = "confirmed";
   stage.confirmedAt = dsNowKorean();
   stage.justUnlocked = false;
-  dsAddHistory(stageKey, `✔ ${dsRoleName(stage.owner)}님이 「${stage.label}」을(를) 확정했습니다.`);
+  dsAddHistory(stageKey, `✔ ${dsRoleName(stage.owner)}님이 「${stage.label}」을(를) 확정했습니다. (${stage.round || 1}차)`);
   stage.downstream.forEach((dKey) => {
     const d = s.stages[dKey];
     if (d.status === "locked") {
@@ -775,40 +803,91 @@ function dsConfirmStage(stageKey) {
       dsAddHistory(dKey, `🔓 「${stage.label}」 확정에 따라 「${d.label}」 작업이 시작 가능해졌습니다.`);
     }
   });
+
+  // 재작업(2차 이상) 끝에 다시 확정한 경우, 바로 다음 단계 외에 더 뒤에 있는
+  // 모든 담당자에게도 "선행 작업이 다시 확정됐다"는 참고 알림을 보낸다.
+  if ((stage.round || 1) > 1) {
+    dsAllDownstreamKeys(stageKey).forEach((k) => {
+      if (stage.downstream.includes(k)) return; // 바로 다음 단계는 위에서 이미 알림
+      dsAddNotification(
+        s.stages[k].owner,
+        "upstream_reconfirmed",
+        `선행 작업 「${stage.label}」이(가) 재작업 후 다시 확정되었습니다. (${stage.round}차) 관련 작업에 영향이 없는지 확인해주세요.`,
+        stageKey
+      );
+    });
+  }
   dsSave();
 }
 
-function dsRequestReopen(stageKey) {
+function dsRequestReopen(stageKey, reason) {
   const s = dsLoad();
   const stage = s.stages[stageKey];
   if (stage.status !== "confirmed") return;
-  const approvers = dsDownstreamNeedingApproval(stage);
-  if (approvers.length === 0) {
+  const related = dsDownstreamNeedingApproval(stage);
+  const reasonText = reason ? ` 사유: ${reason}` : "";
+
+  if (related.length === 0) {
     stage.status = "editable";
     stage.confirmedAt = null;
-    dsAddHistory(stageKey, `↺ ${dsRoleName(stage.owner)}님이 「${stage.label}」 잠금을 해제하고 재작업을 시작했습니다. (후속 작업 미착수로 승인 불필요)`);
+    stage.round = (stage.round || 1) + 1;
+    dsAddHistory(
+      stageKey,
+      `↺ ${dsRoleName(stage.owner)}님이 「${stage.label}」 잠금을 해제하고 재작업을 시작했습니다. (후속 작업 미착수로 승인 불필요)${reasonText}`,
+      { reason: reason || "" }
+    );
     dsAutoResolvePendingApprovalsFor(stageKey);
     dsSave();
     return;
   }
+
+  // 관련자 전원(related)에게 알리되, 실제 승인은 그 중 "가장 마지막(가장 뒤 단계)"
+  // 담당자 1명만 하면 된다 — 그 사람이 승인하는 시점엔 그 사이 모든 단계가
+  // 이미 확정을 마쳤다는 뜻이므로, 선행 작업의 잠금을 대표로 풀어줄 수 있다.
+  const finalApprover = related[related.length - 1];
   stage.status = "reopen_pending";
-  stage.pendingApprovals = approvers.slice();
+  stage.pendingApprovals = [finalApprover];
+
   dsAddHistory(
     stageKey,
-    `↺ ${dsRoleName(stage.owner)}님이 「${stage.label}」 재작업을 위해 잠금 해제를 요청했습니다. (승인 필요: ${approvers.map((k) => dsRoleName(s.stages[k].owner)).join(", ")})`
+    `↺ ${dsRoleName(stage.owner)}님이 「${stage.label}」 재작업을 위해 잠금 해제를 요청했습니다.${reasonText} (최종 승인자: ${dsRoleName(s.stages[finalApprover].owner)})`,
+    { reason: reason || "" }
   );
-  approvers.forEach((dKey) => {
-    const d = s.stages[dKey];
-    const n = dsAddNotification(
-      d.owner,
-      "reopen_request",
-      `${dsRoleName(stage.owner)}님이 「${stage.label}」 재작업을 위해 잠금 해제를 요청했습니다. 승인하면 「${d.label}」은(는) 다시 확정해야 합니다.`,
-      stageKey
-    );
-    n.approverStage = dKey;
+
+  related.forEach((k) => {
+    const d = s.stages[k];
+    if (k === finalApprover) {
+      const n = dsAddNotification(
+        d.owner,
+        "reopen_request",
+        `${dsRoleName(stage.owner)}님이 「${stage.label}」 재작업을 위해 잠금 해제를 요청했습니다.${reasonText} 승인하면 「${stage.label}」이(가) 재작업 가능한 상태로 바뀝니다.`,
+        stageKey
+      );
+      n.approverStage = k;
+    } else {
+      dsAddNotification(
+        d.owner,
+        "reopen_fyi",
+        `${dsRoleName(stage.owner)}님이 「${stage.label}」 재작업을 위해 잠금 해제를 요청했습니다.${reasonText} (최종 승인은 ${dsRoleName(s.stages[finalApprover].owner)}님이 진행하며, 참고로 안내드립니다)`,
+        stageKey
+      );
+    }
   });
   dsAutoResolvePendingApprovalsFor(stageKey);
   dsSave();
+}
+
+// "확정 강제취소(재작업 요청)" 버튼은 어느 화면에서 누르든 항상 사유를
+// 먼저 물어봐야 하므로, 각 화면의 버튼 클릭 핸들러가 공통으로 이 함수를
+// 부르게 한다. 사유를 입력하지 않고 취소하면 아무 것도 바꾸지 않는다.
+function dsPromptAndRequestReopen(stageKey) {
+  const s = dsLoad();
+  const stage = s.stages[stageKey];
+  const reason = window.prompt(`「${stage.label}」을(를) 재작업해야 하는 사유를 입력해주세요.`, "");
+  if (reason === null) return false;
+  if (!reason.trim()) { alert("사유를 입력해야 확정을 취소할 수 있습니다."); return false; }
+  dsRequestReopen(stageKey, reason.trim());
+  return true;
 }
 
 function dsCancelReopenRequest(stageKey) {
@@ -817,6 +896,9 @@ function dsCancelReopenRequest(stageKey) {
   if (stage.status !== "reopen_pending") return;
   stage.status = "confirmed";
   stage.pendingApprovals = [];
+  s.notifications
+    .filter((n) => n.kind === "reopen_request" && n.stageKey === stageKey && !n.resolved)
+    .forEach((n) => { n.resolved = true; n.read = true; n.autoResolved = true; });
   dsAddHistory(stageKey, `${dsRoleName(stage.owner)}님이 「${stage.label}」 잠금 해제 요청을 취소했습니다.`);
   dsSave();
 }
@@ -826,23 +908,61 @@ function dsApproveReopen(notifId) {
   const notif = s.notifications.find((n) => n.id === notifId);
   if (!notif || notif.resolved || notif.kind !== "reopen_request") return;
   const stage = s.stages[notif.stageKey];
-  const approverStage = s.stages[notif.approverStage];
   notif.resolved = true;
   notif.read = true;
+  if (stage.status !== "reopen_pending") return; // 이미 취소되었거나 처리된 요청
 
-  stage.pendingApprovals = stage.pendingApprovals.filter((k) => k !== notif.approverStage);
-  approverStage.status = "locked";
-  approverStage.confirmedAt = null;
-  approverStage.justUnlocked = false;
-  dsAddHistory(notif.approverStage, `✅ ${dsRoleName(approverStage.owner)}님이 「${stage.label}」 잠금 해제를 승인했습니다. 「${approverStage.label}」은(는) 재확정이 필요합니다.`);
+  const approverStage = s.stages[notif.approverStage];
+  stage.pendingApprovals = [];
+  stage.status = "editable";
+  stage.confirmedAt = null;
+  stage.justUnlocked = true;
+  stage.round = (stage.round || 1) + 1;
 
-  if (stage.pendingApprovals.length === 0) {
-    stage.status = "editable";
-    stage.confirmedAt = null;
-    stage.justUnlocked = true;
-    dsAddNotification(stage.owner, "reopen_approved", `모든 후속 작업 담당자가 잠금 해제를 승인했습니다. 「${stage.label}」을(를) 다시 수정할 수 있습니다.`, stage.key);
-    dsAddHistory(stage.key, `🔓 잠금 해제 승인이 모두 완료되어 「${stage.label}」 재작업이 가능합니다.`);
-  }
+  dsAddHistory(notif.approverStage, `✅ ${dsRoleName(approverStage.owner)}님이 「${stage.label}」 잠금 해제를 승인했습니다.`);
+  dsAddNotification(
+    stage.owner,
+    "reopen_approved",
+    `${dsRoleName(approverStage.owner)}님의 승인으로 잠금 해제가 완료되었습니다. 「${stage.label}」을(를) 다시 수정할 수 있습니다. (${stage.round}차)`,
+    stage.key
+  );
+  dsAddHistory(stage.key, `🔓 ${dsRoleName(approverStage.owner)}님의 승인으로 「${stage.label}」 재작업이 가능합니다. (${stage.round}차)`);
+
+  // 승인한 사람 외에, 처음에 참고 알림을 받았던 다른 후행 담당자들에게도
+  // "잠금 해제가 승인되어 재작업이 시작된다"는 사실을 알린다.
+  dsDownstreamNeedingApproval(stage)
+    .filter((k) => k !== notif.approverStage)
+    .forEach((k) => {
+      dsAddNotification(
+        s.stages[k].owner,
+        "reopen_unlocked_fyi",
+        `「${stage.label}」의 잠금 해제가 ${dsRoleName(approverStage.owner)}님의 승인으로 완료되어 재작업이 시작됩니다.`,
+        stage.key
+      );
+    });
+
+  dsSave();
+}
+
+// 후행 작업자가 선행(이미 확정된) 단계의 담당자에게 재작업을 요청한다.
+// 상태는 바꾸지 않고 알림/이력만 남긴다 — 실제로 재작업을 시작할지는
+// 선행 담당자가 자신의 "확정 강제취소" 버튼을 직접 눌러 결정한다.
+function dsRequestReworkFrom(requesterStageKey, targetStageKey, reason) {
+  const s = dsLoad();
+  const requester = s.stages[requesterStageKey];
+  const target = s.stages[targetStageKey];
+  if (!requester || !target || !reason) return;
+  dsAddNotification(
+    target.owner,
+    "rework_requested",
+    `${dsRoleName(requester.owner)}님이 「${requester.label}」 작업 중 「${target.label}」의 재작업이 필요하다고 요청했습니다. 사유: ${reason}`,
+    targetStageKey
+  );
+  dsAddHistory(
+    targetStageKey,
+    `📮 ${dsRoleName(requester.owner)}님이 「${requester.label}」 작업 중 「${target.label}」의 재작업을 요청했습니다. 사유: ${reason}`,
+    { reason, fromStage: requesterStageKey }
+  );
   dsSave();
 }
 
@@ -859,6 +979,10 @@ function dsRenderStatusBar(containerId, opts) {
         현재 담당자
         <select id="dsRoleSelect"></select>
       </label>
+      <div class="notif-wrap">
+        <button class="notif-bell" id="dsReworkBtn" type="button" title="선행 작업에 재작업 요청">🔁 재작업 요청</button>
+        <div class="notif-panel rework-panel" id="dsReworkPanel" hidden></div>
+      </div>
       <div class="notif-wrap">
         <button class="notif-bell" id="dsEditLogBtn" type="button" title="수정 로그">📝 수정로그</button>
         <div class="notif-panel history-panel" id="dsEditLogPanel" hidden></div>
@@ -893,7 +1017,7 @@ function dsRenderStatusBar(containerId, opts) {
       <button type="button" class="status-node" data-stage-key="${key}" title="「${st.label}」 화면으로 이동">
         <span class="status-dot ${st.status}"></span>
         <span class="status-node-label">${st.label}</span>
-        <span class="status-node-owner">· ${dsRoleName(st.owner)} · ${dsStatusLabel(st.status)}</span>
+        <span class="status-node-owner">· ${dsRoleName(st.owner)} · ${dsStatusLabel(st.status)}${(st.round || 1) > 1 ? ` · ${st.round}차` : ""}</span>
       </button>`;
     return i < DS_STAGE_ORDER.length - 1 ? node + `<span class="status-arrow">→</span>` : node;
   }).join("");
@@ -908,6 +1032,8 @@ function dsRenderStatusBar(containerId, opts) {
   const historyPanel = document.getElementById("dsHistoryPanel");
   const editLogBtn = document.getElementById("dsEditLogBtn");
   const editLogPanel = document.getElementById("dsEditLogPanel");
+  const reworkBtn = document.getElementById("dsReworkBtn");
+  const reworkPanel = document.getElementById("dsReworkPanel");
 
   function renderNotifPanel() {
     const mine = dsLoad().notifications.filter((n) => n.to === dsGetCurrentRole());
@@ -919,7 +1045,7 @@ function dsRenderStatusBar(containerId, opts) {
       return;
     }
     notifPanel.innerHTML = `<div class="notif-panel-title">알림 (${dsRoleName(dsGetCurrentRole())})</div>` + mine.map((n) => `
-      <div class="notif-item ${n.read ? "" : "unread"}">
+      <div class="notif-item notif-item-clickable ${n.read ? "" : "unread"}" data-stage-key="${n.stageKey || ""}" title="「${n.stageKey ? dsLoad().stages[n.stageKey].label : ""}」 화면으로 이동">
         <div class="notif-item-text">${n.text}</div>
         <div class="notif-item-meta">${n.time}</div>
         ${n.kind === "reopen_request" && !n.resolved ? `<button class="notif-approve-btn" data-approve="${n.id}">승인</button>` : ""}
@@ -952,17 +1078,41 @@ function dsRenderStatusBar(containerId, opts) {
     }
     editLogPanel.innerHTML = `<div class="notif-panel-title">수정 로그 (모든 담당자 공개, 전체 ${log.length}건)</div>` + log.map((e) => `
       <div class="notif-item">
-        <div class="notif-item-text">[${e.scope}] ${e.text}</div>
+        <div class="notif-item-text">[${e.scope}${e.round ? ` · ${e.round}차` : ""}] ${e.text}</div>
         <div class="notif-item-meta">${e.by} · ${e.time}</div>
       </div>
     `).join("");
   }
   renderEditLogPanelInner();
 
+  // 선행 단계에 재작업을 요청하는 폼. 현재 담당자 본인 단계보다 앞(선행)에
+  // 있으면서 이미 확정된 단계만 대상으로 고를 수 있다.
+  function renderReworkPanel() {
+    const myStage = Object.values(dsLoad().stages).find((st) => st.owner === dsGetCurrentRole());
+    const targets = myStage
+      ? dsAllUpstreamKeys(myStage.key).map((k) => dsLoad().stages[k]).filter((st) => st.status === "confirmed")
+      : [];
+    if (!myStage || targets.length === 0) {
+      reworkPanel.innerHTML = `<div class="notif-panel-title">재작업 요청</div><div class="notif-item-empty">요청할 수 있는 선행(확정된) 단계가 없습니다.</div>`;
+      return;
+    }
+    reworkPanel.innerHTML = `
+      <div class="notif-panel-title">재작업 요청 — 어느 선행 단계를 수정해야 하나요?</div>
+      <div class="rework-form">
+        <select id="reworkTargetSelect">
+          ${targets.map((st) => `<option value="${st.key}">${st.label} · ${dsRoleName(st.owner)}</option>`).join("")}
+        </select>
+        <textarea id="reworkReasonInput" rows="3" placeholder="어떤 수정이 필요한지 사유를 입력해주세요."></textarea>
+        <button class="notif-approve-btn" id="reworkSendBtn" type="button">요청 보내기</button>
+      </div>
+    `;
+  }
+
   notifBell.addEventListener("click", (e) => {
     e.stopPropagation();
     historyPanel.hidden = true;
     editLogPanel.hidden = true;
+    reworkPanel.hidden = true;
     notifPanel.hidden = !notifPanel.hidden;
     if (!notifPanel.hidden) {
       dsLoad().notifications.filter((n) => n.to === dsGetCurrentRole()).forEach((n) => { n.read = true; });
@@ -972,18 +1122,22 @@ function dsRenderStatusBar(containerId, opts) {
   });
   notifPanel.addEventListener("click", (e) => {
     e.stopPropagation();
-    const btn = e.target.closest("[data-approve]");
-    if (btn) {
-      dsApproveReopen(Number(btn.dataset.approve));
+    const approveBtn = e.target.closest("[data-approve]");
+    if (approveBtn) {
+      dsApproveReopen(Number(approveBtn.dataset.approve));
       dsRenderStatusBar(containerId, opts);
       if (opts && opts.onStateChange) opts.onStateChange();
+      return;
     }
+    const item = e.target.closest(".notif-item-clickable[data-stage-key]");
+    if (item && item.dataset.stageKey) dsGoToStage(item.dataset.stageKey);
   });
 
   historyBtn.addEventListener("click", (e) => {
     e.stopPropagation();
     notifPanel.hidden = true;
     editLogPanel.hidden = true;
+    reworkPanel.hidden = true;
     historyPanel.hidden = !historyPanel.hidden;
     if (!historyPanel.hidden) renderHistoryPanelInner();
   });
@@ -993,14 +1147,38 @@ function dsRenderStatusBar(containerId, opts) {
     e.stopPropagation();
     notifPanel.hidden = true;
     historyPanel.hidden = true;
+    reworkPanel.hidden = true;
     editLogPanel.hidden = !editLogPanel.hidden;
     if (!editLogPanel.hidden) renderEditLogPanelInner();
   });
   editLogPanel.addEventListener("click", (e) => e.stopPropagation());
 
+  reworkBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    notifPanel.hidden = true;
+    historyPanel.hidden = true;
+    editLogPanel.hidden = true;
+    reworkPanel.hidden = !reworkPanel.hidden;
+    if (!reworkPanel.hidden) renderReworkPanel();
+  });
+  reworkPanel.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const sendBtn = e.target.closest("#reworkSendBtn");
+    if (!sendBtn) return;
+    const targetKey = document.getElementById("reworkTargetSelect").value;
+    const reason = document.getElementById("reworkReasonInput").value.trim();
+    if (!reason) { alert("어떤 수정이 필요한지 사유를 입력해주세요."); return; }
+    const myStage = Object.values(dsLoad().stages).find((st) => st.owner === dsGetCurrentRole());
+    dsRequestReworkFrom(myStage.key, targetKey, reason);
+    reworkPanel.hidden = true;
+    dsRenderStatusBar(containerId, opts);
+    if (opts && opts.onStateChange) opts.onStateChange();
+  });
+
   document.addEventListener("click", () => {
     notifPanel.hidden = true;
     historyPanel.hidden = true;
     editLogPanel.hidden = true;
+    reworkPanel.hidden = true;
   });
 }

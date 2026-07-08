@@ -404,7 +404,7 @@ function renderStage0Box() {
         </div>
       </div>
       <button class="danger-btn" id="stage0ReopenBtn" ${isOwner ? "" : "disabled"}>↺ 현장별코드 확정 강제취소</button>`;
-    document.getElementById("stage0ReopenBtn").addEventListener("click", () => { dsRequestReopen("s0"); renderEverything(); });
+    document.getElementById("stage0ReopenBtn").addEventListener("click", () => { if (dsPromptAndRequestReopen("s0")) renderEverything(); });
   } else if (s.status === "reopen_pending") {
     box.innerHTML = `
       <span class="stage-pending-badge">⏳ 잠금 해제 승인 대기 중 (${s.pendingApprovals.map((k) => dsRoleName(dsLoad().stages[k].owner)).join(", ")})</span>

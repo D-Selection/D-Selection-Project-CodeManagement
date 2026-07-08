@@ -592,6 +592,21 @@ table { border-collapse: collapse; width: 100%; }
 }
 .notif-approve-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 .notif-resolved-tag { color: var(--c-green); font-weight: 700; font-size: 11px; }
+.notif-item-clickable { cursor: pointer; }
+.notif-item-clickable:hover { background: #f5f8ff; }
+
+.rework-panel { width: 320px; }
+.rework-form { padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.rework-form select, .rework-form textarea {
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  padding: 7px 9px;
+  font-size: 12.5px;
+  font-family: inherit;
+  resize: vertical;
+}
+.rework-form select:focus, .rework-form textarea:focus { border-color: var(--c-blue); outline: none; }
+.rework-form .notif-approve-btn { margin-top: 0; align-self: flex-end; }
 
 .stage-box, .stage-box-inline { display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap; }
 .stage-pending-badge {

@@ -1764,7 +1764,7 @@ function renderStep1StageBox() {
           </div>
         </div>
         <button class="danger-btn" id="stageBoxReopenBtn" ${isOwner ? "" : "disabled"}>↺ ${meta.verb} 확정 강제취소</button>`;
-      document.getElementById("stageBoxReopenBtn").addEventListener("click", () => { dsRequestReopen(targetKey); renderEverything(); });
+      document.getElementById("stageBoxReopenBtn").addEventListener("click", () => { if (dsPromptAndRequestReopen(targetKey)) renderEverything(); });
     } else if (s.status === "reopen_pending") {
       box.innerHTML = `
         <div class="stage-pending-badge">⏳ 잠금 해제 승인 대기 중 (${s.pendingApprovals.map((k) => dsRoleName(stages[k].owner)).join(", ")})</div>
@@ -1803,7 +1803,7 @@ function renderStageBox(stageKey, containerId, verb, badgeText, upstreamKey, ove
         </div>
       </div>
       <button class="danger-btn" id="${stageKey}ReopenBtn" ${isOwner ? "" : "disabled"}>↺ ${verb} 확정 강제취소</button>`;
-    document.getElementById(`${stageKey}ReopenBtn`).addEventListener("click", () => { dsRequestReopen(stageKey); renderEverything(); });
+    document.getElementById(`${stageKey}ReopenBtn`).addEventListener("click", () => { if (dsPromptAndRequestReopen(stageKey)) renderEverything(); });
   } else if (s.status === "reopen_pending") {
     box.innerHTML = `
       <div class="stage-pending-badge">⏳ 잠금 해제 승인 대기 중 (${s.pendingApprovals.map((k) => dsRoleName(stages[k].owner)).join(", ")})</div>
@@ -1863,6 +1863,7 @@ function applyStageNavigation(stageKey) {
     if (link) link.click();
   };
   ({
+    s11: () => goStep1Tab("product"),
     s13: () => goStep1Tab("mapping"),
     s14: () => goStep1Tab("area"),
     s2: () => goStep("2"),
