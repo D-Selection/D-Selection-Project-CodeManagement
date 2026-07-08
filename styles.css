@@ -750,6 +750,35 @@ table.pivot-table thead th.pivot-product-col { background: var(--navy); z-index:
 .area-review-title { font-weight: 700; font-size: 13px; }
 .area-review-hint { color: var(--text-sub); font-size: 11.5px; }
 #reviewPyeongSelect, #reviewCustomerStyleSelect { border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 12px; }
+
+.customer-style-panel {
+  padding: 14px;
+  border-bottom: 1px solid var(--border);
+  background: #f8f9fc;
+  flex-shrink: 0;
+}
+.customer-style-panel-title { font-weight: 700; font-size: 12.5px; margin-bottom: 8px; }
+.customer-style-panel-note { font-weight: 400; color: var(--text-sub); font-size: 11px; }
+.customer-style-existing { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+.customer-style-existing-empty { color: var(--text-sub); font-size: 12px; }
+.customer-style-existing-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+.customer-style-existing-name { font-weight: 700; white-space: nowrap; }
+.customer-style-existing-styles { flex: 1; color: var(--text-sub); font-size: 11.5px; }
+.customer-style-remove-btn { border: none; background: none; color: #6b7280; cursor: pointer; font-size: 12px; padding: 0; }
+.customer-style-remove-btn:hover { color: #d64545; }
+.customer-style-form { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.customer-style-name-input { border: 1px solid var(--border); border-radius: 6px; padding: 6px 9px; font-size: 12.5px; min-width: 200px; }
+.customer-style-checkboxes { display: flex; gap: 12px; flex-wrap: wrap; }
+.customer-style-checkbox { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; cursor: pointer; }
 .area-review-doc-wrap { flex: 1; overflow: auto; background: #eef0f4; padding: 24px; }
 .area-review-doc {
   max-width: 720px;

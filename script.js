@@ -944,12 +944,101 @@ const CUSTOMER_STYLE_COMBOS = [
 const skuStyleCodeByCode = {};
 skuData.forEach((s) => { skuStyleCodeByCode[s.code] = s.styleCode; });
 
+/* 화면에서 임시로 만든 고객스타일 (새로고침하면 사라지는 이 화면 전용 조회용 데이터,
+   pivotAssignments/skuData 등 실제 데이터에는 저장/반영되지 않음) */
+const customStyleCombos = [];
+
+function distinctProductStyles() {
+  const seen = new Map();
+  skuData.forEach((s) => { if (!seen.has(s.styleCode)) seen.set(s.styleCode, s.style); });
+  return [...seen.entries()].map(([code, label]) => ({ code, label }));
+}
+
+function allCustomerStyleCombos() {
+  return CUSTOMER_STYLE_COMBOS.concat(customStyleCombos);
+}
+
 const reviewCustomerStyleSelect = document.getElementById("reviewCustomerStyleSelect");
-if (reviewCustomerStyleSelect) {
+
+function refreshCustomerStyleSelect(selectName) {
+  if (!reviewCustomerStyleSelect) return;
+  const keep = selectName !== undefined ? selectName : reviewCustomerStyleSelect.value;
   reviewCustomerStyleSelect.innerHTML =
     `<option value="">전체 스타일</option>` +
-    CUSTOMER_STYLE_COMBOS.map((c) => `<option value="${c.name}">${c.name}</option>`).join("");
-  reviewCustomerStyleSelect.addEventListener("change", renderReviewDoc);
+    allCustomerStyleCombos().map((c) => `<option value="${c.name}">${c.name}${customStyleCombos.includes(c) ? " (임시)" : ""}</option>`).join("");
+  reviewCustomerStyleSelect.value = allCustomerStyleCombos().some((c) => c.name === keep) ? keep : "";
+}
+refreshCustomerStyleSelect("");
+if (reviewCustomerStyleSelect) reviewCustomerStyleSelect.addEventListener("change", renderReviewDoc);
+
+/* ---- 고객스타일 임시 생성/관리 패널 ---- */
+const customStyleManageBtn = document.getElementById("customStyleManageBtn");
+const customerStylePanel = document.getElementById("customerStylePanel");
+const customerStyleCheckboxes = document.getElementById("customerStyleCheckboxes");
+const customerStyleExistingList = document.getElementById("customerStyleExistingList");
+const customerStyleNameInput = document.getElementById("customerStyleNameInput");
+
+function renderCustomerStyleCheckboxes() {
+  if (!customerStyleCheckboxes) return;
+  customerStyleCheckboxes.innerHTML = distinctProductStyles().map((s) => `
+    <label class="customer-style-checkbox">
+      <input type="checkbox" value="${s.code}" />
+      <span>${s.label}</span>
+    </label>
+  `).join("");
+}
+
+function renderCustomerStyleExistingList() {
+  if (!customerStyleExistingList) return;
+  customerStyleExistingList.innerHTML = customStyleCombos.length === 0
+    ? `<div class="customer-style-existing-empty">아직 임시로 만든 고객스타일이 없습니다.</div>`
+    : customStyleCombos.map((c, i) => `
+      <div class="customer-style-existing-item">
+        <span class="customer-style-existing-name">${c.name}</span>
+        <span class="customer-style-existing-styles">${c.productStyles.map((code) => (skuData.find((s) => s.styleCode === code) || {}).style || code).join(" + ")}</span>
+        <button type="button" class="customer-style-remove-btn" data-index="${i}" title="삭제">✕</button>
+      </div>
+    `).join("");
+}
+
+if (customStyleManageBtn) {
+  customStyleManageBtn.addEventListener("click", () => {
+    const opening = customerStylePanel.hidden;
+    customerStylePanel.hidden = !opening;
+    if (opening) {
+      renderCustomerStyleCheckboxes();
+      renderCustomerStyleExistingList();
+    }
+  });
+}
+
+const customerStyleAddBtn = document.getElementById("customerStyleAddBtn");
+if (customerStyleAddBtn) {
+  customerStyleAddBtn.addEventListener("click", () => {
+    const name = customerStyleNameInput.value.trim();
+    const codes = [...customerStyleCheckboxes.querySelectorAll("input:checked")].map((cb) => cb.value);
+    if (!name) { showToast("고객스타일 이름을 입력해주세요."); return; }
+    if (codes.length === 0) { showToast("포함할 상품 스타일을 1개 이상 선택해주세요."); return; }
+    if (allCustomerStyleCombos().some((c) => c.name === name)) { showToast("이미 같은 이름의 고객스타일이 있습니다."); return; }
+    customStyleCombos.push({ name, productStyles: codes });
+    dsAddEditLog("1.4 평형그룹매핑(검수화면)", `임시 고객스타일 생성: ${name} (${codes.join(", ")}) — 이 화면 전용, 저장되지 않음`);
+    customerStyleNameInput.value = "";
+    renderCustomerStyleCheckboxes();
+    renderCustomerStyleExistingList();
+    refreshCustomerStyleSelect(name);
+    renderReviewDoc();
+  });
+}
+
+if (customerStyleExistingList) {
+  customerStyleExistingList.addEventListener("click", (e) => {
+    const btn = e.target.closest(".customer-style-remove-btn");
+    if (!btn) return;
+    const removed = customStyleCombos.splice(Number(btn.dataset.index), 1)[0];
+    renderCustomerStyleExistingList();
+    refreshCustomerStyleSelect(reviewCustomerStyleSelect.value === (removed && removed.name) ? "" : undefined);
+    renderReviewDoc();
+  });
 }
 
 function renderReviewDoc() {
@@ -958,7 +1047,7 @@ function renderReviewDoc() {
   let items = pivotProducts.filter((p) => assigned.has(p.code));
 
   const customerStyleName = reviewCustomerStyleSelect ? reviewCustomerStyleSelect.value : "";
-  const combo = CUSTOMER_STYLE_COMBOS.find((c) => c.name === customerStyleName);
+  const combo = allCustomerStyleCombos().find((c) => c.name === customerStyleName);
   if (combo) {
     items = items.filter((it) => combo.productStyles.includes(skuStyleCodeByCode[it.code]));
   }

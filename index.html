@@ -361,7 +361,17 @@
             <span class="area-review-title">검수 화면 (안내문 초안 뷰어)</span>
             <select id="reviewPyeongSelect"></select>
             <select id="reviewCustomerStyleSelect"></select>
+            <button type="button" class="toolbar-btn" id="customStyleManageBtn">+ 고객스타일 만들기</button>
             <span class="area-review-hint">판매가 · 패키지 정보 없이, 평형 · 고객스타일별 배정 상품만 고객 안내문과 유사한 형식으로 확인합니다. (고객스타일 변환은 이 화면에서만 적용되는 조회용입니다)</span>
+          </div>
+          <div class="customer-style-panel" id="customerStylePanel" hidden>
+            <div class="customer-style-panel-title">임시 고객스타일 만들기 <span class="customer-style-panel-note">(이 화면에서만 쓰이는 조회용이며, 새로고침하면 초기화됩니다)</span></div>
+            <div class="customer-style-existing" id="customerStyleExistingList"></div>
+            <div class="customer-style-form">
+              <input type="text" id="customerStyleNameInput" class="customer-style-name-input" placeholder="고객스타일 이름 (예: 네츄럴모던)" autocomplete="off" />
+              <div class="customer-style-checkboxes" id="customerStyleCheckboxes"></div>
+              <button type="button" class="toolbar-btn" id="customerStyleAddBtn">고객스타일 추가</button>
+            </div>
           </div>
           <div class="area-review-doc-wrap">
             <div class="area-review-doc" id="reviewDoc"></div>
