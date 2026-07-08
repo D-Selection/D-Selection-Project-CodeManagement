@@ -143,11 +143,7 @@ function renderSkuTableSite() {
       <td>${s.styleCode}</td>
       <td>${s.style}</td>
       <td>본사</td>
-      <td class="muted">-</td>
-      <td class="muted">-</td>
-      <td class="muted">-</td>
-      <td class="muted">-</td>
-      <td class="muted">-</td>
+      <td>${skuProductChipsHtml(s.code)}</td>
       <td>${s.item}</td>
       <td>${s.itemCustomer}</td>
       <td class="site-overlay-col">

@@ -220,23 +220,205 @@ const skuData = [
 ];
 
 const skuTableBody = document.getElementById("skuTableBody");
-skuTableBody.innerHTML = skuData.map((s) => `
-  <tr>
-    <td class="code-cell">${s.code}</td>
-    <td>${s.spaceCode}</td>
-    <td>${s.space}</td>
-    <td>${s.styleCode}</td>
-    <td>${s.style}</td>
-    <td>본사</td>
-    <td class="muted">-</td>
-    <td class="muted">-</td>
-    <td class="muted">-</td>
-    <td class="muted">-</td>
-    <td class="muted">-</td>
-    <td>${s.item}</td>
-    <td>${s.itemCustomer}</td>
-  </tr>
-`).join("");
+
+/* 상품(SKU)은 직접 입력하는 텍스트 데이터, 프로덕트는 1.1의 소분류(PK)
+   마스터(452건)다. 상품 1개에 프로덕트를 여러 개 매핑할 수 있는데, 코드를
+   직접 타이핑하게 하면 452개 중에서 오타·오매핑이 나기 쉬우므로, 검색해서
+   클릭으로만 추가/해제하도록 해 오류 여지를 없앤다. */
+const skuProductMap = {}; // { [skuCode]: string[] (프로덕트 소분류코드 PK 목록) }
+
+function skuMappedProducts(skuCode) {
+  return (skuProductMap[skuCode] || [])
+    .map((code) => PRODUCT_MASTER_CATALOG.find((p) => p.code === code))
+    .filter(Boolean);
+}
+
+function skuProductChipsHtml(skuCode) {
+  const mapped = skuMappedProducts(skuCode);
+  const chips = mapped.map((p) => `
+    <span class="sku-product-chip" title="${p.majorName} · ${p.midName}">
+      <span class="code-cell">${p.code}</span> ${p.name}
+      <button type="button" class="sku-product-remove" data-sku="${skuCode}" data-code="${p.code}" title="매핑 해제">✕</button>
+    </span>
+  `).join("");
+  return `
+    <div class="sku-product-cell">
+      <div class="sku-product-chips">${chips}</div>
+      <button type="button" class="sku-product-add-btn" data-sku="${skuCode}">+ 프로덕트 매핑</button>
+    </div>
+  `;
+}
+
+function renderSkuTable() {
+  skuTableBody.innerHTML = skuData.map((s) => `
+    <tr>
+      <td class="code-cell">${s.code}</td>
+      <td>${s.spaceCode}</td>
+      <td>${s.space}</td>
+      <td>${s.styleCode}</td>
+      <td>${s.style}</td>
+      <td>본사</td>
+      <td>${skuProductChipsHtml(s.code)}</td>
+      <td>${s.item}</td>
+      <td>${s.itemCustomer}</td>
+    </tr>
+  `).join("");
+}
+renderSkuTable();
+
+skuTableBody.addEventListener("click", (e) => {
+  const addBtn = e.target.closest(".sku-product-add-btn");
+  if (addBtn) { openSkuProductModal(addBtn.dataset.sku); return; }
+  const removeBtn = e.target.closest(".sku-product-remove");
+  if (removeBtn) {
+    const { sku, code } = removeBtn.dataset;
+    skuProductMap[sku] = (skuProductMap[sku] || []).filter((c) => c !== code);
+    dsAddEditLog("1.2 상품구성코드", `${sku} · 프로덕트 매핑 해제: ${code}`);
+    renderSkuTable();
+  }
+});
+
+/* ---- 프로덕트 매핑 모달 : 452개 소분류 마스터에서 검색해서 클릭 한 번으로 추가/해제 ---- */
+const skuProductModal = document.getElementById("skuProductModal");
+const skuProductModalBody = document.getElementById("skuProductModalBody");
+const skuProductModalSkuLabel = document.getElementById("skuProductModalSkuLabel");
+let skuProductModalSku = null;
+
+function renderSkuModalMappedList() {
+  const list = document.getElementById("skuModalMappedList");
+  if (!list) return;
+  const mapped = skuMappedProducts(skuProductModalSku);
+  list.innerHTML = mapped.length === 0
+    ? `<div class="sku-modal-mapped-empty">아직 매핑된 프로덕트가 없습니다.</div>`
+    : mapped.map((p) => `
+      <span class="sku-product-chip"><span class="code-cell">${p.code}</span> ${p.name}
+        <button type="button" class="sku-product-remove" data-code="${p.code}" title="매핑 해제">✕</button>
+      </span>
+    `).join("");
+}
+
+function renderSkuProductResults(query) {
+  const resultsEl = document.getElementById("skuProductResults");
+  if (!resultsEl) return;
+  const q = query.trim().toLowerCase();
+  const mappedCodes = new Set(skuProductMap[skuProductModalSku] || []);
+  if (!q) { resultsEl.innerHTML = `<div class="sku-product-results-hint">코드, 상품명, 대분류/중분류명으로 검색해보세요 (452건 중 검색).</div>`; return; }
+  const matches = PRODUCT_MASTER_CATALOG
+    .filter((p) => !mappedCodes.has(p.code))
+    .filter((p) => [p.code, p.name, p.majorName, p.midName].join(" ").toLowerCase().includes(q))
+    .slice(0, 30);
+  resultsEl.innerHTML = matches.length === 0
+    ? `<div class="sku-product-results-hint">일치하는 프로덕트가 없습니다.</div>`
+    : matches.map((p) => `
+      <button type="button" class="sku-product-result" data-code="${p.code}">
+        <span class="code-cell">${p.code}</span>
+        <span class="sku-product-result-name">${p.name}</span>
+        <span class="sku-product-result-cat">${p.majorName} · ${p.midName}</span>
+      </button>
+    `).join("");
+}
+
+function renderSkuProductModalBody() {
+  skuProductModalBody.innerHTML = `
+    <div class="lang-edit-summary">이미 매핑된 프로덕트는 아래에서 바로 해제할 수 있고, 검색으로 새 프로덕트를 찾아 클릭하면 바로 추가됩니다.</div>
+    <div class="sku-modal-mapped" id="skuModalMappedList"></div>
+    <input type="text" id="skuProductSearchInput" class="sku-product-search-input" placeholder="소분류코드(PK), 상품명, 대분류명, 중분류명으로 검색" autocomplete="off" />
+    <div class="sku-product-results" id="skuProductResults"></div>
+  `;
+  renderSkuModalMappedList();
+  renderSkuProductResults("");
+  const searchInput = document.getElementById("skuProductSearchInput");
+  searchInput.addEventListener("input", (e) => renderSkuProductResults(e.target.value));
+  searchInput.focus();
+}
+
+function openSkuProductModal(skuCode) {
+  skuProductModalSku = skuCode;
+  skuProductModalSkuLabel.textContent = `— ${skuCode}`;
+  renderSkuProductModalBody();
+  skuProductModal.hidden = false;
+}
+
+document.getElementById("skuProductModalClose").addEventListener("click", () => { skuProductModal.hidden = true; renderSkuTable(); });
+skuProductModalBody.addEventListener("click", (e) => {
+  const resultBtn = e.target.closest(".sku-product-result");
+  if (resultBtn) {
+    const code = resultBtn.dataset.code;
+    skuProductMap[skuProductModalSku] = [...(skuProductMap[skuProductModalSku] || []), code];
+    dsAddEditLog("1.2 상품구성코드", `${skuProductModalSku} · 프로덕트 매핑 추가: ${code}`);
+    renderSkuModalMappedList();
+    renderSkuProductResults(document.getElementById("skuProductSearchInput").value);
+    renderSkuTable();
+    return;
+  }
+  const removeBtn = e.target.closest(".sku-product-remove");
+  if (removeBtn) {
+    const code = removeBtn.dataset.code;
+    skuProductMap[skuProductModalSku] = (skuProductMap[skuProductModalSku] || []).filter((c) => c !== code);
+    dsAddEditLog("1.2 상품구성코드", `${skuProductModalSku} · 프로덕트 매핑 해제: ${code}`);
+    renderSkuModalMappedList();
+    renderSkuProductResults(document.getElementById("skuProductSearchInput").value);
+    renderSkuTable();
+  }
+});
+
+/* ---- 상품 추가 모달 (직접 입력) ---- */
+const skuAddModal = document.getElementById("skuAddModal");
+const skuAddModalBody = document.getElementById("skuAddModalBody");
+
+function nextSkuCode() {
+  const nums = skuData.map((s) => Number(String(s.code).replace(/\D/g, "")) || 0);
+  return `SL${String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3, "0")}`;
+}
+
+document.getElementById("skuAddBtn").addEventListener("click", () => {
+  skuAddModalBody.innerHTML = `
+    <div class="lang-edit-field"><label>상품 코드</label><input type="text" id="skuAddCode" value="${nextSkuCode()}" /></div>
+    <div class="lang-edit-field"><label>공간코드</label><input type="text" id="skuAddSpaceCode" placeholder="예: EN" /></div>
+    <div class="lang-edit-field"><label>공간명</label><input type="text" id="skuAddSpace" placeholder="예: 현관 - Entrance" /></div>
+    <div class="lang-edit-field"><label>스타일코드</label><input type="text" id="skuAddStyleCode" placeholder="예: NN" /></div>
+    <div class="lang-edit-field"><label>스타일명</label><input type="text" id="skuAddStyle" placeholder="예: 스타일 미적용 - None" /></div>
+    <div class="lang-edit-field"><label>항목명</label><input type="text" id="skuAddItem" placeholder="예: 슬라이딩 도어" /></div>
+    <div class="lang-edit-field"><label>항목명 (고객용)</label><input type="text" id="skuAddItemCustomer" placeholder="비워두면 항목명과 동일하게 저장됩니다" /></div>
+    <div class="lang-edit-error" id="skuAddError" hidden></div>
+    <div class="lang-edit-actions">
+      <button class="toolbar-btn" id="skuAddCancelBtn" type="button">취소</button>
+      <button class="primary-btn" id="skuAddSaveBtn" type="button">추가</button>
+    </div>
+  `;
+  skuAddModal.hidden = false;
+  document.getElementById("skuAddCancelBtn").addEventListener("click", () => { skuAddModal.hidden = true; });
+  document.getElementById("skuAddSaveBtn").addEventListener("click", () => {
+    const errorEl = document.getElementById("skuAddError");
+    errorEl.hidden = true;
+    const code = document.getElementById("skuAddCode").value.trim();
+    const item = document.getElementById("skuAddItem").value.trim();
+    if (!code || !item) {
+      errorEl.hidden = false;
+      errorEl.textContent = "❌ 상품 코드와 항목명은 반드시 입력해야 합니다.";
+      return;
+    }
+    if (skuData.some((s) => s.code === code)) {
+      errorEl.hidden = false;
+      errorEl.textContent = `❌ 이미 존재하는 상품 코드입니다: ${code}`;
+      return;
+    }
+    skuData.push({
+      code,
+      spaceCode: document.getElementById("skuAddSpaceCode").value.trim(),
+      space: document.getElementById("skuAddSpace").value.trim(),
+      styleCode: document.getElementById("skuAddStyleCode").value.trim(),
+      style: document.getElementById("skuAddStyle").value.trim(),
+      item,
+      itemCustomer: document.getElementById("skuAddItemCustomer").value.trim() || item,
+    });
+    renderSkuTable();
+    dsAddEditLog("1.2 상품구성코드", `상품 ${code} 신규 추가 (항목명: ${item})`);
+    skuAddModal.hidden = true;
+    showToast(`상품 ${code}이(가) 추가되었습니다.`);
+  });
+});
+document.getElementById("skuAddModalClose").addEventListener("click", () => { skuAddModal.hidden = true; });
 
 /* ===================== STEP 1 · PANEL 3: 프로덕트 × 상품구성코드 ===================== */
 const mappingTableBody = document.getElementById("mappingTableBody");

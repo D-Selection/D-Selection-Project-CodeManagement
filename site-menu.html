@@ -115,6 +115,11 @@
         <div class="cha-layout">
           <aside class="cha-sidebar" id="chaSidebarSku"></aside>
           <div class="cha-main">
+            <div class="toolbar">
+              <div class="toolbar-left">
+                <button class="toolbar-btn" id="skuAddBtn">+ 상품 추가</button>
+              </div>
+            </div>
             <div class="filterbar">
               <div class="filterbar-left">
                 <span class="section-icon">▤</span>
@@ -124,9 +129,7 @@
                 <button class="filter-chip">상품 코드</button>
                 <button class="filter-chip">공간명</button>
                 <button class="filter-chip">스타일명</button>
-                <button class="filter-chip">상품 대분류명</button>
-                <button class="filter-chip">상품 중분류명</button>
-                <button class="filter-chip">상품 제조사명</button>
+                <button class="filter-chip">매핑된 프로덕트</button>
                 <button class="filter-chip">항목명</button>
                 <button class="filter-chip">항목명(고객용)</button>
                 <button class="filter-chip add-filter">+ Add filter</button>
@@ -142,11 +145,7 @@
                     <th>스타일코드</th>
                     <th>스타일명</th>
                     <th>현장본사구분</th>
-                    <th>상품 대분류코드</th>
-                    <th>상품 대분류명</th>
-                    <th>상품 중분류코드</th>
-                    <th>상품 중분류명</th>
-                    <th>상품 제조사코드</th>
+                    <th>매핑된 프로덕트 (대분류/중분류/제조사는 여기서 자동으로 정해짐)</th>
                     <th>항목명</th>
                     <th>항목명 (고객용)</th>
                     <th class="site-overlay-col">현장 표기명 <span class="site-overlay-tag">현장 전용</span></th>
@@ -715,6 +714,22 @@
       <div class="send-modal">
         <div class="cmodal-header">📥 다른현장 소분류 불러오기 <button class="cmodal-close" id="productLoadSiteModalClose" type="button">✕</button></div>
         <div class="cmodal-body" id="productLoadSiteModalBody"></div>
+      </div>
+    </div>
+
+    <!-- 1.2 상품구성코드 : 상품 추가 모달 -->
+    <div class="cmodal-backdrop" id="skuAddModal" hidden>
+      <div class="send-modal">
+        <div class="cmodal-header">+ 상품 추가 <button class="cmodal-close" id="skuAddModalClose" type="button">✕</button></div>
+        <div class="cmodal-body" id="skuAddModalBody"></div>
+      </div>
+    </div>
+
+    <!-- 1.2 상품구성코드 : 프로덕트 매핑 모달(452개 소분류 마스터에서 검색해서 선택) -->
+    <div class="cmodal-backdrop" id="skuProductModal" hidden>
+      <div class="send-modal">
+        <div class="cmodal-header">🔗 프로덕트 매핑 <span id="skuProductModalSkuLabel"></span> <button class="cmodal-close" id="skuProductModalClose" type="button">✕</button></div>
+        <div class="cmodal-body" id="skuProductModalBody"></div>
       </div>
     </div>
 
