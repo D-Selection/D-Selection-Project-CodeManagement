@@ -286,6 +286,11 @@ const skuProductModalNav = document.getElementById("skuProductModalNav");
 let skuProductModalSku = null;
 let skuProductModalIndex = -1;
 
+function skuNavOptionLabel(s) {
+  const cnt = (skuProductMap[s.code] || []).length;
+  return `${s.code} · ${s.itemCustomer || s.item} (${cnt === 0 ? "미매핑" : cnt + "개 매핑"})`;
+}
+
 function renderSkuProductModalNav() {
   if (!skuProductModalNav || skuProductModalIndex < 0) return;
   const s = skuData[skuProductModalIndex];
@@ -293,8 +298,9 @@ function renderSkuProductModalNav() {
   skuProductModalNav.innerHTML = `
     <button type="button" class="sku-nav-btn" id="skuNavPrev" title="이전 상품 (←)">◀ 이전</button>
     <div class="sku-nav-info">
-      <span class="code-cell">${s.code}</span>
-      <span class="sku-nav-item-name">${s.itemCustomer || s.item}</span>
+      <select class="sku-nav-jump-select" id="skuNavJumpSelect" title="맵핑할 상품 바로 선택">
+        ${skuData.map((row, i) => `<option value="${row.code}" ${i === skuProductModalIndex ? "selected" : ""}>${skuNavOptionLabel(row)}</option>`).join("")}
+      </select>
       <span class="sku-nav-pos">${skuProductModalIndex + 1} / ${skuData.length}</span>
       ${mappedCount === 0 ? `<span class="sku-nav-unmapped-tag">미매핑</span>` : `<span class="sku-nav-mapped-count">${mappedCount}개 매핑됨</span>`}
     </div>
@@ -308,6 +314,9 @@ function renderSkuProductModalNav() {
   document.getElementById("skuNavNext").addEventListener("click", () => {
     const i = (skuProductModalIndex + 1) % skuData.length;
     openSkuProductModal(skuData[i].code);
+  });
+  document.getElementById("skuNavJumpSelect").addEventListener("change", (e) => {
+    openSkuProductModal(e.target.value);
   });
   document.getElementById("skuNavJumpUnmapped").addEventListener("click", () => {
     const n = skuData.length;

@@ -1301,6 +1301,20 @@ table.pivot-table thead th.pivot-product-col { background: var(--navy); z-index:
   min-width: 0;
 }
 .sku-nav-item-name { font-weight: 700; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sku-nav-jump-select {
+  flex: 1;
+  min-width: 0;
+  max-width: 320px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #fff;
+  padding: 5px 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-main);
+  cursor: pointer;
+}
+.sku-nav-jump-select:hover, .sku-nav-jump-select:focus { border-color: var(--blue); outline: none; }
 .sku-nav-pos { color: var(--text-sub); font-size: 11.5px; white-space: nowrap; }
 .sku-nav-unmapped-tag {
   background: #fdeceb;
