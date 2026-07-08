@@ -760,6 +760,31 @@ function dsDownstreamNeedingApproval(stage) {
   return dsAllDownstreamKeys(stage.key).filter((k) => s.stages[k].status !== "locked");
 }
 
+// 선행 단계의 잠금이 풀려 재작업이 시작되면, 그 사이(및 최종 승인자 본인
+// 포함)에 있던 이미 시작/확정된 후행 단계들은 선행 데이터가 바뀌는 동안
+// 유효하지 않으므로 모두 "대기(잠금)" 상태로 되돌린다. exceptKey로 넘긴
+// 단계는 이미 별도 절차(자기 자신의 재작업 요청 등)로 처리 중이므로 건드리지 않는다.
+function dsLockRelatedForRework(stage, exceptKey) {
+  const s = dsLoad();
+  dsDownstreamNeedingApproval(stage).forEach((k) => {
+    if (k === exceptKey) return;
+    const d = s.stages[k];
+    if (d.status === "locked") return;
+    d.status = "locked";
+    d.confirmedAt = null;
+    d.pendingApprovals = [];
+    d.justUnlocked = false;
+    d.forceLockedForRework = true;
+    dsAddNotification(
+      d.owner,
+      "reopen_unlocked_fyi",
+      `「${stage.label}」의 잠금 해제가 완료되어 재작업이 시작됩니다. 「${d.label}」은(는) 재확정이 필요한 대기 상태로 전환되었습니다.`,
+      stage.key
+    );
+    dsAddHistory(k, `⏸ 「${stage.label}」 재작업 시작에 따라 「${d.label}」이(가) 대기(재확정 필요) 상태로 전환되었습니다.`);
+  });
+}
+
 function dsAutoResolvePendingApprovalsFor(stageKey) {
   const s = dsLoad();
   Object.values(s.stages).forEach((up) => {
@@ -783,6 +808,8 @@ function dsAutoResolvePendingApprovalsFor(stageKey) {
       up.round = (up.round || 1) + 1;
       dsAddNotification(up.owner, "reopen_approved", `모든 후속 작업 담당자의 잠금 해제가 완료되었습니다. 「${up.label}」을(를) 다시 수정할 수 있습니다. (${up.round}차)`, up.key);
       dsAddHistory(up.key, `🔓 잠금 해제가 모두 완료되어 「${up.label}」 재작업이 가능합니다. (${up.round}차)`);
+      // stageKey 자신은 별도 절차로 이미 재작업 중이므로 잠금 대상에서 제외
+      dsLockRelatedForRework(up, stageKey);
     }
   });
 }
@@ -799,6 +826,10 @@ function dsConfirmStage(stageKey) {
     const d = s.stages[dKey];
     if (d.status === "locked") {
       d.status = "editable";
+      if (d.forceLockedForRework) {
+        d.round = (d.round || 1) + 1;
+        d.forceLockedForRework = false;
+      }
       dsAddNotification(d.owner, "confirmed", `「${stage.label}」 확정이 완료되었습니다. 이제 「${d.label}」 작업을 시작할 수 있습니다.`, dKey);
       dsAddHistory(dKey, `🔓 「${stage.label}」 확정에 따라 「${d.label}」 작업이 시작 가능해졌습니다.`);
     }
@@ -928,18 +959,9 @@ function dsApproveReopen(notifId) {
   );
   dsAddHistory(stage.key, `🔓 ${dsRoleName(approverStage.owner)}님의 승인으로 「${stage.label}」 재작업이 가능합니다. (${stage.round}차)`);
 
-  // 승인한 사람 외에, 처음에 참고 알림을 받았던 다른 후행 담당자들에게도
-  // "잠금 해제가 승인되어 재작업이 시작된다"는 사실을 알린다.
-  dsDownstreamNeedingApproval(stage)
-    .filter((k) => k !== notif.approverStage)
-    .forEach((k) => {
-      dsAddNotification(
-        s.stages[k].owner,
-        "reopen_unlocked_fyi",
-        `「${stage.label}」의 잠금 해제가 ${dsRoleName(approverStage.owner)}님의 승인으로 완료되어 재작업이 시작됩니다.`,
-        stage.key
-      );
-    });
+  // 승인한 사람의 단계를 포함해, 그 사이에 있던 모든 후행 단계를 대기
+  // (재확정 필요) 상태로 되돌린다 — 승인자도 예외 없이 포함된다.
+  dsLockRelatedForRework(stage);
 
   dsSave();
 }
