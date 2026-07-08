@@ -749,7 +749,7 @@ table.pivot-table thead th.pivot-product-col { background: var(--navy); z-index:
 }
 .area-review-title { font-weight: 700; font-size: 13px; }
 .area-review-hint { color: var(--text-sub); font-size: 11.5px; }
-#reviewPyeongSelect { border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 12px; }
+#reviewPyeongSelect, #reviewCustomerStyleSelect { border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font-size: 12px; }
 .area-review-doc-wrap { flex: 1; overflow: auto; background: #eef0f4; padding: 24px; }
 .area-review-doc {
   max-width: 720px;
@@ -1270,6 +1270,56 @@ table.pivot-table thead th.pivot-product-col { background: var(--navy); z-index:
 .sku-product-add-btn:hover { border-color: var(--blue); color: var(--blue); }
 
 #skuProductModal .send-modal { width: 640px; }
+.sku-modal-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  background: #f5f7fb;
+  border-bottom: 1px solid var(--border);
+}
+.sku-nav-btn {
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--text-main);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.sku-nav-btn:hover { border-color: var(--blue); color: var(--blue); }
+.sku-nav-jump { margin-left: auto; color: var(--blue); border-color: #cfe0fd; }
+.sku-nav-info {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 12.5px;
+  min-width: 0;
+}
+.sku-nav-item-name { font-weight: 700; color: var(--text-main); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sku-nav-pos { color: var(--text-sub); font-size: 11.5px; white-space: nowrap; }
+.sku-nav-unmapped-tag {
+  background: #fdeceb;
+  color: #c0392b;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.sku-nav-mapped-count {
+  background: #eaf3ea;
+  color: #2f7d32;
+  border-radius: 999px;
+  padding: 2px 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
 .sku-modal-mapped { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; min-height: 20px; }
 .sku-modal-mapped-empty { color: var(--text-sub); font-size: 12px; }
 .sku-product-search-input {

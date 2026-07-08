@@ -282,7 +282,51 @@ skuTableBody.addEventListener("click", (e) => {
 const skuProductModal = document.getElementById("skuProductModal");
 const skuProductModalBody = document.getElementById("skuProductModalBody");
 const skuProductModalSkuLabel = document.getElementById("skuProductModalSkuLabel");
+const skuProductModalNav = document.getElementById("skuProductModalNav");
 let skuProductModalSku = null;
+let skuProductModalIndex = -1;
+
+function renderSkuProductModalNav() {
+  if (!skuProductModalNav || skuProductModalIndex < 0) return;
+  const s = skuData[skuProductModalIndex];
+  const mappedCount = (skuProductMap[s.code] || []).length;
+  skuProductModalNav.innerHTML = `
+    <button type="button" class="sku-nav-btn" id="skuNavPrev" title="이전 상품 (←)">◀ 이전</button>
+    <div class="sku-nav-info">
+      <span class="code-cell">${s.code}</span>
+      <span class="sku-nav-item-name">${s.itemCustomer || s.item}</span>
+      <span class="sku-nav-pos">${skuProductModalIndex + 1} / ${skuData.length}</span>
+      ${mappedCount === 0 ? `<span class="sku-nav-unmapped-tag">미매핑</span>` : `<span class="sku-nav-mapped-count">${mappedCount}개 매핑됨</span>`}
+    </div>
+    <button type="button" class="sku-nav-btn" id="skuNavNext" title="다음 상품 (→)">다음 ▶</button>
+    <button type="button" class="sku-nav-btn sku-nav-jump" id="skuNavJumpUnmapped" title="프로덕트가 아직 매핑되지 않은 다음 상품으로 이동">⏭ 다음 미매핑</button>
+  `;
+  document.getElementById("skuNavPrev").addEventListener("click", () => {
+    const i = (skuProductModalIndex - 1 + skuData.length) % skuData.length;
+    openSkuProductModal(skuData[i].code);
+  });
+  document.getElementById("skuNavNext").addEventListener("click", () => {
+    const i = (skuProductModalIndex + 1) % skuData.length;
+    openSkuProductModal(skuData[i].code);
+  });
+  document.getElementById("skuNavJumpUnmapped").addEventListener("click", () => {
+    const n = skuData.length;
+    for (let step = 1; step <= n; step++) {
+      const i = (skuProductModalIndex + step) % n;
+      if ((skuProductMap[skuData[i].code] || []).length === 0) { openSkuProductModal(skuData[i].code); return; }
+    }
+    showToast("모든 상품에 프로덕트가 매핑되어 있습니다.");
+  });
+}
+
+document.addEventListener("keydown", (e) => {
+  if (!skuProductModal || skuProductModal.hidden) return;
+  const active = document.activeElement;
+  const typingInSearch = active && active.id === "skuProductSearchInput" && active.value.length > 0;
+  if (typingInSearch) return;
+  if (e.key === "ArrowLeft") { e.preventDefault(); document.getElementById("skuNavPrev")?.click(); }
+  if (e.key === "ArrowRight") { e.preventDefault(); document.getElementById("skuNavNext")?.click(); }
+});
 
 function renderSkuModalMappedList() {
   const list = document.getElementById("skuModalMappedList");
@@ -334,7 +378,9 @@ function renderSkuProductModalBody() {
 
 function openSkuProductModal(skuCode) {
   skuProductModalSku = skuCode;
+  skuProductModalIndex = skuData.findIndex((s) => s.code === skuCode);
   skuProductModalSkuLabel.textContent = `— ${skuCode}`;
+  renderSkuProductModalNav();
   renderSkuProductModalBody();
   skuProductModal.hidden = false;
 }
@@ -348,6 +394,7 @@ skuProductModalBody.addEventListener("click", (e) => {
     dsAddEditLog("1.2 상품구성코드", `${skuProductModalSku} · 프로덕트 매핑 추가: ${code}`);
     renderSkuModalMappedList();
     renderSkuProductResults(document.getElementById("skuProductSearchInput").value);
+    renderSkuProductModalNav();
     renderSkuTable();
     return;
   }
@@ -358,6 +405,7 @@ skuProductModalBody.addEventListener("click", (e) => {
     dsAddEditLog("1.2 상품구성코드", `${skuProductModalSku} · 프로덕트 매핑 해제: ${code}`);
     renderSkuModalMappedList();
     renderSkuProductResults(document.getElementById("skuProductSearchInput").value);
+    renderSkuProductModalNav();
     renderSkuTable();
   }
 });
@@ -877,10 +925,34 @@ document.getElementById("templateCloneBtn").addEventListener("click", () => {
 document.getElementById("reviewPyeongSelect").innerHTML = pyeongList.map((p) => `<option value="${p}">${p}</option>`).join("");
 document.getElementById("reviewPyeongSelect").addEventListener("change", renderReviewDoc);
 
+/* 고객스타일 = 상품 스타일(styleCode)의 조합. 이 화면에서만 쓰는 조회용 그룹핑이며
+   pivotAssignments/skuData 등 실제 데이터는 전혀 건드리지 않는다. */
+const CUSTOMER_STYLE_COMBOS = [
+  { name: "미니멀", productStyles: ["NN", "MM"] },
+  { name: "네츄럴모던", productStyles: ["NN", "NM"] },
+  { name: "소프트클래식", productStyles: ["NN", "SC"] },
+];
+const skuStyleCodeByCode = {};
+skuData.forEach((s) => { skuStyleCodeByCode[s.code] = s.styleCode; });
+
+const reviewCustomerStyleSelect = document.getElementById("reviewCustomerStyleSelect");
+if (reviewCustomerStyleSelect) {
+  reviewCustomerStyleSelect.innerHTML =
+    `<option value="">전체 스타일</option>` +
+    CUSTOMER_STYLE_COMBOS.map((c) => `<option value="${c.name}">${c.name}</option>`).join("");
+  reviewCustomerStyleSelect.addEventListener("change", renderReviewDoc);
+}
+
 function renderReviewDoc() {
   const pyeong = document.getElementById("reviewPyeongSelect").value || pyeongList[0];
   const assigned = pivotAssignments[pyeong];
-  const items = pivotProducts.filter((p) => assigned.has(p.code));
+  let items = pivotProducts.filter((p) => assigned.has(p.code));
+
+  const customerStyleName = reviewCustomerStyleSelect ? reviewCustomerStyleSelect.value : "";
+  const combo = CUSTOMER_STYLE_COMBOS.find((c) => c.name === customerStyleName);
+  if (combo) {
+    items = items.filter((it) => combo.productStyles.includes(skuStyleCodeByCode[it.code]));
+  }
 
   if (items.length === 0) {
     document.getElementById("reviewDoc").innerHTML = `<div class="review-doc-empty">배정된 상품이 없습니다.</div>`;
@@ -894,8 +966,8 @@ function renderReviewDoc() {
   });
 
   document.getElementById("reviewDoc").innerHTML = `
-    <div class="review-doc-title">${pyeong} 세대 마감재 안내문 (초안)</div>
-    <div class="review-doc-subtitle">본 안내문은 검수용 초안이며 판매가 · 패키지 구성 정보는 포함하지 않습니다.</div>
+    <div class="review-doc-title">${pyeong} 세대 마감재 안내문 (초안)${combo ? ` · 고객스타일: ${combo.name}` : ""}</div>
+    <div class="review-doc-subtitle">본 안내문은 검수용 초안이며 판매가 · 패키지 구성 정보는 포함하지 않습니다.${combo ? ` (고객스타일 분류는 이 화면 전용 조회 필터입니다)` : ""}</div>
     ${Object.keys(bySpace).map((space) => `
       <div class="review-doc-space">
         <div class="review-doc-space-title">${space}</div>
