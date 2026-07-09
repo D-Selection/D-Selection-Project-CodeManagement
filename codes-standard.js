@@ -178,6 +178,8 @@ const productQuickAddModal = document.getElementById("productQuickAddModal");
 const cqaMajorTabs = document.getElementById("cqaMajorTabs");
 const cqaMidList = document.getElementById("cqaMidList");
 const cqaMidCount = document.getElementById("cqaMidCount");
+const cqaExistingList = document.getElementById("cqaExistingList");
+const cqaExistingCount = document.getElementById("cqaExistingCount");
 const cqaSelectedRow = document.getElementById("cqaSelectedRow");
 const cqaSelectedLabel = document.getElementById("cqaSelectedLabel");
 const cqaNextCode = document.getElementById("cqaNextCode");
@@ -211,6 +213,10 @@ function cqaRenderMajorTabs() {
   `).join("");
 }
 
+function cqaExistingCountFor(majorCode, midCode) {
+  return DS_PRODUCT_MASTER_CATALOG.filter((r) => r.majorCode === majorCode && r.midCode === midCode).length;
+}
+
 function cqaRenderMidList() {
   if (!cqaSelectedMajor) {
     cqaMidCount.textContent = "0";
@@ -223,8 +229,29 @@ function cqaRenderMidList() {
     <button type="button" class="cqa-mid-row ${cqaSelectedMid && cqaSelectedMid.code === m.code ? "selected" : ""}" data-code="${m.code}">
       <span class="cqa-mid-row-code">${m.code}</span>
       <span class="cqa-mid-row-name">${m.name}</span>
+      <span class="cqa-mid-row-count">${cqaExistingCountFor(m.majorCode, m.code)}건</span>
     </button>
   `).join("");
+}
+
+function cqaRenderExistingList() {
+  if (!cqaSelectedMajor || !cqaSelectedMid) {
+    cqaExistingCount.textContent = "0";
+    cqaExistingList.innerHTML = `<div class="cqa-existing-list-hint">중분류를 선택하면 기존 소분류가 여기에 표시됩니다.</div>`;
+    return;
+  }
+  const items = DS_PRODUCT_MASTER_CATALOG
+    .filter((r) => r.majorCode === cqaSelectedMajor.code && r.midCode === cqaSelectedMid.code)
+    .sort((a, b) => a.code.localeCompare(b.code));
+  cqaExistingCount.textContent = items.length;
+  cqaExistingList.innerHTML = items.length === 0
+    ? `<div class="cqa-existing-list-hint">이 중분류에는 아직 등록된 소분류가 없습니다.</div>`
+    : items.map((r) => `
+      <div class="cqa-existing-item">
+        <span class="ccode-cell">${r.code}</span>
+        <span class="cqa-existing-item-name">${r.name}</span>
+      </div>
+    `).join("");
 }
 
 function cqaRefreshSelectedInfo() {
@@ -252,6 +279,7 @@ function cqaSelectMajor(majorCode) {
   cqaRenderMajorTabs();
   cqaRenderMidList();
   cqaRefreshSelectedInfo();
+  cqaRenderExistingList();
 }
 
 function cqaSelectMid(midCode) {
@@ -260,6 +288,7 @@ function cqaSelectMid(midCode) {
   cqaSelectedMid = mid;
   cqaRenderMidList();
   cqaRefreshSelectedInfo();
+  cqaRenderExistingList();
   const nameInput = document.getElementById("cqaSingleNameInput");
   nameInput.value = "";
   nameInput.focus();
@@ -361,6 +390,8 @@ cqaSaveBtn.addEventListener("click", () => {
   cqaPendingItems = [];
   cqaRenderPendingList();
   cqaRefreshSelectedInfo();
+  cqaRenderMidList();
+  cqaRenderExistingList();
   cqaApplySubAggFilter();
 });
 
@@ -372,6 +403,7 @@ function cqaResetModal() {
   cqaRenderMidList();
   cqaRefreshSelectedInfo();
   cqaRenderPendingList();
+  cqaRenderExistingList();
   document.querySelectorAll(".cqa-mode-tab").forEach((b) => b.classList.toggle("active", b.dataset.mode === "single"));
 }
 

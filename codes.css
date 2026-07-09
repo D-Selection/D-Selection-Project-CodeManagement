@@ -732,7 +732,7 @@ table { border-collapse: collapse; width: 100%; }
   overflow: hidden;
   box-shadow: 0 16px 40px rgba(0,0,0,0.25);
 }
-.cproduct-quick-add-modal { width: 880px; }
+.cproduct-quick-add-modal { width: 980px; }
 .cmodal-header {
   background: var(--c-navy);
   color: #fff;
@@ -770,12 +770,16 @@ table { border-collapse: collapse; width: 100%; }
 .cqa-major-tab:hover { border-color: var(--c-blue); color: var(--c-blue); }
 .cqa-major-tab.active { background: var(--c-navy); color: #fff; border-color: var(--c-navy); }
 
-.cqa-mid-list { max-height: 190px; overflow-y: auto; border: 1px solid var(--c-border); border-radius: 8px; margin-bottom: 12px; }
+.cqa-mid-existing-split { display: flex; gap: 14px; margin-bottom: 12px; }
+.cqa-mid-col { flex: 1; min-width: 0; }
+.cqa-existing-col { flex: 1; min-width: 0; }
+
+.cqa-mid-list { max-height: 220px; overflow-y: auto; border: 1px solid var(--c-border); border-radius: 8px; }
 .cqa-mid-list-hint { padding: 16px 12px; text-align: center; color: var(--c-sub); font-size: 12px; }
 .cqa-mid-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
   border: none;
   border-bottom: 1px solid #f0f1f4;
@@ -789,7 +793,29 @@ table { border-collapse: collapse; width: 100%; }
 .cqa-mid-row:hover { background: #f5f8ff; }
 .cqa-mid-row.selected { background: var(--c-blue-light); font-weight: 700; }
 .cqa-mid-row-code { color: var(--c-sub); font-size: 11px; white-space: nowrap; }
-.cqa-mid-row-name { flex: 1; }
+.cqa-mid-row-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cqa-mid-row-count {
+  color: var(--c-sub);
+  font-size: 10.5px;
+  white-space: nowrap;
+  background: #f0f2f6;
+  border-radius: 999px;
+  padding: 1px 7px;
+}
+.cqa-mid-row.selected .cqa-mid-row-count { background: #dce8fe; color: var(--c-blue); }
+
+.cqa-existing-list { max-height: 220px; overflow-y: auto; border: 1px solid var(--c-border); border-radius: 8px; background: #fbfbfd; }
+.cqa-existing-list-hint { padding: 16px 12px; text-align: center; color: var(--c-sub); font-size: 12px; }
+.cqa-existing-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-bottom: 1px solid #f0f1f4;
+}
+.cqa-existing-item:last-child { border-bottom: none; }
+.cqa-existing-item-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--c-sub); }
 
 .cqa-selected-row {
   background: var(--c-blue-light);
