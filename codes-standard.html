@@ -222,47 +222,48 @@
     </section>
   </div>
 
-  <!-- 전사공통코드 : 프로덕트 코드(소분류/PK) 간편 추가 모달. 대분류>중분류를 각각
-       테이블에서 클릭해 찾아야 하는 기존 방식 대신, 이름으로 검색해 한 번에 고르고
-       소분류코드는 자동 채번해 오탈자·중복 걱정 없이 추가할 수 있게 한다. -->
+  <!-- 전사공통코드 : 프로덕트 코드(소분류/PK) 간편 추가 모달.
+       - 대분류/중분류를 검색 없이 한 화면에서 전부 보고 클릭으로 고른다.
+       - 상품명을 입력해 추가하면 실제 데이터에 바로 반영되지 않고 오른쪽 "대기 목록"에
+         쌓이기만 하며, 대분류/중분류를 자유롭게 바꿔가며 여러 건을 계속 쌓을 수 있다.
+       - "전체 저장"을 눌러야 그 시점에 쌓인 모든 항목이 한 번에 실제 데이터에 반영된다.
+       - 소분류코드(PK)는 항상 자동 채번되며, 대기 목록에 채번된 번호가 바로 보인다. -->
   <div class="cmodal-backdrop" id="productQuickAddModal" hidden>
     <div class="csend-modal cproduct-quick-add-modal">
       <div class="cmodal-header">🏷 프로덕트 코드 추가 (소분류 · PK) <button class="cmodal-close" id="productQuickAddClose" type="button">✕</button></div>
-      <div class="cmodal-body">
-        <div class="cqa-note">새 프로덕트 코드는 신규체계(대분류 6개 · 중분류 44개) 기준으로 등록됩니다.</div>
+      <div class="cqa-note">새 프로덕트 코드는 신규체계(대분류 6개 · 중분류 44개) 기준으로 등록되며, 아래 대기 목록에 쌓아두었다가 <strong>"전체 저장"</strong>을 눌러야 실제로 반영됩니다.</div>
+      <div class="cmodal-body cqa-body-split">
+        <div class="cqa-left-col">
+          <div class="cqa-step-label">대분류 <span class="ccount" id="cqaMajorCount">6</span></div>
+          <div class="cqa-major-tabs" id="cqaMajorTabs"></div>
 
-        <div class="cqa-step">
-          <div class="cqa-step-label">1. 대분류 · 중분류 선택</div>
-          <div class="cqa-category-picked" id="cqaCategoryPicked" hidden></div>
-          <input type="text" id="cqaCategorySearchInput" class="cqa-search-input" placeholder="대분류명 또는 중분류명으로 검색 (예: 위생, 수전, 신발장)" autocomplete="off" />
-          <div class="cqa-category-results" id="cqaCategoryResults"></div>
-        </div>
+          <div class="cqa-step-label">중분류 <span class="ccount" id="cqaMidCount">0</span></div>
+          <div class="cqa-mid-list" id="cqaMidList"></div>
 
-        <div class="cqa-step" id="cqaAddStep" hidden>
-          <div class="cqa-step-label">2. 상품명 입력</div>
-          <div class="cqa-next-code">다음 코드: <span class="ccode-cell" id="cqaNextCode">-</span></div>
-
-          <div class="cqa-mode-tabs">
-            <button type="button" class="cqa-mode-tab active" data-mode="single">1건씩 추가</button>
-            <button type="button" class="cqa-mode-tab" data-mode="bulk">여러 개 한번에 등록</button>
+          <div class="cqa-selected-row" id="cqaSelectedRow" hidden>
+            선택됨: <strong id="cqaSelectedLabel"></strong> · 다음 채번 코드: <span class="ccode-cell" id="cqaNextCode">-</span>
           </div>
 
-          <div class="cqa-mode-panel" id="cqaSingleMode">
+          <div class="cqa-mode-tabs" id="cqaAddControls" hidden>
+            <button type="button" class="cqa-mode-tab active" data-mode="single">1건씩 추가</button>
+            <button type="button" class="cqa-mode-tab" data-mode="bulk">여러 개 한번에</button>
+          </div>
+          <div class="cqa-mode-panel" id="cqaSingleMode" hidden>
             <div class="cqa-single-row">
-              <input type="text" id="cqaSingleNameInput" class="cqa-name-input" placeholder="상품명 입력 후 추가" autocomplete="off" />
-              <button type="button" class="toolbar-btn" id="cqaSingleAddBtn">추가</button>
+              <input type="text" id="cqaSingleNameInput" class="cqa-name-input" placeholder="상품명 입력 후 Enter 또는 추가" autocomplete="off" />
+              <button type="button" class="toolbar-btn" id="cqaSingleAddBtn">대기 목록에 추가</button>
             </div>
           </div>
-
           <div class="cqa-mode-panel" id="cqaBulkMode" hidden>
-            <textarea id="cqaBulkTextarea" class="cqa-bulk-textarea" rows="5" placeholder="상품명을 한 줄에 하나씩 붙여넣으세요.&#10;예)&#10;국산 세면기 수전/A사&#10;국산 세면기 수전/B사"></textarea>
-            <button type="button" class="toolbar-btn" id="cqaBulkAddBtn">일괄 추가</button>
+            <textarea id="cqaBulkTextarea" class="cqa-bulk-textarea" rows="4" placeholder="상품명을 한 줄에 하나씩 붙여넣으세요.&#10;예)&#10;국산 세면기 수전/A사&#10;국산 세면기 수전/B사"></textarea>
+            <button type="button" class="toolbar-btn" id="cqaBulkAddBtn">여러 줄 한번에 대기 목록에 추가</button>
           </div>
         </div>
 
-        <div class="cqa-step" id="cqaAddedStep" hidden>
-          <div class="cqa-step-label">이번에 추가한 코드 <span class="ccount" id="cqaAddedCount">0</span></div>
-          <div class="cqa-added-list" id="cqaAddedList"></div>
+        <div class="cqa-right-col">
+          <div class="cqa-step-label">대기 목록 <span class="ccount" id="cqaPendingCount">0</span></div>
+          <div class="cqa-pending-list" id="cqaPendingList"></div>
+          <button type="button" class="toolbar-btn cqa-save-btn" id="cqaSaveBtn" disabled>💾 전체 저장 (<span id="cqaSaveBtnCount">0</span>건)</button>
         </div>
       </div>
     </div>

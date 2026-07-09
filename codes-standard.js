@@ -152,12 +152,14 @@ document.getElementById("subAggSearch").addEventListener("input", cqaApplySubAgg
 /* =====================================================================
    전사공통코드: 프로덕트 코드(소분류/PK) 간편 추가
    -----------------------------------------------------------------------
-   대분류>중분류를 각각 테이블에서 찾아 클릭해야 하는 기존 방식 대신, 이름으로
-   검색해 대분류·중분류를 한 번에 고르고 소분류코드는 자동 채번해서 추가한다.
-   코드를 직접 입력하지 않으므로 오탈자·중복 걱정이 없고, 여러 상품명을 한 번에
-   붙여넣어 일괄 등록할 수도 있다. 기존 화면(대분류/중분류/소분류집계 테이블)은
-   그대로 두고, 이 모달만 새로 추가한 것이다.
-   ===================================================================== */
+   대분류/중분류를 검색 없이 한 화면에서 전부 보고 클릭으로 고른다. 상품명을
+   입력해 추가하면 실제 데이터에 바로 반영되지 않고 오른쪽 "대기 목록"에
+   쌓이기만 하며, 대분류/중분류를 자유롭게 바꿔가며 여러 건을 계속 쌓을 수
+   있다. 소분류코드(PK)는 항상 자동 채번되고(코드를 직접 입력하지 않으므로
+   오탈자·중복 걱정이 없다) 대기 목록에 채번된 번호가 바로 보인다. "전체 저장"을
+   눌러야 그 시점까지 쌓인 모든 항목이 한 번에 실제 데이터에 반영된다. 기존
+   화면(대분류/중분류/소분류집계 테이블)은 그대로 두고, 이 모달만 새로 추가한
+   것이다. */
 function cqaShowMsg(text) {
   let el = document.getElementById("cqaToast");
   if (!el) {
@@ -173,183 +175,212 @@ function cqaShowMsg(text) {
 }
 
 const productQuickAddModal = document.getElementById("productQuickAddModal");
-const cqaCategorySearchInput = document.getElementById("cqaCategorySearchInput");
-const cqaCategoryResults = document.getElementById("cqaCategoryResults");
-const cqaCategoryPicked = document.getElementById("cqaCategoryPicked");
-const cqaAddStep = document.getElementById("cqaAddStep");
+const cqaMajorTabs = document.getElementById("cqaMajorTabs");
+const cqaMidList = document.getElementById("cqaMidList");
+const cqaMidCount = document.getElementById("cqaMidCount");
+const cqaSelectedRow = document.getElementById("cqaSelectedRow");
+const cqaSelectedLabel = document.getElementById("cqaSelectedLabel");
 const cqaNextCode = document.getElementById("cqaNextCode");
-const cqaAddedStep = document.getElementById("cqaAddedStep");
-const cqaAddedList = document.getElementById("cqaAddedList");
-const cqaAddedCount = document.getElementById("cqaAddedCount");
+const cqaAddControls = document.getElementById("cqaAddControls");
+const cqaSingleMode = document.getElementById("cqaSingleMode");
+const cqaBulkMode = document.getElementById("cqaBulkMode");
+const cqaPendingList = document.getElementById("cqaPendingList");
+const cqaPendingCount = document.getElementById("cqaPendingCount");
+const cqaSaveBtn = document.getElementById("cqaSaveBtn");
+const cqaSaveBtnCount = document.getElementById("cqaSaveBtnCount");
 
 let cqaSelectedMajor = null;
 let cqaSelectedMid = null;
-let cqaAddedThisSession = [];
-
-function cqaMidOptionsWithMajorName() {
-  return DS_PRODUCT_MIDS_NEW.map((m) => {
-    const major = DS_PRODUCT_MAJORS_NEW.find((x) => x.code === m.majorCode);
-    return { majorCode: m.majorCode, majorName: major ? major.name : m.majorCode, code: m.code, name: m.name };
-  });
-}
+let cqaPendingItems = []; // 저장 전 대기 목록: { majorCode, majorName, midCode, midName, name, code }
 
 function cqaNextSeq(majorCode, midCode) {
-  const nums = DS_PRODUCT_MASTER_CATALOG
+  const fromCatalog = DS_PRODUCT_MASTER_CATALOG
     .filter((r) => r.majorCode === majorCode && r.midCode === midCode)
-    .map((r) => parseInt(r.code.split("-")[2], 10))
-    .filter((n) => !isNaN(n));
+    .map((r) => parseInt(r.code.split("-")[2], 10));
+  const fromPending = cqaPendingItems
+    .filter((r) => r.majorCode === majorCode && r.midCode === midCode)
+    .map((r) => parseInt(r.code.split("-")[2], 10));
+  const nums = fromCatalog.concat(fromPending).filter((n) => !isNaN(n));
   const max = nums.length ? Math.max(...nums) : 0;
   return String(max + 1).padStart(2, "0");
 }
 
-function cqaRenderCategoryResults(query) {
-  const q = query.trim().toLowerCase();
-  if (!q) { cqaCategoryResults.innerHTML = ""; return; }
-  const matches = cqaMidOptionsWithMajorName()
-    .filter((m) => [m.majorName, m.name].join(" ").toLowerCase().includes(q))
-    .slice(0, 30);
-  cqaCategoryResults.innerHTML = matches.length === 0
-    ? `<div class="cqa-category-results-hint">일치하는 대분류/중분류가 없습니다.</div>`
-    : matches.map((m) => `
-      <button type="button" class="cqa-category-result" data-major-code="${m.majorCode}" data-mid-code="${m.code}">
-        <span class="cqa-category-result-major">${m.majorCode} · ${m.majorName}</span>
-        <span class="cqa-category-result-mid">${m.code} · ${m.name}</span>
-      </button>
-    `).join("");
+function cqaRenderMajorTabs() {
+  cqaMajorTabs.innerHTML = DS_PRODUCT_MAJORS_NEW.map((m) => `
+    <button type="button" class="cqa-major-tab ${cqaSelectedMajor && cqaSelectedMajor.code === m.code ? "active" : ""}" data-code="${m.code}">${m.code} · ${m.name}</button>
+  `).join("");
 }
 
-function cqaRefreshNextCode() {
-  if (cqaSelectedMajor && cqaSelectedMid) {
-    cqaNextCode.textContent = `${cqaSelectedMajor.code}-${cqaSelectedMid.code}-${cqaNextSeq(cqaSelectedMajor.code, cqaSelectedMid.code)}`;
+function cqaRenderMidList() {
+  if (!cqaSelectedMajor) {
+    cqaMidCount.textContent = "0";
+    cqaMidList.innerHTML = `<div class="cqa-mid-list-hint">먼저 대분류를 선택해주세요.</div>`;
+    return;
   }
+  const mids = DS_PRODUCT_MIDS_NEW.filter((m) => m.majorCode === cqaSelectedMajor.code);
+  cqaMidCount.textContent = mids.length;
+  cqaMidList.innerHTML = mids.map((m) => `
+    <button type="button" class="cqa-mid-row ${cqaSelectedMid && cqaSelectedMid.code === m.code ? "selected" : ""}" data-code="${m.code}">
+      <span class="cqa-mid-row-code">${m.code}</span>
+      <span class="cqa-mid-row-name">${m.name}</span>
+    </button>
+  `).join("");
 }
 
-function cqaSelectCategory(majorCode, midCode) {
+function cqaRefreshSelectedInfo() {
+  if (!cqaSelectedMajor || !cqaSelectedMid) {
+    cqaSelectedRow.hidden = true;
+    cqaAddControls.hidden = true;
+    cqaSingleMode.hidden = true;
+    cqaBulkMode.hidden = true;
+    return;
+  }
+  cqaSelectedRow.hidden = false;
+  cqaAddControls.hidden = false;
+  cqaSelectedLabel.textContent = `${cqaSelectedMajor.code} ${cqaSelectedMajor.name} > ${cqaSelectedMid.code} ${cqaSelectedMid.name}`;
+  cqaNextCode.textContent = `${cqaSelectedMajor.code}-${cqaSelectedMid.code}-${cqaNextSeq(cqaSelectedMajor.code, cqaSelectedMid.code)}`;
+  const activeTab = document.querySelector(".cqa-mode-tab.active");
+  cqaSingleMode.hidden = !activeTab || activeTab.dataset.mode !== "single";
+  cqaBulkMode.hidden = !activeTab || activeTab.dataset.mode !== "bulk";
+}
+
+function cqaSelectMajor(majorCode) {
   const major = DS_PRODUCT_MAJORS_NEW.find((m) => m.code === majorCode);
-  const mid = DS_PRODUCT_MIDS_NEW.find((m) => m.majorCode === majorCode && m.code === midCode);
-  if (!major || !mid) return;
+  if (!major) return;
   cqaSelectedMajor = major;
+  cqaSelectedMid = null;
+  cqaRenderMajorTabs();
+  cqaRenderMidList();
+  cqaRefreshSelectedInfo();
+}
+
+function cqaSelectMid(midCode) {
+  const mid = DS_PRODUCT_MIDS_NEW.find((m) => m.majorCode === cqaSelectedMajor.code && m.code === midCode);
+  if (!mid) return;
   cqaSelectedMid = mid;
-  cqaCategoryPicked.hidden = false;
-  cqaCategoryPicked.innerHTML = `
-    <span>선택됨: <strong>${major.code} ${major.name}</strong> &gt; <strong>${mid.code} ${mid.name}</strong></span>
-    <button type="button" class="cqa-category-picked-change" id="cqaCategoryChangeBtn">변경</button>
-  `;
-  document.getElementById("cqaCategoryChangeBtn").addEventListener("click", cqaResetCategory);
-  cqaCategorySearchInput.value = "";
-  cqaCategoryResults.innerHTML = "";
-  cqaCategorySearchInput.hidden = true;
-  cqaAddStep.hidden = false;
-  cqaRefreshNextCode();
+  cqaRenderMidList();
+  cqaRefreshSelectedInfo();
   const nameInput = document.getElementById("cqaSingleNameInput");
   nameInput.value = "";
   nameInput.focus();
 }
 
-function cqaResetCategory() {
-  cqaSelectedMajor = null;
-  cqaSelectedMid = null;
-  cqaCategoryPicked.hidden = true;
-  cqaCategoryPicked.innerHTML = "";
-  cqaCategorySearchInput.hidden = false;
-  cqaCategorySearchInput.value = "";
-  cqaCategorySearchInput.focus();
-  cqaCategoryResults.innerHTML = "";
-  cqaAddStep.hidden = true;
-}
-
-cqaCategorySearchInput.addEventListener("input", (e) => cqaRenderCategoryResults(e.target.value));
-cqaCategoryResults.addEventListener("click", (e) => {
-  const btn = e.target.closest(".cqa-category-result");
+cqaMajorTabs.addEventListener("click", (e) => {
+  const btn = e.target.closest(".cqa-major-tab");
   if (!btn) return;
-  cqaSelectCategory(btn.dataset.majorCode, btn.dataset.midCode);
+  cqaSelectMajor(btn.dataset.code);
+});
+cqaMidList.addEventListener("click", (e) => {
+  const btn = e.target.closest(".cqa-mid-row");
+  if (!btn) return;
+  cqaSelectMid(btn.dataset.code);
 });
 
 document.querySelectorAll(".cqa-mode-tab").forEach((btn) => {
   btn.addEventListener("click", () => {
     document.querySelectorAll(".cqa-mode-tab").forEach((b) => b.classList.toggle("active", b === btn));
-    document.getElementById("cqaSingleMode").hidden = btn.dataset.mode !== "single";
-    document.getElementById("cqaBulkMode").hidden = btn.dataset.mode !== "bulk";
+    cqaSingleMode.hidden = btn.dataset.mode !== "single";
+    cqaBulkMode.hidden = btn.dataset.mode !== "bulk";
   });
 });
 
-function cqaAddOne(name) {
+function cqaRenderPendingList() {
+  cqaPendingCount.textContent = cqaPendingItems.length;
+  cqaSaveBtnCount.textContent = cqaPendingItems.length;
+  cqaSaveBtn.disabled = cqaPendingItems.length === 0;
+  cqaPendingList.innerHTML = cqaPendingItems.length === 0
+    ? `<div class="cqa-pending-empty">아직 대기중인 항목이 없습니다.<br/>왼쪽에서 대분류·중분류를 고르고 상품명을 추가해보세요.</div>`
+    : cqaPendingItems.map((r, i) => `
+      <div class="cqa-pending-item">
+        <span class="ccode-cell">${r.code}</span>
+        <span class="cqa-pending-cat">${r.majorName} &gt; ${r.midName}</span>
+        <span class="cqa-pending-name">${r.name}</span>
+        <button type="button" class="cqa-pending-remove-btn" data-index="${i}" title="대기 목록에서 제거">✕</button>
+      </div>
+    `).join("");
+}
+
+function cqaAddToPending(name) {
   const trimmed = name.trim();
   if (!trimmed) return null;
   const seq = cqaNextSeq(cqaSelectedMajor.code, cqaSelectedMid.code);
   const code = `${cqaSelectedMajor.code}-${cqaSelectedMid.code}-${seq}`;
   const row = {
-    no: DS_PRODUCT_MASTER_CATALOG.length + 1,
     majorCode: cqaSelectedMajor.code, majorName: cqaSelectedMajor.name,
     midCode: cqaSelectedMid.code, midName: cqaSelectedMid.name,
     code, name: trimmed,
   };
-  dsAddCustomProductCode(row);
-  SUB_AGG_SITE_SETS[0].codes.push(code);
-  subCategoryAggregate.push(Object.assign({}, row, { siteUsage: 1 }));
-  dsAddEditLog("전사공통코드(프로덕트코드)", `신규 프로덕트 코드 추가: ${code} (${trimmed})`);
+  cqaPendingItems.push(row);
   return row;
 }
 
-function cqaRenderAdded() {
-  cqaAddedStep.hidden = cqaAddedThisSession.length === 0;
-  cqaAddedCount.textContent = cqaAddedThisSession.length;
-  cqaAddedList.innerHTML = cqaAddedThisSession.map((r) => `
-    <div class="cqa-added-item">
-      <span class="ccode-cell">${r.code}</span>
-      <span class="cqa-added-name">${r.name}</span>
-      <button type="button" class="cqa-added-undo-btn" data-code="${r.code}" title="되돌리기">✕ 되돌리기</button>
-    </div>
-  `).join("");
-}
-
-cqaAddedList.addEventListener("click", (e) => {
-  const btn = e.target.closest(".cqa-added-undo-btn");
+cqaPendingList.addEventListener("click", (e) => {
+  const btn = e.target.closest(".cqa-pending-remove-btn");
   if (!btn) return;
-  const code = btn.dataset.code;
-  dsRemoveCustomProductCode(code);
-  SUB_AGG_SITE_SETS[0].codes = SUB_AGG_SITE_SETS[0].codes.filter((c) => c !== code);
-  const idx = subCategoryAggregate.findIndex((r) => r.code === code);
-  if (idx !== -1) subCategoryAggregate.splice(idx, 1);
-  cqaAddedThisSession = cqaAddedThisSession.filter((r) => r.code !== code);
-  dsAddEditLog("전사공통코드(프로덕트코드)", `방금 추가한 프로덕트 코드 되돌림: ${code}`);
-  cqaRenderAdded();
-  cqaApplySubAggFilter();
-  cqaRefreshNextCode();
+  cqaPendingItems.splice(Number(btn.dataset.index), 1);
+  cqaRenderPendingList();
+  cqaRefreshSelectedInfo();
 });
 
 document.getElementById("cqaSingleAddBtn").addEventListener("click", () => {
   const input = document.getElementById("cqaSingleNameInput");
   if (!input.value.trim()) { cqaShowMsg("상품명을 입력해주세요."); return; }
-  const row = cqaAddOne(input.value);
-  cqaAddedThisSession.unshift(row);
-  cqaRenderAdded();
-  cqaApplySubAggFilter();
-  cqaRefreshNextCode();
+  cqaAddToPending(input.value);
+  cqaRenderPendingList();
+  cqaRefreshSelectedInfo();
   input.value = "";
   input.focus();
+});
+document.getElementById("cqaSingleNameInput").addEventListener("keydown", (e) => {
+  if (e.key === "Enter") document.getElementById("cqaSingleAddBtn").click();
 });
 
 document.getElementById("cqaBulkAddBtn").addEventListener("click", () => {
   const textarea = document.getElementById("cqaBulkTextarea");
   const lines = textarea.value.split("\n").map((l) => l.trim()).filter(Boolean);
   if (lines.length === 0) { cqaShowMsg("등록할 상품명을 입력해주세요."); return; }
-  const added = lines.map((line) => cqaAddOne(line)).filter(Boolean);
-  cqaAddedThisSession.unshift(...added.slice().reverse());
-  cqaRenderAdded();
-  cqaApplySubAggFilter();
-  cqaRefreshNextCode();
+  lines.forEach((line) => cqaAddToPending(line));
+  cqaRenderPendingList();
+  cqaRefreshSelectedInfo();
   textarea.value = "";
-  cqaShowMsg(`${added.length}건 등록되었습니다.`);
+  cqaShowMsg(`${lines.length}건 대기 목록에 추가되었습니다.`);
 });
 
+cqaSaveBtn.addEventListener("click", () => {
+  if (cqaPendingItems.length === 0) return;
+  const savedCodes = [];
+  cqaPendingItems.forEach((item) => {
+    const row = { no: DS_PRODUCT_MASTER_CATALOG.length + 1, ...item };
+    dsAddCustomProductCode(row);
+    SUB_AGG_SITE_SETS[0].codes.push(row.code);
+    subCategoryAggregate.push(Object.assign({}, row, { siteUsage: 1 }));
+    savedCodes.push(row.code);
+  });
+  dsAddEditLog("전사공통코드(프로덕트코드)", `신규 프로덕트 코드 ${savedCodes.length}건 저장: ${savedCodes.join(", ")}`);
+  cqaShowMsg(`${savedCodes.length}건 저장되었습니다.`);
+  cqaPendingItems = [];
+  cqaRenderPendingList();
+  cqaRefreshSelectedInfo();
+  cqaApplySubAggFilter();
+});
+
+function cqaResetModal() {
+  cqaSelectedMajor = null;
+  cqaSelectedMid = null;
+  cqaPendingItems = [];
+  cqaRenderMajorTabs();
+  cqaRenderMidList();
+  cqaRefreshSelectedInfo();
+  cqaRenderPendingList();
+  document.querySelectorAll(".cqa-mode-tab").forEach((b) => b.classList.toggle("active", b.dataset.mode === "single"));
+}
+
 document.getElementById("productQuickAddBtn").addEventListener("click", () => {
-  cqaResetCategory();
-  cqaAddedThisSession = [];
-  cqaRenderAdded();
+  cqaResetModal();
   productQuickAddModal.hidden = false;
 });
 document.getElementById("productQuickAddClose").addEventListener("click", () => {
+  if (cqaPendingItems.length > 0 && !window.confirm(`저장하지 않은 ${cqaPendingItems.length}건이 있습니다. 저장하지 않고 닫으시겠습니까?`)) return;
   productQuickAddModal.hidden = true;
 });
 
