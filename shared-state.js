@@ -578,11 +578,44 @@ const DS_PRODUCT_MASTER_CATALOG = [
 
 // "다른현장 불러오기"로 가져올 수 있는 예시 현장들 — 각 현장이 마스터 카탈로그 중
 // 서로 다른 부분집합을 소분류로 보유한다는 것을 보여주기 위한 데모 데이터.
+// 반드시 아래 신규 등록 코드 병합보다 먼저 계산해야 한다 — 그렇지 않으면 방금
+// 새로 등록한 코드까지 이 고정된 데모 현장들이 "보유"한 것으로 잘못 집계된다.
 const DS_OTHER_SITE_PRODUCT_SETS = [
   { name: "e편한세상 강동 프레스티지 현장", codes: DS_PRODUCT_MASTER_CATALOG.filter((r) => r.majorCode !== "HA").map((r) => r.code) },
   { name: "아크로 리버스카이 현장", codes: DS_PRODUCT_MASTER_CATALOG.filter((r) => ["AC", "FM", "FN"].includes(r.majorCode)).map((r) => r.code) },
   { name: "e편한세상 분당 퍼스트빌리지 현장", codes: DS_PRODUCT_MASTER_CATALOG.filter((r) => r.no % 2 === 1).map((r) => r.code) },
 ];
+
+/* 사용자가 전사공통코드 화면에서 직접 등록한 신규 프로덕트 코드(소분류/PK)는
+   새로고침·다른 화면 이동 후에도 유지되도록 localStorage에 별도로 저장해두고,
+   불러올 때 마스터 카탈로그 뒤에 이어붙인다. index.html/site-menu.html/
+   codes-standard.html 모두 이 카탈로그를 그대로 공유하므로, 한 화면에서 추가하면
+   다른 화면에도 그대로 보인다. */
+const DS_CUSTOM_PRODUCT_STORAGE_KEY = "dselection_custom_products_v1";
+function dsLoadCustomProducts() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(DS_CUSTOM_PRODUCT_STORAGE_KEY));
+    return Array.isArray(raw) ? raw : [];
+  } catch (e) {
+    return [];
+  }
+}
+function dsSaveCustomProducts(list) {
+  localStorage.setItem(DS_CUSTOM_PRODUCT_STORAGE_KEY, JSON.stringify(list));
+}
+dsLoadCustomProducts().forEach((row) => DS_PRODUCT_MASTER_CATALOG.push(row));
+
+function dsAddCustomProductCode(row) {
+  DS_PRODUCT_MASTER_CATALOG.push(row);
+  const custom = dsLoadCustomProducts();
+  custom.push(row);
+  dsSaveCustomProducts(custom);
+}
+function dsRemoveCustomProductCode(code) {
+  const idx = DS_PRODUCT_MASTER_CATALOG.findIndex((r) => r.code === code);
+  if (idx !== -1) DS_PRODUCT_MASTER_CATALOG.splice(idx, 1);
+  dsSaveCustomProducts(dsLoadCustomProducts().filter((r) => r.code !== code));
+}
 
 
 const DS_ROLES = [

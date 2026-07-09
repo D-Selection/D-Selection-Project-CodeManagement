@@ -139,12 +139,218 @@ document.querySelector("#subAggTable .sortable").addEventListener("click", () =>
   renderSubAggBody(sorted);
 });
 
-document.getElementById("subAggSearch").addEventListener("input", (e) => {
-  const q = e.target.value.trim().toLowerCase();
+function cqaApplySubAggFilter() {
+  const q = document.getElementById("subAggSearch").value.trim().toLowerCase();
   const filtered = !q ? subCategoryAggregate : subCategoryAggregate.filter((r) =>
     [r.code, r.name, r.majorName, r.midName].join(" ").toLowerCase().includes(q)
   );
   renderSubAggBody(filtered);
+}
+
+document.getElementById("subAggSearch").addEventListener("input", cqaApplySubAggFilter);
+
+/* =====================================================================
+   전사공통코드: 프로덕트 코드(소분류/PK) 간편 추가
+   -----------------------------------------------------------------------
+   대분류>중분류를 각각 테이블에서 찾아 클릭해야 하는 기존 방식 대신, 이름으로
+   검색해 대분류·중분류를 한 번에 고르고 소분류코드는 자동 채번해서 추가한다.
+   코드를 직접 입력하지 않으므로 오탈자·중복 걱정이 없고, 여러 상품명을 한 번에
+   붙여넣어 일괄 등록할 수도 있다. 기존 화면(대분류/중분류/소분류집계 테이블)은
+   그대로 두고, 이 모달만 새로 추가한 것이다.
+   ===================================================================== */
+function cqaShowMsg(text) {
+  let el = document.getElementById("cqaToast");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "cqaToast";
+    el.className = "cqa-toast";
+    document.body.appendChild(el);
+  }
+  el.textContent = text;
+  el.classList.add("show");
+  clearTimeout(cqaShowMsg._t);
+  cqaShowMsg._t = setTimeout(() => el.classList.remove("show"), 2400);
+}
+
+const productQuickAddModal = document.getElementById("productQuickAddModal");
+const cqaCategorySearchInput = document.getElementById("cqaCategorySearchInput");
+const cqaCategoryResults = document.getElementById("cqaCategoryResults");
+const cqaCategoryPicked = document.getElementById("cqaCategoryPicked");
+const cqaAddStep = document.getElementById("cqaAddStep");
+const cqaNextCode = document.getElementById("cqaNextCode");
+const cqaAddedStep = document.getElementById("cqaAddedStep");
+const cqaAddedList = document.getElementById("cqaAddedList");
+const cqaAddedCount = document.getElementById("cqaAddedCount");
+
+let cqaSelectedMajor = null;
+let cqaSelectedMid = null;
+let cqaAddedThisSession = [];
+
+function cqaMidOptionsWithMajorName() {
+  return DS_PRODUCT_MIDS_NEW.map((m) => {
+    const major = DS_PRODUCT_MAJORS_NEW.find((x) => x.code === m.majorCode);
+    return { majorCode: m.majorCode, majorName: major ? major.name : m.majorCode, code: m.code, name: m.name };
+  });
+}
+
+function cqaNextSeq(majorCode, midCode) {
+  const nums = DS_PRODUCT_MASTER_CATALOG
+    .filter((r) => r.majorCode === majorCode && r.midCode === midCode)
+    .map((r) => parseInt(r.code.split("-")[2], 10))
+    .filter((n) => !isNaN(n));
+  const max = nums.length ? Math.max(...nums) : 0;
+  return String(max + 1).padStart(2, "0");
+}
+
+function cqaRenderCategoryResults(query) {
+  const q = query.trim().toLowerCase();
+  if (!q) { cqaCategoryResults.innerHTML = ""; return; }
+  const matches = cqaMidOptionsWithMajorName()
+    .filter((m) => [m.majorName, m.name].join(" ").toLowerCase().includes(q))
+    .slice(0, 30);
+  cqaCategoryResults.innerHTML = matches.length === 0
+    ? `<div class="cqa-category-results-hint">일치하는 대분류/중분류가 없습니다.</div>`
+    : matches.map((m) => `
+      <button type="button" class="cqa-category-result" data-major-code="${m.majorCode}" data-mid-code="${m.code}">
+        <span class="cqa-category-result-major">${m.majorCode} · ${m.majorName}</span>
+        <span class="cqa-category-result-mid">${m.code} · ${m.name}</span>
+      </button>
+    `).join("");
+}
+
+function cqaRefreshNextCode() {
+  if (cqaSelectedMajor && cqaSelectedMid) {
+    cqaNextCode.textContent = `${cqaSelectedMajor.code}-${cqaSelectedMid.code}-${cqaNextSeq(cqaSelectedMajor.code, cqaSelectedMid.code)}`;
+  }
+}
+
+function cqaSelectCategory(majorCode, midCode) {
+  const major = DS_PRODUCT_MAJORS_NEW.find((m) => m.code === majorCode);
+  const mid = DS_PRODUCT_MIDS_NEW.find((m) => m.majorCode === majorCode && m.code === midCode);
+  if (!major || !mid) return;
+  cqaSelectedMajor = major;
+  cqaSelectedMid = mid;
+  cqaCategoryPicked.hidden = false;
+  cqaCategoryPicked.innerHTML = `
+    <span>선택됨: <strong>${major.code} ${major.name}</strong> &gt; <strong>${mid.code} ${mid.name}</strong></span>
+    <button type="button" class="cqa-category-picked-change" id="cqaCategoryChangeBtn">변경</button>
+  `;
+  document.getElementById("cqaCategoryChangeBtn").addEventListener("click", cqaResetCategory);
+  cqaCategorySearchInput.value = "";
+  cqaCategoryResults.innerHTML = "";
+  cqaCategorySearchInput.hidden = true;
+  cqaAddStep.hidden = false;
+  cqaRefreshNextCode();
+  const nameInput = document.getElementById("cqaSingleNameInput");
+  nameInput.value = "";
+  nameInput.focus();
+}
+
+function cqaResetCategory() {
+  cqaSelectedMajor = null;
+  cqaSelectedMid = null;
+  cqaCategoryPicked.hidden = true;
+  cqaCategoryPicked.innerHTML = "";
+  cqaCategorySearchInput.hidden = false;
+  cqaCategorySearchInput.value = "";
+  cqaCategorySearchInput.focus();
+  cqaCategoryResults.innerHTML = "";
+  cqaAddStep.hidden = true;
+}
+
+cqaCategorySearchInput.addEventListener("input", (e) => cqaRenderCategoryResults(e.target.value));
+cqaCategoryResults.addEventListener("click", (e) => {
+  const btn = e.target.closest(".cqa-category-result");
+  if (!btn) return;
+  cqaSelectCategory(btn.dataset.majorCode, btn.dataset.midCode);
+});
+
+document.querySelectorAll(".cqa-mode-tab").forEach((btn) => {
+  btn.addEventListener("click", () => {
+    document.querySelectorAll(".cqa-mode-tab").forEach((b) => b.classList.toggle("active", b === btn));
+    document.getElementById("cqaSingleMode").hidden = btn.dataset.mode !== "single";
+    document.getElementById("cqaBulkMode").hidden = btn.dataset.mode !== "bulk";
+  });
+});
+
+function cqaAddOne(name) {
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+  const seq = cqaNextSeq(cqaSelectedMajor.code, cqaSelectedMid.code);
+  const code = `${cqaSelectedMajor.code}-${cqaSelectedMid.code}-${seq}`;
+  const row = {
+    no: DS_PRODUCT_MASTER_CATALOG.length + 1,
+    majorCode: cqaSelectedMajor.code, majorName: cqaSelectedMajor.name,
+    midCode: cqaSelectedMid.code, midName: cqaSelectedMid.name,
+    code, name: trimmed,
+  };
+  dsAddCustomProductCode(row);
+  SUB_AGG_SITE_SETS[0].codes.push(code);
+  subCategoryAggregate.push(Object.assign({}, row, { siteUsage: 1 }));
+  dsAddEditLog("전사공통코드(프로덕트코드)", `신규 프로덕트 코드 추가: ${code} (${trimmed})`);
+  return row;
+}
+
+function cqaRenderAdded() {
+  cqaAddedStep.hidden = cqaAddedThisSession.length === 0;
+  cqaAddedCount.textContent = cqaAddedThisSession.length;
+  cqaAddedList.innerHTML = cqaAddedThisSession.map((r) => `
+    <div class="cqa-added-item">
+      <span class="ccode-cell">${r.code}</span>
+      <span class="cqa-added-name">${r.name}</span>
+      <button type="button" class="cqa-added-undo-btn" data-code="${r.code}" title="되돌리기">✕ 되돌리기</button>
+    </div>
+  `).join("");
+}
+
+cqaAddedList.addEventListener("click", (e) => {
+  const btn = e.target.closest(".cqa-added-undo-btn");
+  if (!btn) return;
+  const code = btn.dataset.code;
+  dsRemoveCustomProductCode(code);
+  SUB_AGG_SITE_SETS[0].codes = SUB_AGG_SITE_SETS[0].codes.filter((c) => c !== code);
+  const idx = subCategoryAggregate.findIndex((r) => r.code === code);
+  if (idx !== -1) subCategoryAggregate.splice(idx, 1);
+  cqaAddedThisSession = cqaAddedThisSession.filter((r) => r.code !== code);
+  dsAddEditLog("전사공통코드(프로덕트코드)", `방금 추가한 프로덕트 코드 되돌림: ${code}`);
+  cqaRenderAdded();
+  cqaApplySubAggFilter();
+  cqaRefreshNextCode();
+});
+
+document.getElementById("cqaSingleAddBtn").addEventListener("click", () => {
+  const input = document.getElementById("cqaSingleNameInput");
+  if (!input.value.trim()) { cqaShowMsg("상품명을 입력해주세요."); return; }
+  const row = cqaAddOne(input.value);
+  cqaAddedThisSession.unshift(row);
+  cqaRenderAdded();
+  cqaApplySubAggFilter();
+  cqaRefreshNextCode();
+  input.value = "";
+  input.focus();
+});
+
+document.getElementById("cqaBulkAddBtn").addEventListener("click", () => {
+  const textarea = document.getElementById("cqaBulkTextarea");
+  const lines = textarea.value.split("\n").map((l) => l.trim()).filter(Boolean);
+  if (lines.length === 0) { cqaShowMsg("등록할 상품명을 입력해주세요."); return; }
+  const added = lines.map((line) => cqaAddOne(line)).filter(Boolean);
+  cqaAddedThisSession.unshift(...added.slice().reverse());
+  cqaRenderAdded();
+  cqaApplySubAggFilter();
+  cqaRefreshNextCode();
+  textarea.value = "";
+  cqaShowMsg(`${added.length}건 등록되었습니다.`);
+});
+
+document.getElementById("productQuickAddBtn").addEventListener("click", () => {
+  cqaResetCategory();
+  cqaAddedThisSession = [];
+  cqaRenderAdded();
+  productQuickAddModal.hidden = false;
+});
+document.getElementById("productQuickAddClose").addEventListener("click", () => {
+  productQuickAddModal.hidden = true;
 });
 
 /* =====================================================================
