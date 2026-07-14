@@ -1443,6 +1443,19 @@ table.pivot-table thead th.pivot-product-col { background: var(--navy); z-index:
 }
 .bulk-map-input:focus { border-color: var(--blue); outline: none; }
 .bulk-map-hint { padding: 10px 4px; text-align: center; color: var(--text-sub); font-size: 11.5px; }
+.bulk-check-col { width: 30px; text-align: center; }
+.bulk-selected-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  background: #f5f7fb;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.bulk-selected-row .bulk-map-input { flex: 1; }
+.bulk-selected-row .toolbar-btn { white-space: nowrap; color: var(--blue); border-color: #cfe0fd; }
 
 .sort-order-columns { display: flex; gap: 14px; }
 .sort-order-col { flex: 1; min-width: 0; }
