@@ -222,8 +222,8 @@ const skuData = [
 const skuTableBody = document.getElementById("skuTableBody");
 
 /* 상품(SKU)은 직접 입력하는 텍스트 데이터, 프로덕트는 1.1의 소분류(PK)
-   마스터(452건)다. 상품 1개에 프로덕트를 여러 개 매핑할 수 있는데, 코드를
-   직접 타이핑하게 하면 452개 중에서 오타·오매핑이 나기 쉬우므로, 검색해서
+   마스터(445건)다. 상품 1개에 프로덕트를 여러 개 매핑할 수 있는데, 코드를
+   직접 타이핑하게 하면 445개 중에서 오타·오매핑이 나기 쉬우므로, 검색해서
    클릭으로만 추가/해제하도록 해 오류 여지를 없앤다. */
 const skuProductMap = {}; // { [skuCode]: string[] (프로덕트 소분류코드 PK 목록) }
 
@@ -278,7 +278,7 @@ skuTableBody.addEventListener("click", (e) => {
   }
 });
 
-/* ---- 프로덕트 매핑 모달 : 452개 소분류 마스터에서 검색해서 클릭 한 번으로 추가/해제 ---- */
+/* ---- 프로덕트 매핑 모달 : 445개 소분류 마스터에서 검색해서 클릭 한 번으로 추가/해제 ---- */
 const skuProductModal = document.getElementById("skuProductModal");
 const skuProductModalBody = document.getElementById("skuProductModalBody");
 const skuProductModalSkuLabel = document.getElementById("skuProductModalSkuLabel");
@@ -355,7 +355,7 @@ function renderSkuProductResults(query) {
   if (!resultsEl) return;
   const q = query.trim().toLowerCase();
   const mappedCodes = new Set(skuProductMap[skuProductModalSku] || []);
-  if (!q) { resultsEl.innerHTML = `<div class="sku-product-results-hint">코드, 상품명, 대분류/중분류명으로 검색해보세요 (452건 중 검색).</div>`; return; }
+  if (!q) { resultsEl.innerHTML = `<div class="sku-product-results-hint">코드, 상품명, 대분류/중분류명으로 검색해보세요 (445건 중 검색).</div>`; return; }
   const matches = PRODUCT_MASTER_CATALOG
     .filter((p) => !mappedCodes.has(p.code))
     .filter((p) => [p.code, p.name, p.majorName, p.midName].join(" ").toLowerCase().includes(q))

@@ -205,10 +205,10 @@ function resolveGagamEntity(level, code) {
 
 let gagamSeq = 1;
 const gagamConditions = [
-  { id: gagamSeq++, priority: 1, triggerLevel: "sub", triggerCode: "AC-001-01", type: "add", targetLevel: "sub", targetCode: "AC-005-01", note: "주방수전 선택 시 수건걸이 기본 제공", createdAt: "2026-07-01" },
-  { id: gagamSeq++, priority: 2, triggerLevel: "major", triggerCode: "CW", type: "remove", targetLevel: "mid", targetCode: "FN-002", note: "구조변경/창호 대분류 선택 시 현관중문 중분류는 전체 제외", createdAt: "2026-07-01" },
-  { id: gagamSeq++, priority: 3, triggerLevel: "sub", triggerCode: "AC-003-04", type: "remove", targetLevel: "sub", targetCode: "AC-003-06", note: "비데일체형 양변기 선택 시 분리형 비데는 제외", createdAt: "2026-07-01" },
-  { id: gagamSeq++, priority: 4, triggerLevel: "sub", triggerCode: "FN-002-04", type: "add", targetLevel: "sub", targetCode: "FN-002-01", note: "슬라이딩 도어 선택 시 예비 스윙 도어 부속 추가", createdAt: "2026-07-02" },
+  { id: gagamSeq++, priority: 1, triggerLevel: "sub", triggerCode: "AC-200-01", type: "add", targetLevel: "sub", targetCode: "AC-221-01", note: "주방수전 선택 시 수건걸이 기본 제공", createdAt: "2026-07-01" },
+  { id: gagamSeq++, priority: 2, triggerLevel: "major", triggerCode: "CW", type: "remove", targetLevel: "mid", targetCode: "FN-501", note: "공사성(창호 등) 대분류 선택 시 현관중문 슬라이딩 도어 중분류는 전체 제외", createdAt: "2026-07-01" },
+  { id: gagamSeq++, priority: 3, triggerLevel: "sub", triggerCode: "AC-216-01", type: "remove", targetLevel: "sub", targetCode: "AC-218-01", note: "비데일체형 양변기 선택 시 분리형 비데는 제외", createdAt: "2026-07-01" },
+  { id: gagamSeq++, priority: 4, triggerLevel: "sub", triggerCode: "FN-501-01", type: "add", targetLevel: "sub", targetCode: "FN-500-01", note: "슬라이딩 도어 선택 시 예비 스윙 도어 부속 추가", createdAt: "2026-07-02" },
 ];
 
 function gagamToday() {
@@ -238,7 +238,7 @@ function gagamValueFieldHtml(prefix, fieldId, level, code) {
       </select>`;
   }
   return `<label>${prefix} 소분류코드(PK)</label>
-    <input type="text" id="${fieldId}" list="gagamProductList" placeholder="예: AC-001-01" value="${code || ""}" />`;
+    <input type="text" id="${fieldId}" list="gagamProductList" placeholder="예: AC-200-01" value="${code || ""}" />`;
 }
 
 function gagamRowHtml(c) {
