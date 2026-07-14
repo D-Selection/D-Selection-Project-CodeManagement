@@ -261,7 +261,6 @@ function renderSkuTable() {
       <td>본사</td>
       <td>${skuProductChipsHtml(s.code)}</td>
       <td>${s.item}</td>
-      <td>${s.itemCustomer}</td>
     </tr>
   `).join("");
 }
@@ -437,7 +436,6 @@ document.getElementById("skuAddBtn").addEventListener("click", () => {
     <div class="lang-edit-field"><label>스타일코드</label><input type="text" id="skuAddStyleCode" placeholder="예: NN" /></div>
     <div class="lang-edit-field"><label>스타일명</label><input type="text" id="skuAddStyle" placeholder="예: 스타일 미적용 - None" /></div>
     <div class="lang-edit-field"><label>항목명</label><input type="text" id="skuAddItem" placeholder="예: 슬라이딩 도어" /></div>
-    <div class="lang-edit-field"><label>항목명 (고객용)</label><input type="text" id="skuAddItemCustomer" placeholder="비워두면 항목명과 동일하게 저장됩니다" /></div>
     <div class="lang-edit-error" id="skuAddError" hidden></div>
     <div class="lang-edit-actions">
       <button class="toolbar-btn" id="skuAddCancelBtn" type="button">취소</button>
@@ -468,7 +466,7 @@ document.getElementById("skuAddBtn").addEventListener("click", () => {
       styleCode: document.getElementById("skuAddStyleCode").value.trim(),
       style: document.getElementById("skuAddStyle").value.trim(),
       item,
-      itemCustomer: document.getElementById("skuAddItemCustomer").value.trim() || item,
+      itemCustomer: item,
     });
     renderSkuTable();
     dsAddEditLog("1.2 상품구성코드", `상품 ${code} 신규 추가 (항목명: ${item})`);
@@ -1157,9 +1155,21 @@ const flatRows = [
   { seq: 24, code: "SL055", detailCode: "FN-552-01", style: "내추럴 모던 - Natural Modern", space: "침실1 - Bedroom 1", item: "침실1 와이드 붙박이장_NM", itemCustomer: "침실1 와이드 붙박이장_NM", detail: "도어형 붙박이장/내추럴 모던", detailCustomer: "도어형 붙박이장/내추럴 모던", price: 10 },
 ].map((r) => ({
   customer: "일반 - Customer", pyeong: "059A", hq: "본사", option: "기본", plan: "미적용",
-  majorCode: "", majorName: "", midCode: "", midName: "", makerCode: "", makerName: "",
   ...r,
 }));
+
+/* 상품 대분류/중분류/제조사는 더 이상 사람이 직접 입력하지 않고, 각 행의 프로덕트코드를
+   1.1/1.2에서 관리하는 프로덕트 마스터(PRODUCT_MASTER_CATALOG)에서 찾아 그 자리에서
+   조회해 보여준다 — 4.상품고객언어의 "선택 항목 수정"에 있던 별도 입력/검증 필드는
+   제거했다(오타·불일치 자체가 발생할 수 없다). */
+function flatRowProductInfo(detailCode) {
+  const p = PRODUCT_MASTER_CATALOG.find((x) => x.code === detailCode);
+  return {
+    majorName: p ? p.majorName : "",
+    midName: p ? p.midName : "",
+    maker: p && p.maker ? p.maker : "",
+  };
+}
 
 document.getElementById("costTableBody").innerHTML = flatRows.map((r) => `
   <tr>
@@ -1171,12 +1181,13 @@ document.getElementById("costTableBody").innerHTML = flatRows.map((r) => `
     <td>${r.item}</td>
     <td>${r.itemCustomer}</td>
     <td>${r.detail}</td>
-    <td>${r.detailCustomer}</td>
   </tr>
 `).join("");
 
 function renderLangTable() {
-  document.getElementById("langTableBody").innerHTML = flatRows.map((r) => `
+  document.getElementById("langTableBody").innerHTML = flatRows.map((r) => {
+    const info = flatRowProductInfo(r.detailCode);
+    return `
     <tr>
       <td><input type="checkbox" class="lang-row-check stage3-editable-control" data-seq="${r.seq}" /></td>
       <td>${r.seq}</td>
@@ -1187,9 +1198,9 @@ function renderLangTable() {
       <td>${r.option}</td>
       <td>${r.plan}</td>
       <td>${r.space}</td>
-      <td class="${r.majorName ? "" : "muted"}">${r.majorName || "-"}</td>
-      <td class="${r.midName ? "" : "muted"}">${r.midName || "-"}</td>
-      <td class="${r.makerName ? "" : "muted"}">${r.makerName || "-"}</td>
+      <td class="${info.majorName ? "" : "muted"}">${info.majorName || "-"}</td>
+      <td class="${info.midName ? "" : "muted"}">${info.midName || "-"}</td>
+      <td class="${info.maker ? "" : "muted"}">${info.maker || "-"}</td>
       <td>${PRODUCT_OPTION_TIER[r.code] ? `${PRODUCT_OPTION_TIER[r.code]}단계` : "-"}</td>
       <td class="code-cell">${r.code}</td>
       <td>${r.item}</td>
@@ -1198,7 +1209,8 @@ function renderLangTable() {
       <td>${r.detail}</td>
       <td>${r.detailCustomer}</td>
     </tr>
-  `).join("");
+  `;
+  }).join("");
   renderStage3ExtraLock();
 }
 renderLangTable();
@@ -1217,17 +1229,16 @@ function renderPriceTable() {
       <td class="code-cell">${r.code}</td>
       <td>${r.detailCode}</td>
       <td>${r.item}</td>
-      <td>${r.itemCustomer}</td>
-      <td class="${r.majorName ? "" : "muted"}">${r.majorName || "-"}</td>
-      <td class="${r.midName ? "" : "muted"}">${r.midName || "-"}</td>
-      <td class="${r.makerName ? "" : "muted"}">${r.makerName || "-"}</td>
       <td>${r.price === "" ? "" : r.price}</td>
     </tr>
   `).join("");
 }
 renderPriceTable();
 
-/* ===================== STEP 4 개선 : 선택 항목 일괄수정(대분류/중분류/제조사명 검증) + 정렬순서 설정 ===================== */
+/* ===================== STEP 4 개선 : 선택 항목 일괄수정(별매품 단계 · 고객용 언어) ===================== */
+// 상품 대분류/중분류/제조사명은 이제 프로덕트코드로 자동 조회되므로(flatRowProductInfo)
+// 여기서 직접 입력·검증하지 않는다. 고객용 언어(항목명/세부사항) 수정은 이 화면에서만 한다 —
+// 이전 단계(1.1/1.2/2.원가수정/3.판매가수정)에는 고객용 필드를 따로 두지 않는다.
 const langEditModal = document.getElementById("langEditModal");
 const langEditModalBody = document.getElementById("langEditModalBody");
 const langEditBtn = document.getElementById("langEditBtn");
@@ -1241,24 +1252,6 @@ langEditBtn.addEventListener("click", () => {
 
   langEditModalBody.innerHTML = `
     <div class="lang-edit-summary">선택 ${checkedSeqs.length}건에 아래 입력값을 동일하게 적용합니다. 비워두면 해당 항목은 변경하지 않습니다.</div>
-    <div class="lang-edit-field">
-      <label>상품 대분류명</label>
-      <input type="text" id="langEditMajor" placeholder="예: 현관" />
-      <div class="field-hint">분양수금 시스템에 등록된 대분류명과 정확히 일치해야 합니다.</div>
-      <div class="lang-edit-error" id="langEditMajorError" hidden></div>
-    </div>
-    <div class="lang-edit-field">
-      <label>상품 중분류명</label>
-      <input type="text" id="langEditMid" placeholder="예: 블랑클래식" />
-      <div class="field-hint">분양수금 시스템에 등록된 중분류명과 정확히 일치해야 합니다.</div>
-      <div class="lang-edit-error" id="langEditMidError" hidden></div>
-    </div>
-    <div class="lang-edit-field">
-      <label>상품 제조사명</label>
-      <input type="text" id="langEditMaker" placeholder="예: LX하우시스" />
-      <div class="field-hint">분양수금 시스템에 등록된 제조사명과 정확히 일치해야 합니다.</div>
-      <div class="lang-edit-error" id="langEditMakerError" hidden></div>
-    </div>
     <div class="lang-edit-field">
       <label>별매품 단계</label>
       <select id="langEditTier">
@@ -1287,50 +1280,13 @@ langEditBtn.addEventListener("click", () => {
   document.getElementById("langEditCancelBtn").addEventListener("click", () => { langEditModal.hidden = true; });
 
   document.getElementById("langEditSaveBtn").addEventListener("click", () => {
-    ["langEditMajorError", "langEditMidError", "langEditMakerError"].forEach((id) => { document.getElementById(id).hidden = true; });
-
-    const majorInput = document.getElementById("langEditMajor").value.trim();
-    const midInput = document.getElementById("langEditMid").value.trim();
-    const makerInput = document.getElementById("langEditMaker").value.trim();
     const tierInput = document.getElementById("langEditTier").value;
     const itemCustomerInput = document.getElementById("langEditItemCustomer").value.trim();
     const detailCustomerInput = document.getElementById("langEditDetailCustomer").value.trim();
 
-    let hasError = false;
-    let majorMatch = null, midMatch = null, makerMatch = null;
-
-    if (majorInput) {
-      majorMatch = majorCats.find((c) => c.name === majorInput);
-      if (!majorMatch) {
-        document.getElementById("langEditMajorError").hidden = false;
-        document.getElementById("langEditMajorError").textContent = `❌ '${majorInput}'은(는) 분양수금 시스템에 없는 상품 대분류명입니다.`;
-        hasError = true;
-      }
-    }
-    if (midInput) {
-      midMatch = midCats.find((c) => c.name === midInput);
-      if (!midMatch) {
-        document.getElementById("langEditMidError").hidden = false;
-        document.getElementById("langEditMidError").textContent = `❌ '${midInput}'은(는) 분양수금 시스템에 없는 상품 중분류명입니다.`;
-        hasError = true;
-      }
-    }
-    if (makerInput) {
-      makerMatch = makers.find((c) => c.name === makerInput);
-      if (!makerMatch) {
-        document.getElementById("langEditMakerError").hidden = false;
-        document.getElementById("langEditMakerError").textContent = `❌ '${makerInput}'은(는) 분양수금 시스템에 없는 상품 제조사명입니다.`;
-        hasError = true;
-      }
-    }
-    if (hasError) return;
-
     const changed = [];
     flatRows.forEach((r) => {
       if (!checkedSeqs.includes(r.seq)) return;
-      if (majorMatch) { r.majorName = majorMatch.name; r.majorCode = majorMatch.code; }
-      if (midMatch) { r.midName = midMatch.name; r.midCode = midMatch.code; }
-      if (makerMatch) { r.makerName = makerMatch.name; r.makerCode = makerMatch.code; }
       if (tierInput) PRODUCT_OPTION_TIER[r.code] = tierInput;
       if (itemCustomerInput) r.itemCustomer = itemCustomerInput;
       if (detailCustomerInput) r.detailCustomer = detailCustomerInput;

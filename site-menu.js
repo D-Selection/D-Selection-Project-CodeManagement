@@ -146,7 +146,6 @@ function renderSkuTableSite() {
       <td>본사</td>
       <td>${skuProductChipsHtml(s.code)}</td>
       <td>${s.item}</td>
-      <td>${s.itemCustomer}</td>
       <td class="site-overlay-col">
         <div class="site-overlay-cell">
           <input type="text" class="site-overlay-input" data-code="${s.code}" data-kind="sku" value="${siteName.replace(/"/g, "&quot;")}" />
