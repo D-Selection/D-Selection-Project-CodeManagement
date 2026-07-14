@@ -330,6 +330,17 @@ table { border-collapse: collapse; width: 100%; }
 }
 .cmini-table tbody tr:hover { background: #f5f8ff; cursor: pointer; }
 .cmini-table tbody tr.selected { background: var(--c-blue-light); }
+.cmini-table tbody tr.cmid-group-row { cursor: default; }
+.cmini-table tbody tr.cmid-group-row:hover { background: transparent; }
+.cmini-table tbody tr.cmid-group-row td {
+  background: #f3f4f8;
+  color: var(--c-sub);
+  font-weight: 700;
+  font-size: 10.5px;
+  padding: 5px 8px;
+  white-space: nowrap;
+  border-bottom: 1px solid var(--c-border);
+}
 .cdot { width: 8px; height: 8px; border-radius: 50%; background: var(--c-green); display: inline-block; }
 
 /* 소분류 / 큰 테이블 */
@@ -776,6 +787,16 @@ table { border-collapse: collapse; width: 100%; }
 
 .cqa-mid-list { max-height: 220px; overflow-y: auto; border: 1px solid var(--c-border); border-radius: 8px; }
 .cqa-mid-list-hint { padding: 16px 12px; text-align: center; color: var(--c-sub); font-size: 12px; }
+.cqa-mid-group-header {
+  position: sticky;
+  top: 0;
+  background: #f3f4f8;
+  color: var(--c-sub);
+  font-weight: 700;
+  font-size: 10.5px;
+  padding: 5px 12px;
+  border-bottom: 1px solid var(--c-border);
+}
 .cqa-mid-row {
   display: flex;
   align-items: center;

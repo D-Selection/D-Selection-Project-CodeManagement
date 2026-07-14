@@ -21,6 +21,7 @@ function renderRows(list) {
       <td>${p.no}</td>
       <td class="code-cell">${p.majorCode}</td>
       <td>${p.majorName}</td>
+      <td>${p.groupName || "-"}</td>
       <td>${p.midCode}</td>
       <td>${p.midName}</td>
       <td class="code-cell">${p.code}</td>
@@ -48,7 +49,7 @@ searchInput.addEventListener("input", () => {
   const q = searchInput.value.trim().toLowerCase();
   if (!q) { renderRows(products); return; }
   const filtered = products.filter((p) =>
-    [p.code, p.name, p.majorName, p.midName].join(" ").toLowerCase().includes(q)
+    [p.code, p.name, p.majorName, p.groupName, p.midName].join(" ").toLowerCase().includes(q)
   );
   renderRows(filtered);
 });

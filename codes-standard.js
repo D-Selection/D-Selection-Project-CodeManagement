@@ -67,8 +67,19 @@ function renderMajorBody() {
 function renderMidBody() {
   const mids = currentMids().filter((m) => !selectedMajorCode || m.majorCode === selectedMajorCode);
   document.getElementById("midCount").textContent = mids.length;
-  document.getElementById("midBody").innerHTML = mids.map((m) => `
-    <tr><td>${m.majorCode}</td><td>${m.code}</td><td>${m.name}</td></tr>
+  if (categoryScheme !== "new") {
+    // 구버전 체계에는 그룹명 데이터가 없어 기존처럼 평평하게 보여준다.
+    document.getElementById("midBody").innerHTML = mids.map((m) => `
+      <tr><td>${m.majorCode}</td><td>${m.code}</td><td>${m.name}</td></tr>
+    `).join("");
+    return;
+  }
+  // 신규 체계: 대분류 안에서 그룹명으로 한 번 더 묶어서 보여준다(대분류 → 그룹명 → 중분류 → 소분류).
+  document.getElementById("midBody").innerHTML = dsGroupMidsByGroupName(mids).map((g) => `
+    <tr class="cmid-group-row"><td colspan="3">${g.groupName || "(그룹명 없음)"}</td></tr>
+    ${g.mids.map((m) => `
+      <tr><td>${m.majorCode}</td><td>${m.code}</td><td>${m.name}</td></tr>
+    `).join("")}
   `).join("");
 }
 
@@ -123,7 +134,7 @@ function renderSubAggBody(list) {
   document.getElementById("subAggCount").textContent = list.length;
   document.getElementById("subAggBody").innerHTML = list.map((r) => `
     <tr>
-      <td>${r.majorCode}</td><td>${r.majorName}</td><td>${r.midCode}</td><td>${r.midName}</td>
+      <td>${r.majorCode}</td><td>${r.majorName}</td><td>${r.groupName || "-"}</td><td>${r.midCode}</td><td>${r.midName}</td>
       <td class="ccode-cell">${r.code}</td><td>${r.name}</td><td>${r.siteUsage}개 현장</td>
     </tr>
   `).join("");
@@ -142,7 +153,7 @@ document.querySelector("#subAggTable .sortable").addEventListener("click", () =>
 function cqaApplySubAggFilter() {
   const q = document.getElementById("subAggSearch").value.trim().toLowerCase();
   const filtered = !q ? subCategoryAggregate : subCategoryAggregate.filter((r) =>
-    [r.code, r.name, r.majorName, r.midName].join(" ").toLowerCase().includes(q)
+    [r.code, r.name, r.majorName, r.groupName, r.midName].join(" ").toLowerCase().includes(q)
   );
   renderSubAggBody(filtered);
 }
@@ -225,12 +236,15 @@ function cqaRenderMidList() {
   }
   const mids = DS_PRODUCT_MIDS_NEW.filter((m) => m.majorCode === cqaSelectedMajor.code);
   cqaMidCount.textContent = mids.length;
-  cqaMidList.innerHTML = mids.map((m) => `
-    <button type="button" class="cqa-mid-row ${cqaSelectedMid && cqaSelectedMid.code === m.code ? "selected" : ""}" data-code="${m.code}">
-      <span class="cqa-mid-row-code">${m.code}</span>
-      <span class="cqa-mid-row-name">${m.name}</span>
-      <span class="cqa-mid-row-count">${cqaExistingCountFor(m.majorCode, m.code)}건</span>
-    </button>
+  cqaMidList.innerHTML = dsGroupMidsByGroupName(mids).map((g) => `
+    <div class="cqa-mid-group-header">${g.groupName || "(그룹명 없음)"}</div>
+    ${g.mids.map((m) => `
+      <button type="button" class="cqa-mid-row ${cqaSelectedMid && cqaSelectedMid.code === m.code ? "selected" : ""}" data-code="${m.code}">
+        <span class="cqa-mid-row-code">${m.code}</span>
+        <span class="cqa-mid-row-name">${m.name}</span>
+        <span class="cqa-mid-row-count">${cqaExistingCountFor(m.majorCode, m.code)}건</span>
+      </button>
+    `).join("")}
   `).join("");
 }
 
@@ -264,7 +278,8 @@ function cqaRefreshSelectedInfo() {
   }
   cqaSelectedRow.hidden = false;
   cqaAddControls.hidden = false;
-  cqaSelectedLabel.textContent = `${cqaSelectedMajor.code} ${cqaSelectedMajor.name} > ${cqaSelectedMid.code} ${cqaSelectedMid.name}`;
+  const groupPart = cqaSelectedMid.groupName ? ` > ${cqaSelectedMid.groupName}` : "";
+  cqaSelectedLabel.textContent = `${cqaSelectedMajor.code} ${cqaSelectedMajor.name}${groupPart} > ${cqaSelectedMid.code} ${cqaSelectedMid.name}`;
   cqaNextCode.textContent = `${cqaSelectedMajor.code}-${cqaSelectedMid.code}-${cqaNextSeq(cqaSelectedMajor.code, cqaSelectedMid.code)}`;
   const activeTab = document.querySelector(".cqa-mode-tab.active");
   cqaSingleMode.hidden = !activeTab || activeTab.dataset.mode !== "single";
@@ -322,7 +337,7 @@ function cqaRenderPendingList() {
     : cqaPendingItems.map((r, i) => `
       <div class="cqa-pending-item">
         <span class="ccode-cell">${r.code}</span>
-        <span class="cqa-pending-cat">${r.majorName} &gt; ${r.midName}</span>
+        <span class="cqa-pending-cat">${r.majorName}${r.groupName ? " > " + r.groupName : ""} &gt; ${r.midName}</span>
         <span class="cqa-pending-name">${r.name}</span>
         <button type="button" class="cqa-pending-remove-btn" data-index="${i}" title="대기 목록에서 제거">✕</button>
       </div>
@@ -336,6 +351,7 @@ function cqaAddToPending(name) {
   const code = `${cqaSelectedMajor.code}-${cqaSelectedMid.code}-${seq}`;
   const row = {
     majorCode: cqaSelectedMajor.code, majorName: cqaSelectedMajor.name,
+    groupName: cqaSelectedMid.groupName || "",
     midCode: cqaSelectedMid.code, midName: cqaSelectedMid.name,
     code, name: trimmed,
   };

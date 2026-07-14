@@ -304,6 +304,25 @@ const DS_PRODUCT_MIDS_NEW = [
   { majorCode: "HA", code: "432", name: "하이브리드 쿡탑 인덕션/삼성 인덕션 3구", groupName: "하이브리드 쿡탑 인덕션" },
 ];
 
+/* 대분류 안에서 중분류를 한 번 더 묶는 "그룹명" 단위(대분류 → 그룹명 → 중분류 → 소분류).
+   그룹명은 원본 코드북 파일의 컬럼을 그대로 살린 참고용 분류라 별도 마스터 배열로
+   관리하지 않고, DS_PRODUCT_MIDS_NEW에 붙은 groupName을 그때그때 묶어서 쓴다. 같은
+   그룹명이 파일 안에서 떨어져 나타나도(연속되지 않아도) 하나의 그룹으로 합친다. */
+function dsGroupMidsByGroupName(mids) {
+  const groups = [];
+  const byName = new Map();
+  mids.forEach((m) => {
+    const key = m.groupName || "";
+    if (!byName.has(key)) {
+      const g = { groupName: key, mids: [] };
+      byName.set(key, g);
+      groups.push(g);
+    }
+    byName.get(key).mids.push(m);
+  });
+  return groups;
+}
+
 // 구버전 체계(개편 이전) — 기존 현장은 계속 이 체계로 조회한다.
 const DS_PRODUCT_MAJORS_LEGACY = [
   { code: "AC", name: "악세서리" },

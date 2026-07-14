@@ -88,6 +88,7 @@ function renderRows(list) {
       <td>${p.no}</td>
       <td class="code-cell">${p.majorCode}</td>
       <td>${p.majorName}</td>
+      <td>${p.groupName || "-"}</td>
       <td>${p.midCode}</td>
       <td>${p.midName}</td>
       <td class="code-cell">${p.code}</td>
