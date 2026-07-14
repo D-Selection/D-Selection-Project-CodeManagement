@@ -1155,39 +1155,28 @@ const flatRows = [
   { seq: 24, code: "SL055", detailCode: "FN-552-01", style: "내추럴 모던 - Natural Modern", space: "침실1 - Bedroom 1", item: "침실1 와이드 붙박이장_NM", itemCustomer: "침실1 와이드 붙박이장_NM", detail: "도어형 붙박이장/내추럴 모던", detailCustomer: "도어형 붙박이장/내추럴 모던", price: 10 },
 ].map((r) => ({
   customer: "일반 - Customer", pyeong: "059A", hq: "본사", option: "기본", plan: "미적용",
+  majorName: "", midName: "", maker: "",
   ...r,
 }));
 
-/* 상품 대분류/중분류/제조사는 더 이상 사람이 직접 입력하지 않고, 각 행의 프로덕트코드를
-   1.1/1.2에서 관리하는 프로덕트 마스터(PRODUCT_MASTER_CATALOG)에서 찾아 그 자리에서
-   조회해 보여준다 — 4.상품고객언어의 "선택 항목 수정"에 있던 별도 입력/검증 필드는
-   제거했다(오타·불일치 자체가 발생할 수 없다). */
-function flatRowProductInfo(detailCode) {
-  const p = PRODUCT_MASTER_CATALOG.find((x) => x.code === detailCode);
-  return {
-    majorName: p ? p.majorName : "",
-    midName: p ? p.midName : "",
-    maker: p && p.maker ? p.maker : "",
-  };
+function renderCostTable() {
+  document.getElementById("costTableBody").innerHTML = flatRows.map((r) => `
+    <tr>
+      <td>${r.seq}</td>
+      <td>${r.customer} ${r.pyeong} ${r.option} 미적용</td>
+      <td class="muted">-</td>
+      <td class="code-cell">${r.code}</td>
+      <td>${r.detailCode}</td>
+      <td>${r.item}</td>
+      <td>${r.itemCustomer}</td>
+      <td>${r.detail}</td>
+    </tr>
+  `).join("");
 }
-
-document.getElementById("costTableBody").innerHTML = flatRows.map((r) => `
-  <tr>
-    <td>${r.seq}</td>
-    <td>${r.customer} ${r.pyeong} ${r.option} 미적용</td>
-    <td class="muted">-</td>
-    <td class="code-cell">${r.code}</td>
-    <td>${r.detailCode}</td>
-    <td>${r.item}</td>
-    <td>${r.itemCustomer}</td>
-    <td>${r.detail}</td>
-  </tr>
-`).join("");
+renderCostTable();
 
 function renderLangTable() {
-  document.getElementById("langTableBody").innerHTML = flatRows.map((r) => {
-    const info = flatRowProductInfo(r.detailCode);
-    return `
+  document.getElementById("langTableBody").innerHTML = flatRows.map((r) => `
     <tr>
       <td><input type="checkbox" class="lang-row-check stage3-editable-control" data-seq="${r.seq}" /></td>
       <td>${r.seq}</td>
@@ -1198,9 +1187,9 @@ function renderLangTable() {
       <td>${r.option}</td>
       <td>${r.plan}</td>
       <td>${r.space}</td>
-      <td class="${info.majorName ? "" : "muted"}">${info.majorName || "-"}</td>
-      <td class="${info.midName ? "" : "muted"}">${info.midName || "-"}</td>
-      <td class="${info.maker ? "" : "muted"}">${info.maker || "-"}</td>
+      <td class="${r.majorName ? "" : "muted"}">${r.majorName || "-"}</td>
+      <td class="${r.midName ? "" : "muted"}">${r.midName || "-"}</td>
+      <td class="${r.maker ? "" : "muted"}">${r.maker || "-"}</td>
       <td>${PRODUCT_OPTION_TIER[r.code] ? `${PRODUCT_OPTION_TIER[r.code]}단계` : "-"}</td>
       <td class="code-cell">${r.code}</td>
       <td>${r.item}</td>
@@ -1209,8 +1198,7 @@ function renderLangTable() {
       <td>${r.detail}</td>
       <td>${r.detailCustomer}</td>
     </tr>
-  `;
-  }).join("");
+  `).join("");
   renderStage3ExtraLock();
 }
 renderLangTable();
@@ -1236,9 +1224,9 @@ function renderPriceTable() {
 renderPriceTable();
 
 /* ===================== STEP 4 개선 : 선택 항목 일괄수정(별매품 단계 · 고객용 언어) ===================== */
-// 상품 대분류/중분류/제조사명은 이제 프로덕트코드로 자동 조회되므로(flatRowProductInfo)
-// 여기서 직접 입력·검증하지 않는다. 고객용 언어(항목명/세부사항) 수정은 이 화면에서만 한다 —
-// 이전 단계(1.1/1.2/2.원가수정/3.판매가수정)에는 고객용 필드를 따로 두지 않는다.
+// 대분류/중분류/제조사 매핑과 항목명(고객용)/세부사항(고객용) "대량 입력"은 바로 아래
+// 3개의 별도 버튼(1.2/1.1 리스트를 띄워 매핑 후 "적용")으로 처리한다. 이 모달은 이미
+// 화면에 나열된 행 중 선택한 몇 건만 빠르게 고쳐야 할 때 쓰는 보조 수단이다.
 const langEditModal = document.getElementById("langEditModal");
 const langEditModalBody = document.getElementById("langEditModalBody");
 const langEditBtn = document.getElementById("langEditBtn");
@@ -1301,6 +1289,206 @@ langEditBtn.addEventListener("click", () => {
     showToast(`${changed.length}건이 수정되었습니다.`);
   });
 });
+
+/* =====================================================================
+   4.상품고객언어 : 대량 입력 도구 3종 (버튼 → 1.1/1.2 리스트 표시 → 입력/엑셀 업로드
+   → "적용"으로 현재까지 생성된 평형별 상품 정보(flatRows)에 일괄 반영)
+   ===================================================================== */
+
+/* ---- 도구 1 : 대분류/중분류/제조사 상품 맵핑 (1.2 상품구성코드 리스트 기준) ---- */
+const majorMidMakerMapModal = document.getElementById("majorMidMakerMapModal");
+const majorMidMakerMapModalBody = document.getElementById("majorMidMakerMapModalBody");
+
+function firstFlatRowFor(code) {
+  return flatRows.find((r) => r.code === code);
+}
+
+document.getElementById("majorMidMakerMapBtn").addEventListener("click", () => {
+  majorMidMakerMapModalBody.innerHTML = `
+    <div class="lang-edit-summary">1.2 상품구성코드 리스트입니다. 상품별로 대분류/중분류/제조사명을 입력하고 "적용"을 누르면 같은 상품코드를 쓰는 모든 평형별 상품 정보에 반영됩니다. 비워두면 해당 상품은 변경하지 않습니다.</div>
+    <div class="bulk-map-toolbar">
+      <button type="button" class="toolbar-btn">⭣ 엑셀 양식 다운로드</button>
+      <button type="button" class="toolbar-btn">⭱ 엑셀 업로드</button>
+    </div>
+    <div class="bulk-map-table-wrap">
+      <table class="bulk-map-table">
+        <thead><tr><th>상품 코드</th><th>항목명</th><th>대분류명</th><th>중분류명</th><th>제조사명</th></tr></thead>
+        <tbody>
+          ${skuData.map((s) => {
+            const existing = firstFlatRowFor(s.code) || {};
+            return `
+            <tr data-code="${s.code}">
+              <td class="code-cell">${s.code}</td>
+              <td>${s.item}</td>
+              <td><input type="text" class="bulk-map-input" data-field="majorName" value="${(existing.majorName || "").replace(/"/g, "&quot;")}" /></td>
+              <td><input type="text" class="bulk-map-input" data-field="midName" value="${(existing.midName || "").replace(/"/g, "&quot;")}" /></td>
+              <td><input type="text" class="bulk-map-input" data-field="maker" value="${(existing.maker || "").replace(/"/g, "&quot;")}" /></td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>
+    <div class="lang-edit-actions">
+      <button class="toolbar-btn" id="majorMidMakerMapCancelBtn" type="button">취소</button>
+      <button class="primary-btn" id="majorMidMakerMapApplyBtn" type="button">적용</button>
+    </div>
+  `;
+  majorMidMakerMapModal.hidden = false;
+
+  document.getElementById("majorMidMakerMapCancelBtn").addEventListener("click", () => { majorMidMakerMapModal.hidden = true; });
+  document.getElementById("majorMidMakerMapApplyBtn").addEventListener("click", () => {
+    let changedSkus = 0;
+    majorMidMakerMapModalBody.querySelectorAll("tr[data-code]").forEach((tr) => {
+      const code = tr.dataset.code;
+      const majorName = tr.querySelector('[data-field="majorName"]').value.trim();
+      const midName = tr.querySelector('[data-field="midName"]').value.trim();
+      const maker = tr.querySelector('[data-field="maker"]').value.trim();
+      if (!majorName && !midName && !maker) return;
+      let touched = false;
+      flatRows.filter((r) => r.code === code).forEach((r) => {
+        if (majorName) r.majorName = majorName;
+        if (midName) r.midName = midName;
+        if (maker) r.maker = maker;
+        touched = true;
+      });
+      if (touched) changedSkus++;
+    });
+    dsAddEditLog("4. 상품고객언어", `대분류/중분류/제조사 상품 맵핑 적용: ${changedSkus}개 상품코드`);
+    renderLangTable();
+    majorMidMakerMapModal.hidden = true;
+    showToast(`${changedSkus}개 상품의 대분류/중분류/제조사가 반영되었습니다.`);
+  });
+});
+document.getElementById("majorMidMakerMapModalClose").addEventListener("click", () => { majorMidMakerMapModal.hidden = true; });
+
+/* ---- 도구 2 : 항목명(고객용) 입력 (1.2 상품구성코드 리스트 기준) ---- */
+const itemCustomerBulkModal = document.getElementById("itemCustomerBulkModal");
+const itemCustomerBulkModalBody = document.getElementById("itemCustomerBulkModalBody");
+
+document.getElementById("itemCustomerBulkBtn").addEventListener("click", () => {
+  itemCustomerBulkModalBody.innerHTML = `
+    <div class="lang-edit-summary">1.2 상품구성코드 리스트입니다. 항목명(고객용)을 입력하고 "적용"을 누르면 현재까지 생성된 평형별 상품 정보에 자동 반영됩니다. 비워두면 해당 상품은 변경하지 않습니다.</div>
+    <div class="bulk-map-toolbar">
+      <button type="button" class="toolbar-btn">⭣ 엑셀 양식 다운로드</button>
+      <button type="button" class="toolbar-btn">⭱ 엑셀 업로드</button>
+    </div>
+    <div class="bulk-map-table-wrap">
+      <table class="bulk-map-table">
+        <thead><tr><th>상품 코드</th><th>항목명</th><th>항목명(고객용)</th></tr></thead>
+        <tbody>
+          ${skuData.map((s) => `
+            <tr data-code="${s.code}">
+              <td class="code-cell">${s.code}</td>
+              <td>${s.item}</td>
+              <td><input type="text" class="bulk-map-input" data-field="itemCustomer" value="${(s.itemCustomer || "").replace(/"/g, "&quot;")}" /></td>
+            </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>
+    <div class="lang-edit-actions">
+      <button class="toolbar-btn" id="itemCustomerBulkCancelBtn" type="button">취소</button>
+      <button class="primary-btn" id="itemCustomerBulkApplyBtn" type="button">적용</button>
+    </div>
+  `;
+  itemCustomerBulkModal.hidden = false;
+
+  document.getElementById("itemCustomerBulkCancelBtn").addEventListener("click", () => { itemCustomerBulkModal.hidden = true; });
+  document.getElementById("itemCustomerBulkApplyBtn").addEventListener("click", () => {
+    let changedSkus = 0;
+    itemCustomerBulkModalBody.querySelectorAll("tr[data-code]").forEach((tr) => {
+      const code = tr.dataset.code;
+      const value = tr.querySelector('[data-field="itemCustomer"]').value.trim();
+      if (!value) return;
+      const s = skuData.find((x) => x.code === code);
+      if (s) s.itemCustomer = value;
+      flatRows.filter((r) => r.code === code).forEach((r) => { r.itemCustomer = value; });
+      changedSkus++;
+    });
+    dsAddEditLog("4. 상품고객언어", `항목명(고객용) 일괄 입력 적용: ${changedSkus}개 상품코드`);
+    renderSkuTable();
+    renderLangTable();
+    renderCostTable();
+    itemCustomerBulkModal.hidden = true;
+    showToast(`${changedSkus}개 상품의 항목명(고객용)이 반영되었습니다.`);
+  });
+});
+document.getElementById("itemCustomerBulkModalClose").addEventListener("click", () => { itemCustomerBulkModal.hidden = true; });
+
+/* ---- 도구 3 : 세부사항(고객용) 입력 (1.1 프로덕트 리스트 기준) ----
+   세부사항은 1.1에서 설정된 "상품명"들을 +로 이어붙인 것이므로, 세부사항(고객용)의
+   원천 데이터도 1.1의 소분류(PK)마다 "상품명(고객용)"을 입력해두는 것이다. 적용하면
+   각 상품(SKU)에 매핑된 프로덕트들의 상품명(고객용)을 +로 이어붙여 세부사항(고객용)에
+   반영한다(매핑된 프로덕트가 없는 상품은 건드리지 않는다). */
+const detailCustomerBulkModal = document.getElementById("detailCustomerBulkModal");
+const detailCustomerBulkModalBody = document.getElementById("detailCustomerBulkModalBody");
+
+function renderDetailCustomerBulkList(query) {
+  const q = (query || "").trim().toLowerCase();
+  const listEl = document.getElementById("detailCustomerBulkList");
+  const matches = PRODUCT_MASTER_CATALOG
+    .filter((p) => !q || [p.code, p.name, p.majorName, p.midName].join(" ").toLowerCase().includes(q))
+    .slice(0, 60);
+  listEl.innerHTML = `
+    <table class="bulk-map-table">
+      <thead><tr><th>소분류코드(PK)</th><th>상품명</th><th>상품명(고객용)</th></tr></thead>
+      <tbody>
+        ${matches.map((p) => `
+          <tr data-code="${p.code}">
+            <td class="code-cell">${p.code}</td>
+            <td>${p.name}</td>
+            <td><input type="text" class="bulk-map-input" data-field="customerName" value="${(p.customerName || "").replace(/"/g, "&quot;")}" /></td>
+          </tr>`).join("")}
+      </tbody>
+    </table>
+    ${PRODUCT_MASTER_CATALOG.length > matches.length && !q ? `<div class="bulk-map-hint">전체 ${PRODUCT_MASTER_CATALOG.length}건 중 최근 60건만 표시됩니다. 검색해서 찾아보세요.</div>` : ""}
+  `;
+}
+
+document.getElementById("detailCustomerBulkBtn").addEventListener("click", () => {
+  detailCustomerBulkModalBody.innerHTML = `
+    <div class="lang-edit-summary">1.1 프로덕트(소분류) 리스트입니다. 상품명(고객용)을 입력하고 "적용"을 누르면, 각 상품(SKU)에 매핑된 프로덕트들의 상품명(고객용)을 +로 이어붙여 세부사항(고객용)에 자동 반영됩니다. 비워두면 해당 프로덕트는 변경하지 않습니다.</div>
+    <div class="bulk-map-toolbar">
+      <button type="button" class="toolbar-btn">⭣ 엑셀 양식 다운로드</button>
+      <button type="button" class="toolbar-btn">⭱ 엑셀 업로드</button>
+      <input type="text" id="detailCustomerBulkSearch" class="sku-product-search-input" placeholder="소분류코드(PK), 상품명, 대분류/중분류명으로 검색" autocomplete="off" />
+    </div>
+    <div class="bulk-map-table-wrap" id="detailCustomerBulkList"></div>
+    <div class="lang-edit-actions">
+      <button class="toolbar-btn" id="detailCustomerBulkCancelBtn" type="button">취소</button>
+      <button class="primary-btn" id="detailCustomerBulkApplyBtn" type="button">적용</button>
+    </div>
+  `;
+  renderDetailCustomerBulkList("");
+  document.getElementById("detailCustomerBulkSearch").addEventListener("input", (e) => renderDetailCustomerBulkList(e.target.value));
+  detailCustomerBulkModal.hidden = false;
+
+  document.getElementById("detailCustomerBulkCancelBtn").addEventListener("click", () => { detailCustomerBulkModal.hidden = true; });
+  document.getElementById("detailCustomerBulkApplyBtn").addEventListener("click", () => {
+    let changedProducts = 0;
+    detailCustomerBulkModalBody.querySelectorAll("tr[data-code]").forEach((tr) => {
+      const code = tr.dataset.code;
+      const value = tr.querySelector('[data-field="customerName"]').value.trim();
+      if (!value) return;
+      const p = PRODUCT_MASTER_CATALOG.find((x) => x.code === code);
+      if (p) { p.customerName = value; changedProducts++; }
+    });
+
+    let changedRows = 0;
+    flatRows.forEach((r) => {
+      const mapped = skuMappedProducts(r.code);
+      if (mapped.length === 0) return;
+      const joined = mapped.map((p) => p.customerName || p.name).filter(Boolean).join("+");
+      if (joined) { r.detailCustomer = joined; changedRows++; }
+    });
+
+    dsAddEditLog("4. 상품고객언어", `세부사항(고객용) 입력 적용: 프로덕트 ${changedProducts}건, 평형별 상품 정보 ${changedRows}건 반영`);
+    renderLangTable();
+    renderCostTable();
+    detailCustomerBulkModal.hidden = true;
+    showToast(`프로덕트 ${changedProducts}건 저장, 세부사항(고객용) ${changedRows}건에 반영되었습니다.`);
+  });
+});
+document.getElementById("detailCustomerBulkModalClose").addEventListener("click", () => { detailCustomerBulkModal.hidden = true; });
 
 // 대분류/중분류/제조사 조회·편집 : 1.5(대분류/중분류/제조사)에 있는 마스터 데이터를
 // 4.상품고객언어 상단에서도 바로 조회·추가·수정·삭제·정렬할 수 있게 한다.

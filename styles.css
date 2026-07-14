@@ -1416,6 +1416,34 @@ table.pivot-table thead th.pivot-product-col { background: var(--navy); z-index:
 }
 .lang-edit-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
 
+/* 4.상품고객언어 대량 입력 도구 3종 (대분류/중분류/제조사 맵핑, 항목명(고객용), 세부사항(고객용)) */
+#majorMidMakerMapModal .send-modal, #itemCustomerBulkModal .send-modal, #detailCustomerBulkModal .send-modal { width: 820px; }
+.bulk-map-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+.bulk-map-toolbar .sku-product-search-input { flex: 1; margin-left: 8px; }
+.bulk-map-table-wrap { max-height: 420px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 14px; }
+.bulk-map-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.bulk-map-table thead th {
+  position: sticky;
+  top: 0;
+  background: #eef0f4;
+  padding: 8px 10px;
+  font-size: 11px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+}
+.bulk-map-table tbody td { padding: 6px 10px; border-bottom: 1px solid #f0f1f4; }
+.bulk-map-table tbody tr:last-child td { border-bottom: none; }
+.bulk-map-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 6px 8px;
+  font-size: 12px;
+}
+.bulk-map-input:focus { border-color: var(--blue); outline: none; }
+.bulk-map-hint { padding: 10px 4px; text-align: center; color: var(--text-sub); font-size: 11.5px; }
+
 .sort-order-columns { display: flex; gap: 14px; }
 .sort-order-col { flex: 1; min-width: 0; }
 .sort-order-col-title { font-weight: 700; font-size: 12.5px; margin-bottom: 8px; }
