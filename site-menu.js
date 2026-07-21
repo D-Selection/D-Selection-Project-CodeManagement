@@ -327,34 +327,32 @@ function renderGagamCategoryMembers(codes) {
     }).join("");
 }
 
+function gagamAutoCategoryName(codes) {
+  const names = codes.map((code) => {
+    const p = DS_PRODUCT_MASTER_CATALOG.find((x) => x.code === code);
+    return p ? p.name : code;
+  });
+  return names.length <= 2 ? names.join(" · ") : `${names[0]} 외 ${names.length - 1}개`;
+}
+
 function openGagamCategoryModal(editing) {
   gagamCategoryEditingId = editing ? editing.id : null;
   let workingCodes = editing ? [...editing.codes] : [];
-  gagamCategoryModalHeader.innerHTML = `${editing ? "✎ 카테고리 수정" : "➕ 카테고리 추가"} <button class="cmodal-close" id="gagamCategoryModalClose" type="button">✕</button>`;
+  gagamCategoryModalHeader.innerHTML = `${editing ? "✎ 간섭 프로덕트 수정" : "➕ 간섭 프로덕트 선택"} <button class="cmodal-close" id="gagamCategoryModalClose" type="button">✕</button>`;
   gagamCategoryModalBody.innerHTML = `
     <div class="lang-edit-field">
-      <label>공간</label>
-      <select id="gagamCategorySpace">
-        ${gagamSpaces.map((sp) => `<option value="${sp}" ${sp === (editing ? editing.space : gagamSelectedSpace) ? "selected" : ""}>${sp}</option>`).join("")}
-      </select>
-    </div>
-    <div class="lang-edit-field">
-      <label>카테고리 이름</label>
-      <input type="text" id="gagamCategoryName" placeholder="예: 현관중문 도어 방식" value="${editing ? editing.name : ""}" />
-    </div>
-    <div class="lang-edit-field">
-      <label>포함된 프로덕트 (저장하면 서로 상호 제외됩니다)</label>
+      <label>「${gagamSelectedSpace}」 안에서 서로 대체 관계라 동시에 선택될 수 없는 프로덕트를 골라주세요 (2개 이상). 완료하면 카테고리가 자동으로 만들어집니다.</label>
       <div class="gagam-category-members" id="gagamCategoryMembers"></div>
     </div>
     <div class="lang-edit-field">
-      <label>프로덕트 검색해서 추가</label>
+      <label>프로덕트 코드/상품명으로 검색</label>
       <input type="text" id="gagamCategorySearchInput" class="sku-product-search-input" placeholder="코드 또는 상품명으로 검색" autocomplete="off" />
       <div class="sku-product-results" id="gagamCategoryProductResults"></div>
     </div>
     <div class="lang-edit-error" id="gagamCategoryError" hidden></div>
     <div class="lang-edit-actions">
       <button class="toolbar-btn" id="gagamCategoryCancelBtn" type="button">취소</button>
-      <button class="primary-btn" id="gagamCategorySaveBtn" type="button">저장</button>
+      <button class="primary-btn" id="gagamCategorySaveBtn" type="button">완료</button>
     </div>
   `;
   renderGagamCategoryMembers(workingCodes);
@@ -365,16 +363,16 @@ function openGagamCategoryModal(editing) {
     const resultsEl = document.getElementById("gagamCategoryProductResults");
     if (!q) { resultsEl.innerHTML = `<div class="sku-product-results-hint">코드 또는 상품명으로 검색해보세요.</div>`; return; }
     const matches = DS_PRODUCT_MASTER_CATALOG
-      .filter((p) => !workingCodes.includes(p.code))
       .filter((p) => [p.code, p.name, p.majorName, p.midName].join(" ").toLowerCase().includes(q))
       .slice(0, 30);
     resultsEl.innerHTML = matches.length === 0
       ? `<div class="sku-product-results-hint">일치하는 프로덕트가 없습니다.</div>`
       : matches.map((p) => `
-        <button type="button" class="sku-product-result" data-add-code="${p.code}">
+        <button type="button" class="sku-product-result ${workingCodes.includes(p.code) ? "selected" : ""}" data-toggle-code="${p.code}">
           <span class="code-cell">${p.code}</span>
           <span class="sku-product-result-name">${p.name}</span>
           <span class="sku-product-result-cat">${p.majorName} · ${p.midName}</span>
+          ${workingCodes.includes(p.code) ? `<span class="sku-product-result-check">✓ 선택됨</span>` : ""}
         </button>
       `).join("");
   }
@@ -383,9 +381,11 @@ function openGagamCategoryModal(editing) {
   document.getElementById("gagamCategoryCancelBtn").addEventListener("click", () => { gagamCategoryModal.hidden = true; });
   document.getElementById("gagamCategorySearchInput").addEventListener("input", (e) => renderGagamCategorySearchResults(e.target.value));
   document.getElementById("gagamCategoryProductResults").addEventListener("click", (e) => {
-    const btn = e.target.closest("[data-add-code]");
+    const btn = e.target.closest("[data-toggle-code]");
     if (!btn) return;
-    workingCodes.push(btn.dataset.addCode);
+    const code = btn.dataset.toggleCode;
+    if (workingCodes.includes(code)) workingCodes = workingCodes.filter((c) => c !== code);
+    else workingCodes.push(code);
     renderGagamCategoryMembers(workingCodes);
     renderGagamCategorySearchResults(document.getElementById("gagamCategorySearchInput").value);
   });
@@ -400,10 +400,9 @@ function openGagamCategoryModal(editing) {
   document.getElementById("gagamCategorySaveBtn").addEventListener("click", () => {
     const errorEl = document.getElementById("gagamCategoryError");
     errorEl.hidden = true;
-    const space = document.getElementById("gagamCategorySpace").value;
-    const name = document.getElementById("gagamCategoryName").value.trim();
-    if (!name) { errorEl.hidden = false; errorEl.textContent = "❌ 카테고리 이름을 입력해주세요."; return; }
-    if (workingCodes.length < 2) { errorEl.hidden = false; errorEl.textContent = "❌ 서로 배타적인 프로덕트를 2개 이상 추가해주세요."; return; }
+    if (workingCodes.length < 2) { errorEl.hidden = false; errorEl.textContent = "❌ 서로 배타적인 프로덕트를 2개 이상 선택해주세요."; return; }
+    const space = gagamSelectedSpace;
+    const name = gagamAutoCategoryName(workingCodes);
 
     let category;
     if (gagamCategoryEditingId) {
@@ -417,9 +416,8 @@ function openGagamCategoryModal(editing) {
     }
     gagamRegenerateCategoryConditions(category);
     gagamCategoryModal.hidden = true;
-    gagamSelectedSpace = space;
     renderGagamAll();
-    showToast(`카테고리가 저장되었고, 상호 제외 규칙 ${workingCodes.length * (workingCodes.length - 1)}건이 자동 생성되었습니다.`);
+    showToast(`선택한 프로덕트 ${workingCodes.length}개가 카테고리로 묶였고, 상호 제외 규칙 ${workingCodes.length * (workingCodes.length - 1)}건이 자동 생성되었습니다.`);
   });
 }
 

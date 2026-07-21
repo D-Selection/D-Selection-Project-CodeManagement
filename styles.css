@@ -1391,8 +1391,11 @@ table.pivot-table thead th.pivot-product-col { background: var(--navy); z-index:
 }
 .sku-product-result:last-child { border-bottom: none; }
 .sku-product-result:hover { background: #f5f8ff; }
+.sku-product-result.selected { background: var(--blue-light); }
+.sku-product-result.selected:hover { background: var(--blue-light); }
 .sku-product-result-name { flex: 1; color: var(--text-main); }
 .sku-product-result-cat { color: var(--text-sub); font-size: 11px; white-space: nowrap; }
+.sku-product-result-check { color: var(--blue); font-size: 11px; font-weight: 700; white-space: nowrap; }
 .sku-product-results-hint { padding: 20px 14px; text-align: center; color: var(--text-sub); font-size: 12px; }
 .lang-edit-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
 .lang-edit-field label { font-size: 12px; font-weight: 700; color: var(--text-main); }
