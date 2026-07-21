@@ -1365,16 +1365,25 @@ document.getElementById("majorMidMakerMapModalClose").addEventListener("click", 
 const itemCustomerBulkModal = document.getElementById("itemCustomerBulkModal");
 const itemCustomerBulkModalBody = document.getElementById("itemCustomerBulkModalBody");
 
+function bulkTierOptionsHtml(selected) {
+  return `
+    <option value="" ${!selected ? "selected" : ""}>-</option>
+    <option value="1" ${selected === "1" ? "selected" : ""}>1단계</option>
+    <option value="2" ${selected === "2" ? "selected" : ""}>2단계</option>
+    <option value="3" ${selected === "3" ? "selected" : ""}>3단계</option>
+  `;
+}
+
 document.getElementById("itemCustomerBulkBtn").addEventListener("click", () => {
   itemCustomerBulkModalBody.innerHTML = `
-    <div class="lang-edit-summary">1.2 상품구성코드 리스트입니다. 항목명(고객용)을 입력하고 "적용"을 누르면 현재까지 생성된 평형별 상품 정보에 자동 반영됩니다. 비워두면 해당 상품은 변경하지 않습니다.<br/>여러 상품에 같은 값을 넣으려면 왼쪽 체크박스로 선택한 뒤 아래 「선택 항목에 일괄 입력」을 사용하세요.</div>
+    <div class="lang-edit-summary">1.2 상품구성코드 리스트입니다. 항목명(고객용)·별매품 단계를 입력하고 "적용"을 누르면 현재까지 생성된 평형별 상품 정보에 자동 반영됩니다. 비워두면(별매품 단계는 "-") 해당 값은 변경하지 않습니다.<br/>여러 상품에 같은 값을 넣으려면 왼쪽 체크박스로 선택한 뒤 아래 「선택 항목에 일괄 입력」을 사용하세요.</div>
     <div class="bulk-map-toolbar">
       <button type="button" class="toolbar-btn">⭣ 엑셀 양식 다운로드</button>
       <button type="button" class="toolbar-btn">⭱ 엑셀 업로드</button>
     </div>
     <div class="bulk-map-table-wrap">
       <table class="bulk-map-table">
-        <thead><tr><th class="bulk-check-col"><input type="checkbox" id="itemCustomerBulkCheckAll" title="전체 선택" /></th><th>상품 코드</th><th>항목명</th><th>항목명(고객용)</th></tr></thead>
+        <thead><tr><th class="bulk-check-col"><input type="checkbox" id="itemCustomerBulkCheckAll" title="전체 선택" /></th><th>상품 코드</th><th>항목명</th><th>항목명(고객용)</th><th>별매품 단계</th></tr></thead>
         <tbody>
           ${skuData.map((s) => `
             <tr data-code="${s.code}">
@@ -1382,12 +1391,19 @@ document.getElementById("itemCustomerBulkBtn").addEventListener("click", () => {
               <td class="code-cell">${s.code}</td>
               <td>${s.item}</td>
               <td><input type="text" class="bulk-map-input" data-field="itemCustomer" value="${(s.itemCustomer || "").replace(/"/g, "&quot;")}" /></td>
+              <td><select class="bulk-tier-select" data-field="tier">${bulkTierOptionsHtml(PRODUCT_OPTION_TIER[s.code] || "")}</select></td>
             </tr>`).join("")}
         </tbody>
       </table>
     </div>
     <div class="bulk-selected-row">
       <input type="text" id="itemCustomerBulkSelectedValue" class="bulk-map-input" placeholder="체크한 상품들의 항목명(고객용)에 넣을 값" />
+      <select id="itemCustomerBulkSelectedTier" class="bulk-tier-select">
+        <option value="">별매품 단계 (변경 안 함)</option>
+        <option value="1">1단계</option>
+        <option value="2">2단계</option>
+        <option value="3">3단계</option>
+      </select>
       <button type="button" class="toolbar-btn" id="itemCustomerBulkSelectedFillBtn">✔ 선택 항목에 일괄 입력</button>
     </div>
     <div class="lang-edit-actions">
@@ -1402,31 +1418,43 @@ document.getElementById("itemCustomerBulkBtn").addEventListener("click", () => {
   });
   document.getElementById("itemCustomerBulkSelectedFillBtn").addEventListener("click", () => {
     const value = document.getElementById("itemCustomerBulkSelectedValue").value.trim();
-    if (!value) { showToast("일괄 입력할 값을 먼저 입력해주세요."); return; }
+    const tier = document.getElementById("itemCustomerBulkSelectedTier").value;
+    if (!value && !tier) { showToast("일괄 입력할 항목명(고객용) 또는 별매품 단계를 먼저 입력해주세요."); return; }
     const checkedRows = [...itemCustomerBulkModalBody.querySelectorAll("tr[data-code]")].filter((tr) => tr.querySelector(".bulk-map-check").checked);
     if (checkedRows.length === 0) { showToast("값을 넣을 상품을 체크박스로 먼저 선택해주세요."); return; }
-    checkedRows.forEach((tr) => { tr.querySelector('[data-field="itemCustomer"]').value = value; });
+    checkedRows.forEach((tr) => {
+      if (value) tr.querySelector('[data-field="itemCustomer"]').value = value;
+      if (tier) tr.querySelector('[data-field="tier"]').value = tier;
+    });
     showToast(`${checkedRows.length}개 상품에 입력되었습니다. "적용"을 눌러야 실제 반영됩니다.`);
   });
 
   document.getElementById("itemCustomerBulkCancelBtn").addEventListener("click", () => { itemCustomerBulkModal.hidden = true; });
   document.getElementById("itemCustomerBulkApplyBtn").addEventListener("click", () => {
     let changedSkus = 0;
+    let changedTiers = 0;
     itemCustomerBulkModalBody.querySelectorAll("tr[data-code]").forEach((tr) => {
       const code = tr.dataset.code;
       const value = tr.querySelector('[data-field="itemCustomer"]').value.trim();
-      if (!value) return;
-      const s = skuData.find((x) => x.code === code);
-      if (s) s.itemCustomer = value;
-      flatRows.filter((r) => r.code === code).forEach((r) => { r.itemCustomer = value; });
-      changedSkus++;
+      const tier = tr.querySelector('[data-field="tier"]').value;
+      if (value) {
+        const s = skuData.find((x) => x.code === code);
+        if (s) s.itemCustomer = value;
+        flatRows.filter((r) => r.code === code).forEach((r) => { r.itemCustomer = value; });
+        changedSkus++;
+      }
+      if (tier) {
+        PRODUCT_OPTION_TIER[code] = tier;
+        changedTiers++;
+      }
     });
-    dsAddEditLog("4. 상품고객언어", `항목명(고객용) 일괄 입력 적용: ${changedSkus}개 상품코드`);
+    dsAddEditLog("4. 상품고객언어", `항목명(고객용) 일괄 입력 적용: ${changedSkus}개 상품코드, 별매품 단계 ${changedTiers}개 상품코드`);
     renderSkuTable();
     renderLangTable();
     renderCostTable();
+    renderAllocationTable();
     itemCustomerBulkModal.hidden = true;
-    showToast(`${changedSkus}개 상품의 항목명(고객용)이 반영되었습니다.`);
+    showToast(`상품 ${changedSkus}건, 별매품 단계 ${changedTiers}건이 반영되었습니다.`);
   });
 });
 document.getElementById("itemCustomerBulkModalClose").addEventListener("click", () => { itemCustomerBulkModal.hidden = true; });
