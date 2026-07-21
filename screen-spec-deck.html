@@ -175,7 +175,7 @@ body {
 <a class="toc-row" href="#pop-package"><span class="toc-no">27</span><span class="toc-tag toc-tag-popup">팝업</span><span class="toc-name">📦 안분표 패키지 생성 (현재안 - 평형 1개씩)</span><span class="toc-menu">STEP 5. 안분표 생성</span></a>
 <a class="toc-row" href="#pop-package-map"><span class="toc-no">28</span><span class="toc-tag toc-tag-popup">팝업</span><span class="toc-name">📦 공통 패키지 생성 — 평형 일괄 매핑 (개선안)</span><span class="toc-menu">STEP 5. 안분표 생성</span></a>
 <a class="toc-row" href="#pop-gagam"><span class="toc-no">29</span><span class="toc-tag toc-tag-popup">팝업</span><span class="toc-name">➕ 가감조건 추가/수정</span><span class="toc-menu">현장 메뉴 › 2. 가감조건 관리</span></a>
-<a class="toc-row" href="#pop-gagam-category"><span class="toc-no">30</span><span class="toc-tag toc-tag-popup">팝업</span><span class="toc-name">➕ 카테고리 추가/수정 (프로덕트 카테고리/간섭 그룹)</span><span class="toc-menu">현장 메뉴 › 2. 가감조건 관리</span></a>
+<a class="toc-row" href="#pop-gagam-category"><span class="toc-no">30</span><span class="toc-tag toc-tag-popup">팝업</span><span class="toc-name">➕ 간섭 프로덕트 선택 (프로덕트 카테고리/간섭 그룹)</span><span class="toc-menu">현장 메뉴 › 2. 가감조건 관리</span></a>
 <a class="toc-row" href="#pop-product-quick-add"><span class="toc-no">31</span><span class="toc-tag toc-tag-popup">팝업</span><span class="toc-name">🏷 프로덕트 코드 추가 (소분류 · PK)</span><span class="toc-menu">현장별 표준코드 › 전사공통코드</span></a>
     </div>
   </section>
@@ -733,18 +733,18 @@ body {
   </section>
 
   <section class="slide" id="pop-gagam-category">
-    <div class="slide-media"><img src="screen-spec-images/pop-gagam-category.png" alt="➕ 카테고리 추가/수정 (프로덕트 카테고리/간섭 그룹) 스크린샷" /></div>
+    <div class="slide-media"><img src="screen-spec-images/pop-gagam-category.png" alt="➕ 간섭 프로덕트 선택 (프로덕트 카테고리/간섭 그룹) 스크린샷" /></div>
     <div class="slide-panel">
       <div class="slide-panel-top">
         <div class="slide-eyebrow">
           <span class="tag tag-popup">팝업</span>
           <span class="menu-path">현장 메뉴 › 2. 가감조건 관리</span>
         </div>
-        <h2 class="slide-title">➕ 카테고리 추가/수정 (프로덕트 카테고리/간섭 그룹)</h2>
+        <h2 class="slide-title">➕ 간섭 프로덕트 선택 (프로덕트 카테고리/간섭 그룹)</h2>
         <div class="slide-files">site-menu.html (현장 전용, 신규)</div>
       </div>
       <ul class="slide-features">
-        <li>공간 선택, 카테고리 이름 입력</li><li>프로덕트를 코드/상품명으로 검색해서 추가, 칩 형태로 표시된 포함 프로덕트를 개별 제거 가능</li><li>저장 시 이름 입력 및 프로덕트 2개 이상 필수 — 저장하면 카테고리 내 모든 프로덕트 조합에 상호 제외 규칙이 자동 생성됨</li>
+        <li>현재 선택된 공간 안에서 서로 대체 관계인 프로덕트를 코드/상품명으로 검색해 체크박스로 여러 개 한 번에 선택(선택된 항목은 목록에서 "✓ 선택됨"으로 계속 표시되어 재검색 없이 계속 고를 수 있음)</li><li>선택된 프로덕트는 칩으로 표시되고 개별 제거 가능</li><li>카테고리 이름은 선택한 프로덕트명으로 자동 생성됨(예: "A 외 2개") — 완료 시 프로덕트 2개 이상 필수, 카테고리 내 모든 조합에 상호 제외 규칙이 자동 생성됨</li>
       </ul>
       <div class="slide-notes">📌 트리거: 가감조건 관리 › + 카테고리 추가 / 카테고리 카드의 수정 버튼</div>
       <div class="slide-foot"><span class="slide-page">30 / 31</span></div>
