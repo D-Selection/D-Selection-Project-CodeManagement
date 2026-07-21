@@ -597,14 +597,37 @@
     <!-- ============ STEP (신규): 가감조건 관리 ============ -->
     <section class="view" id="view-6">
       <div class="info-box">
-        상품(소분류)뿐 아니라 <strong>프로덕트 단위(대분류/중분류)</strong>로도 자동 추가/제외 규칙을 걸 수 있습니다.<br/>
-        예1(소분류): 「AC-200-01 국산 주방수전/워터웍스유진」을 선택하면 「AC-221-01 국산 일반 수건걸이/대림바스」를 자동 추가.<br/>
-        예2(프로덕트): 「CW 대분류(공사성(창호 등))」를 선택하면 「FN-501 중분류(현관중문 슬라이딩 도어)」 전체를 자동 제외.<br/>
-        같은 기준상품에 여러 조건이 겹치면 <strong>우선순위 숫자가 낮은 조건부터</strong> 적용됩니다.
+        <strong>1. 안내문 스텝</strong> — 공간을 고르면 그 공간의 상품들이 나열됩니다. 안내문에 보여줄 순서(스텝)를 지정할 수 있고, 별매품 단계(1/2/3)와는 별개의 값입니다.<br/>
+        <strong>2. 프로덕트 카테고리(간섭 그룹)</strong> — 같은 공간 안에서 서로 대체 관계라 동시에 선택될 수 없는 프로덕트들을 카테고리로 묶으면, 카테고리 안의 프로덕트들 사이에 <strong>자동으로 상호 제외 규칙</strong>이 만들어집니다.<br/>
+        아래 <strong>가감조건 목록</strong>에는 위 카테고리에서 자동 생성된 규칙과, 직접 등록한 규칙(상품(소분류)뿐 아니라 프로덕트 단위(대분류/중분류)로도 등록 가능)이 함께 표시됩니다. 같은 기준상품에 여러 조건이 겹치면 <strong>우선순위 숫자가 낮은 조건부터</strong> 적용됩니다.
       </div>
+
+      <div class="gagam-space-tabs" id="gagamSpaceTabs"></div>
+
+      <div class="gagam-space-cols">
+        <div class="gagam-space-col">
+          <div class="gagam-section-title">
+            <span>1. 안내문 스텝(우선순위) <span class="count-pill" id="gagamStepCount">0개</span></span>
+          </div>
+          <div class="gagam-step-table-wrap">
+            <table class="gagam-step-table">
+              <thead><tr><th>스텝</th><th>상품 코드</th><th>항목명</th></tr></thead>
+              <tbody id="gagamStepBody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="gagam-space-col">
+          <div class="gagam-section-title">
+            <span>2. 프로덕트 카테고리(간섭 그룹) <span class="count-pill" id="gagamCategoryCount">0개</span></span>
+            <button type="button" class="toolbar-btn" id="gagamCategoryAddBtn">+ 카테고리 추가</button>
+          </div>
+          <div id="gagamCategoryList"></div>
+        </div>
+      </div>
+
       <div class="section-title-bar">
         <div class="section-title-left">
-          <h2>2. 가감조건 <span class="count-pill" id="gagamCount">0개</span></h2>
+          <h2>가감조건 목록 <span class="count-pill" id="gagamCount">0개</span></h2>
         </div>
         <div class="filterbar-right">
           <input type="text" id="gagamSearchInput" class="gagam-search-input" placeholder="기준/대상 코드, 상품명, 비고로 검색" />
@@ -622,6 +645,7 @@
               <th>대상 단위</th>
               <th>대상 코드</th>
               <th>대상 명칭</th>
+              <th>출처</th>
               <th>비고</th>
               <th>등록일</th>
               <th></th>
@@ -809,6 +833,14 @@
       </div>
     </div>
     <datalist id="gagamProductList"></datalist>
+
+    <!-- 가감조건 관리 : 프로덕트 카테고리(간섭 그룹) 추가/수정 모달 -->
+    <div class="cmodal-backdrop" id="gagamCategoryModal" hidden>
+      <div class="send-modal">
+        <div class="cmodal-header" id="gagamCategoryModalHeader">➕ 카테고리 추가 <button class="cmodal-close" id="gagamCategoryModalClose" type="button">✕</button></div>
+        <div class="cmodal-body" id="gagamCategoryModalBody"></div>
+      </div>
+    </div>
   </div>
 
 <script>

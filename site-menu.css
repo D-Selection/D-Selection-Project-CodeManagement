@@ -99,3 +99,130 @@
   text-align: center;
 }
 .gagam-priority-input:focus { border-color: var(--blue); outline: none; }
+
+/* 가감조건 관리 : 공간 탭 */
+.gagam-space-tabs { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 24px 12px; }
+.gagam-space-tab {
+  border: 1px solid var(--border);
+  background: #fff;
+  border-radius: 16px;
+  padding: 6px 14px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-sub);
+  cursor: pointer;
+}
+.gagam-space-tab:hover { border-color: var(--blue); color: var(--blue); }
+.gagam-space-tab.active { background: var(--blue); border-color: var(--blue); color: #fff; }
+
+/* 가감조건 관리 : 안내문 스텝 / 프로덕트 카테고리 2단 레이아웃 */
+.gagam-space-cols {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  padding: 0 24px 16px;
+}
+.gagam-space-col {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  padding: 14px;
+}
+.gagam-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.gagam-step-table-wrap { max-height: 320px; overflow-y: auto; }
+.gagam-step-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.gagam-step-table th, .gagam-step-table td {
+  border-bottom: 1px solid var(--border);
+  padding: 6px 8px;
+  text-align: left;
+}
+.gagam-step-table th { color: var(--text-sub); font-weight: 700; background: #f7f8fb; position: sticky; top: 0; }
+.gagam-step-input {
+  width: 56px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 12.5px;
+  text-align: center;
+}
+.gagam-step-input:focus { border-color: var(--blue); outline: none; }
+
+/* 가감조건 관리 : 프로덕트 카테고리 카드 */
+.gagam-category-empty {
+  color: var(--text-sub);
+  font-size: 12.5px;
+  padding: 20px 4px;
+  text-align: center;
+}
+.gagam-category-card {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+}
+.gagam-category-card:last-child { margin-bottom: 0; }
+.gagam-category-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 12.5px;
+  font-weight: 700;
+}
+.gagam-category-card-actions { display: flex; gap: 6px; }
+.gagam-category-chips, .gagam-category-members { display: flex; flex-wrap: wrap; gap: 6px; }
+.gagam-category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #eef1f6;
+  color: var(--text-main);
+  font-size: 11.5px;
+  padding: 3px 8px;
+  border-radius: 12px;
+}
+.gagam-category-chip-remove {
+  border: none;
+  background: none;
+  color: var(--text-sub);
+  cursor: pointer;
+  font-size: 11px;
+  padding: 0;
+  line-height: 1;
+}
+.gagam-category-chip-remove:hover { color: #d64545; }
+
+/* 가감조건 목록 : 우선순위(읽기전용) / 출처 */
+.gagam-priority-readonly {
+  display: inline-block;
+  width: 52px;
+  text-align: center;
+  color: var(--text-sub);
+  font-size: 12.5px;
+}
+.gagam-source-auto {
+  display: inline-block;
+  background: #eef1fb;
+  color: #4a5bd0;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+.gagam-source-manual {
+  display: inline-block;
+  color: var(--text-sub);
+  font-size: 10.5px;
+  white-space: nowrap;
+}
