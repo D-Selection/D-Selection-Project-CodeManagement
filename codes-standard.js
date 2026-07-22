@@ -551,14 +551,28 @@ const SITE_COL_META = {
   plans: { section: "plan", label: "선택형 평면" },
 };
 
+// 컬럼별 관리 방식
+// - toggle    : 전사공통코드 표준 목록 전체를 항상 보여주고, 현장에서는 적용/미적용만 선택(고객 스타일/스타일)
+// - freeform  : 표준과 연동하지 않고 현장이 코드/명칭을 직접 등록·관리하는 현장 전용 목록(평형)
+// - assign    : 표준 목록 중 일부를 배정해서 쓰는 기존 방식(평형옵션/선택형 평면)
+const SITE_COL_MODE = {
+  custStyles: "toggle",
+  styles: "toggle",
+  pyeongs: "freeform",
+  pyeongOptions: "assign",
+  plans: "assign",
+};
+
 // 현장별로 배정된 코드 목록(마스터 코드 참조). 190197은 목업과 동일하게 전량 배정된 상태로 시작.
+// pyeongs만 예외로, 표준과 연동되지 않는 현장 자체 {code,name} 목록을 최초 1회 복사해서 시작한다
+// (이후 전사공통코드의 평형 표준이 바뀌어도 이미 생성된 현장의 평형에는 영향을 주지 않는다).
 const siteAssignments = {};
 function getSiteAssignment(siteCode) {
   if (!siteAssignments[siteCode]) {
     siteAssignments[siteCode] = {
       custStyles: masterData.custStyles.map((m) => m.code),
       styles: masterData.styles.map((m) => m.code),
-      pyeongs: masterData.pyeongs.map((m) => m.code),
+      pyeongs: masterData.pyeongs.map((m) => ({ code: m.code, name: m.name })),
       pyeongOptions: masterData.pyeongOptions.map((m) => m.code),
       plans: masterData.plans.map((m) => m.code),
     };
@@ -574,11 +588,47 @@ function isSiteEditable() {
 
 function renderSiteColumn(key) {
   const meta = SITE_COL_META[key];
+  const mode = SITE_COL_MODE[key];
   const assignment = getSiteAssignment(currentSiteCode);
-  const codes = assignment[key];
   const editable = isSiteEditable();
-  document.getElementById(`${meta.section}Count`).textContent = codes.length;
-  document.getElementById(`${meta.section}Body`).innerHTML = codes.map((code) => {
+  const countEl = document.getElementById(`${meta.section}Count`);
+  const bodyEl = document.getElementById(`${meta.section}Body`);
+
+  if (mode === "toggle") {
+    // 표준 전체를 항상 보여주고, 현장에서는 적용/미적용만 토글한다
+    const applied = assignment[key];
+    countEl.textContent = `${applied.length} / ${masterData[key].length}`;
+    bodyEl.innerHTML = masterData[key].map((item) => {
+      const isApplied = applied.includes(item.code);
+      return `
+        <tr data-code="${item.code}" class="${isApplied ? "" : "csite-row-unapplied"}">
+          <td>${item.code}</td>
+          <td>${item.name}</td>
+          <td><button type="button" class="ctoggle-btn ${isApplied ? "applied" : "unapplied"}" data-toggle-master="${key}" data-toggle-code="${item.code}" ${editable ? "" : "disabled"}>${isApplied ? "적용" : "미적용"}</button></td>
+        </tr>
+      `;
+    }).join("");
+    return;
+  }
+
+  if (mode === "freeform") {
+    // 표준과 연동하지 않는 현장 자체 목록 : 현장이 직접 등록한 {code,name}만 보여준다
+    const items = assignment[key];
+    countEl.textContent = items.length;
+    bodyEl.innerHTML = items.map((item) => `
+      <tr data-code="${item.code}">
+        <td>${item.code}</td>
+        <td>${item.name}</td>
+        <td><button class="cremove-btn" data-remove-master="${key}" data-remove-code="${item.code}" ${editable ? "" : "disabled"}>✕</button></td>
+      </tr>
+    `).join("");
+    return;
+  }
+
+  // mode === "assign" : 표준 목록 중 배정된 코드만 보여준다(기존 방식)
+  const codes = assignment[key];
+  countEl.textContent = codes.length;
+  bodyEl.innerHTML = codes.map((code) => {
     const item = masterData[key].find((m) => m.code === code);
     return `
       <tr data-code="${code}">
@@ -604,12 +654,39 @@ document.querySelector(".csite-cols").addEventListener("click", (e) => {
     const key = removeBtn.dataset.removeMaster;
     const code = removeBtn.dataset.removeCode;
     const meta = SITE_COL_META[key];
-    const item = masterData[key].find((m) => m.code === code);
+    const mode = SITE_COL_MODE[key];
     const assignment = getSiteAssignment(currentSiteCode);
-    assignment[key] = assignment[key].filter((c) => c !== code);
+    let label = code;
+    let logVerb = "배정 해제";
+    if (mode === "freeform") {
+      const item = assignment[key].find((x) => x.code === code);
+      label = item ? item.name : code;
+      logVerb = "삭제";
+      assignment[key] = assignment[key].filter((x) => x.code !== code);
+    } else {
+      const item = masterData[key].find((m) => m.code === code);
+      label = item ? item.name : code;
+      assignment[key] = assignment[key].filter((c) => c !== code);
+    }
     renderSiteColumn(key);
     const site = sitesCompact.find((s) => s.code === currentSiteCode);
-    dsAddEditLog("현장별코드", `${site.name}(${currentSiteCode}) - ${meta.label}에서 ${code} ${item ? item.name : ""} 배정 해제`);
+    dsAddEditLog("현장별코드", `${site.name}(${currentSiteCode}) - ${meta.label}에서 ${code} ${label} ${logVerb}`);
+    return;
+  }
+
+  const toggleBtn = e.target.closest("[data-toggle-master]");
+  if (toggleBtn && isSiteEditable()) {
+    const key = toggleBtn.dataset.toggleMaster;
+    const code = toggleBtn.dataset.toggleCode;
+    const meta = SITE_COL_META[key];
+    const item = masterData[key].find((m) => m.code === code);
+    const assignment = getSiteAssignment(currentSiteCode);
+    const nowApplied = !assignment[key].includes(code);
+    if (nowApplied) assignment[key].push(code);
+    else assignment[key] = assignment[key].filter((c) => c !== code);
+    renderSiteColumn(key);
+    const site = sitesCompact.find((s) => s.code === currentSiteCode);
+    dsAddEditLog("현장별코드", `${site.name}(${currentSiteCode}) - ${meta.label} ${code} ${item ? item.name : ""} ${nowApplied ? "적용" : "미적용"}으로 변경`);
   }
 });
 
@@ -618,10 +695,45 @@ document.querySelectorAll(".cmaster-add-btn[data-site-master]").forEach((btn) =>
     if (!isSiteEditable()) return;
     const key = btn.dataset.siteMaster;
     const meta = SITE_COL_META[key];
+    const mode = SITE_COL_MODE[key];
     const body = document.getElementById(`${meta.section}Body`);
     if (body.querySelector(".cinline-add-row")) return;
-
     const assignment = getSiteAssignment(currentSiteCode);
+
+    if (mode === "freeform") {
+      // 표준 목록과 무관하게 현장이 직접 코드/명칭을 입력해서 등록한다
+      const tr = document.createElement("tr");
+      tr.className = "cinline-add-row";
+      tr.innerHTML = `
+        <td><input type="text" placeholder="코드" class="cnew-code" /></td>
+        <td>
+          <div style="display:flex; gap:4px;">
+            <input type="text" placeholder="명칭" class="cnew-name" />
+            <div class="cinline-add-actions">
+              <button class="cinline-confirm-btn">추가</button>
+              <button class="cinline-cancel-btn">취소</button>
+            </div>
+          </div>
+        </td>
+        <td></td>
+      `;
+      body.prepend(tr);
+      tr.querySelector(".cnew-code").focus();
+      tr.querySelector(".cinline-cancel-btn").addEventListener("click", () => tr.remove());
+      tr.querySelector(".cinline-confirm-btn").addEventListener("click", () => {
+        const code = tr.querySelector(".cnew-code").value.trim();
+        const name = tr.querySelector(".cnew-name").value.trim();
+        if (!code || !name) return;
+        if (assignment[key].some((item) => item.code === code)) { alert("이미 존재하는 코드입니다."); return; }
+        assignment[key].push({ code, name });
+        renderSiteColumn(key);
+        const site = sitesCompact.find((s) => s.code === currentSiteCode);
+        dsAddEditLog("현장별코드", `${site.name}(${currentSiteCode}) - ${meta.label}에 ${code} ${name} 신규 등록 (현장 자체 관리, 표준 미연동)`);
+      });
+      return;
+    }
+
+    // mode === "assign" (기존 방식 : 표준 목록 중 미배정 코드를 골라 배정)
     const available = masterData[key].filter((m) => !assignment[key].includes(m.code));
     if (available.length === 0) {
       alert(`전사공통코드에 등록된 "${meta.label}" 코드가 모두 이미 배정되어 있습니다.\n새 코드는 전사공통코드 탭에서 추가해 주세요.`);
