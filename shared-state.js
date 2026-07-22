@@ -855,6 +855,30 @@ function dsRemoveCustomProductCode(code) {
   dsSaveCustomProducts(dsLoadCustomProducts().filter((r) => r.code !== code));
 }
 
+/* 사용자가 전사공통코드 화면에서 직접 등록한 신규 중분류도, 소분류(PK)와 같은
+   방식으로 새로고침 후에도 유지되도록 별도 저장해두고 DS_PRODUCT_MIDS_NEW 뒤에
+   이어붙인다. */
+const DS_CUSTOM_MID_STORAGE_KEY = "dselection_custom_mids_v1";
+function dsLoadCustomMids() {
+  try {
+    const raw = JSON.parse(localStorage.getItem(DS_CUSTOM_MID_STORAGE_KEY));
+    return Array.isArray(raw) ? raw : [];
+  } catch (e) {
+    return [];
+  }
+}
+function dsSaveCustomMids(list) {
+  localStorage.setItem(DS_CUSTOM_MID_STORAGE_KEY, JSON.stringify(list));
+}
+dsLoadCustomMids().forEach((row) => DS_PRODUCT_MIDS_NEW.push(row));
+
+function dsAddCustomMidCode(row) {
+  DS_PRODUCT_MIDS_NEW.push(row);
+  const custom = dsLoadCustomMids();
+  custom.push(row);
+  dsSaveCustomMids(custom);
+}
+
 
 const DS_ROLES = [
   { key: "owner0", name: "최유진", team: "현장관리팀", stageLabel: "0. 현장별코드" },

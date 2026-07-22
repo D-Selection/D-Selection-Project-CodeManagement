@@ -501,6 +501,81 @@ table { border-collapse: collapse; width: 100%; }
   border-right: 1px solid var(--c-border);
 }
 .csite-subcol:last-child { border-right: none; }
+.csite-subcol-wide { flex: 1.6; }
+
+/* 평형 : 엑셀처럼 셀 직접 입력 + 여러 줄 붙여넣기 지원하는 현장 전용 그리드 */
+.cgrid-hint { color: var(--c-sub); font-size: 10.5px; padding: 0 8px 6px; }
+.cgrid-table td { padding: 3px 6px; }
+.cgrid-code-input, .cgrid-name-input {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: 12px;
+  background: transparent;
+}
+.cgrid-code-input:hover, .cgrid-name-input:hover { border-color: var(--c-border); }
+.cgrid-code-input:focus, .cgrid-name-input:focus { border-color: var(--c-blue); outline: none; background: #fff; }
+.cgrid-code-input:disabled, .cgrid-name-input:disabled { color: var(--c-sub); }
+
+/* 고객스타일 = 스타일 조합 관리 */
+.ccombo-hint { color: var(--c-sub); font-size: 10.5px; padding: 0 8px 6px; }
+.ccombo-cell { color: var(--c-sub); font-size: 11px; }
+.ccombo-field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 14px; }
+.ccombo-field label { font-size: 12px; font-weight: 700; color: var(--c-text); }
+.ccombo-field input {
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+.ccombo-field input:focus { border-color: var(--c-blue); outline: none; }
+.ccombo-style-checks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  max-height: 160px;
+  overflow-y: auto;
+}
+.ccombo-check-item { font-size: 12.5px; display: flex; align-items: center; gap: 5px; cursor: pointer; }
+.ccombo-error { color: #d64545; font-size: 11.5px; margin-bottom: 8px; }
+.ccombo-actions { display: flex; justify-content: flex-end; gap: 8px; }
+
+/* 전사공통코드 : 중분류/소분류 검색(쉼표 AND) + 새 중분류 추가 */
+.cqa-step-label { display: flex; align-items: center; gap: 8px; }
+.cqa-new-mid-btn {
+  margin-left: auto;
+  border: 1px solid var(--c-blue);
+  background: #fff;
+  color: var(--c-blue);
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.cqa-new-mid-btn:hover { background: var(--c-blue-light); }
+.cqa-new-mid-btn:disabled { opacity: 0.5; cursor: default; }
+.cqa-inline-search {
+  width: 100%;
+  box-sizing: border-box;
+  border: 1px solid var(--c-border);
+  border-radius: 6px;
+  padding: 7px 10px;
+  font-size: 12px;
+  margin-bottom: 8px;
+}
+.cqa-inline-search:focus { border-color: var(--c-blue); outline: none; }
+.cqa-new-mid-form {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.cqa-new-mid-form input { flex: 1; min-width: 0; }
 
 /* =====================================================================
    확정 관리(shared-state.js) 공용 컴포넌트 — 안분표 생성 앱(styles.css)과

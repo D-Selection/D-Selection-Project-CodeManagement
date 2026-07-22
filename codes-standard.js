@@ -5,6 +5,8 @@ document.querySelectorAll(".ctab").forEach((btn) => {
     btn.classList.add("active");
     document.querySelectorAll(".ctab-panel").forEach((p) => p.classList.remove("active"));
     document.getElementById(`cpanel-${btn.dataset.tab}`).classList.add("active");
+    // 현장별코드 탭으로 전환할 때, 전사공통코드에서 그 사이 표준이 바뀌었을 수 있으므로 다시 그린다
+    if (btn.dataset.tab === "site" && typeof renderAllSiteColumns === "function") renderAllSiteColumns();
   });
 });
 
@@ -150,10 +152,19 @@ document.querySelector("#subAggTable .sortable").addEventListener("click", () =>
   renderSubAggBody(sorted);
 });
 
+// 쉼표로 구분한 여러 단어를 모두 만족해야 하는(AND) 검색. 예) "FM,마루" -> "FM"과
+// "마루"를 둘 다 포함하는 항목만 매치. 검색어가 없으면 전체를 통과시킨다.
+function cqaMatchesQuery(haystackParts, query) {
+  const terms = (query || "").split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
+  if (terms.length === 0) return true;
+  const haystack = haystackParts.join(" ").toLowerCase();
+  return terms.every((t) => haystack.includes(t));
+}
+
 function cqaApplySubAggFilter() {
-  const q = document.getElementById("subAggSearch").value.trim().toLowerCase();
-  const filtered = !q ? subCategoryAggregate : subCategoryAggregate.filter((r) =>
-    [r.code, r.name, r.majorName, r.groupName, r.midName].join(" ").toLowerCase().includes(q)
+  const q = document.getElementById("subAggSearch").value;
+  const filtered = subCategoryAggregate.filter((r) =>
+    cqaMatchesQuery([r.code, r.name, r.majorName, r.groupName, r.midName], q)
   );
   renderSubAggBody(filtered);
 }
@@ -229,37 +240,52 @@ function cqaExistingCountFor(majorCode, midCode) {
 }
 
 function cqaRenderMidList() {
+  const midSearchInput = document.getElementById("cqaMidSearchInput");
+  const newMidBtn = document.getElementById("cqaNewMidBtn");
   if (!cqaSelectedMajor) {
     cqaMidCount.textContent = "0";
     cqaMidList.innerHTML = `<div class="cqa-mid-list-hint">먼저 대분류를 선택해주세요.</div>`;
+    midSearchInput.hidden = true;
+    newMidBtn.disabled = true;
     return;
   }
-  const mids = DS_PRODUCT_MIDS_NEW.filter((m) => m.majorCode === cqaSelectedMajor.code);
+  midSearchInput.hidden = false;
+  newMidBtn.disabled = false;
+  let mids = DS_PRODUCT_MIDS_NEW.filter((m) => m.majorCode === cqaSelectedMajor.code);
+  const q = midSearchInput.value;
+  mids = mids.filter((m) => cqaMatchesQuery([m.code, m.name, m.groupName], q));
   cqaMidCount.textContent = mids.length;
-  cqaMidList.innerHTML = dsGroupMidsByGroupName(mids).map((g) => `
-    <div class="cqa-mid-group-header">${g.groupName || "(그룹명 없음)"}</div>
-    ${g.mids.map((m) => `
-      <button type="button" class="cqa-mid-row ${cqaSelectedMid && cqaSelectedMid.code === m.code ? "selected" : ""}" data-code="${m.code}">
-        <span class="cqa-mid-row-code">${m.code}</span>
-        <span class="cqa-mid-row-name">${m.name}</span>
-        <span class="cqa-mid-row-count">${cqaExistingCountFor(m.majorCode, m.code)}건</span>
-      </button>
-    `).join("")}
-  `).join("");
+  cqaMidList.innerHTML = mids.length === 0
+    ? `<div class="cqa-mid-list-hint">${q ? "검색과 일치하는 중분류가 없습니다." : "이 대분류에는 중분류가 없습니다."}</div>`
+    : dsGroupMidsByGroupName(mids).map((g) => `
+      <div class="cqa-mid-group-header">${g.groupName || "(그룹명 없음)"}</div>
+      ${g.mids.map((m) => `
+        <button type="button" class="cqa-mid-row ${cqaSelectedMid && cqaSelectedMid.code === m.code ? "selected" : ""}" data-code="${m.code}">
+          <span class="cqa-mid-row-code">${m.code}</span>
+          <span class="cqa-mid-row-name">${m.name}</span>
+          <span class="cqa-mid-row-count">${cqaExistingCountFor(m.majorCode, m.code)}건</span>
+        </button>
+      `).join("")}
+    `).join("");
 }
 
 function cqaRenderExistingList() {
+  const existingSearchInput = document.getElementById("cqaExistingSearchInput");
   if (!cqaSelectedMajor || !cqaSelectedMid) {
     cqaExistingCount.textContent = "0";
     cqaExistingList.innerHTML = `<div class="cqa-existing-list-hint">중분류를 선택하면 기존 소분류가 여기에 표시됩니다.</div>`;
+    existingSearchInput.hidden = true;
     return;
   }
+  existingSearchInput.hidden = false;
+  const q = existingSearchInput.value;
   const items = DS_PRODUCT_MASTER_CATALOG
     .filter((r) => r.majorCode === cqaSelectedMajor.code && r.midCode === cqaSelectedMid.code)
+    .filter((r) => cqaMatchesQuery([r.code, r.name], q))
     .sort((a, b) => a.code.localeCompare(b.code));
   cqaExistingCount.textContent = items.length;
   cqaExistingList.innerHTML = items.length === 0
-    ? `<div class="cqa-existing-list-hint">이 중분류에는 아직 등록된 소분류가 없습니다.</div>`
+    ? `<div class="cqa-existing-list-hint">${q ? "검색과 일치하는 소분류가 없습니다." : "이 중분류에는 아직 등록된 소분류가 없습니다."}</div>`
     : items.map((r) => `
       <div class="cqa-existing-item">
         <span class="ccode-cell">${r.code}</span>
@@ -318,6 +344,37 @@ cqaMidList.addEventListener("click", (e) => {
   const btn = e.target.closest(".cqa-mid-row");
   if (!btn) return;
   cqaSelectMid(btn.dataset.code);
+});
+document.getElementById("cqaMidSearchInput").addEventListener("input", cqaRenderMidList);
+document.getElementById("cqaExistingSearchInput").addEventListener("input", cqaRenderExistingList);
+
+/* ---- 새 중분류 추가 (선택된 대분류 안에 신규 중분류를 즉시 등록) ---- */
+const cqaNewMidForm = document.getElementById("cqaNewMidForm");
+document.getElementById("cqaNewMidBtn").addEventListener("click", () => {
+  if (!cqaSelectedMajor) return;
+  cqaNewMidForm.hidden = false;
+  document.getElementById("cqaNewMidName").value = "";
+  document.getElementById("cqaNewMidGroup").value = "";
+  document.getElementById("cqaNewMidName").focus();
+});
+document.getElementById("cqaNewMidCancelBtn").addEventListener("click", () => { cqaNewMidForm.hidden = true; });
+document.getElementById("cqaNewMidConfirmBtn").addEventListener("click", () => {
+  const name = document.getElementById("cqaNewMidName").value.trim();
+  const groupName = document.getElementById("cqaNewMidGroup").value.trim();
+  if (!name) { cqaShowMsg("중분류명을 입력해주세요."); return; }
+  const existingCodes = DS_PRODUCT_MIDS_NEW
+    .filter((m) => m.majorCode === cqaSelectedMajor.code)
+    .map((m) => parseInt(m.code, 10))
+    .filter((n) => !isNaN(n));
+  const nextCode = String((existingCodes.length ? Math.max(...existingCodes) : 0) + 1).padStart(3, "0");
+  const row = { majorCode: cqaSelectedMajor.code, code: nextCode, name, groupName };
+  dsAddCustomMidCode(row);
+  dsAddEditLog("전사공통코드(프로덕트코드)", `신규 중분류 ${cqaSelectedMajor.code}-${nextCode} ${name} 등록`);
+  cqaShowMsg(`중분류 ${nextCode} ${name}이(가) 등록되었습니다.`);
+  cqaNewMidForm.hidden = true;
+  document.getElementById("cqaMidSearchInput").value = "";
+  renderMidBody();
+  cqaSelectMid(nextCode);
 });
 
 document.querySelectorAll(".cqa-mode-tab").forEach((btn) => {
@@ -415,6 +472,9 @@ function cqaResetModal() {
   cqaSelectedMajor = null;
   cqaSelectedMid = null;
   cqaPendingItems = [];
+  document.getElementById("cqaMidSearchInput").value = "";
+  document.getElementById("cqaExistingSearchInput").value = "";
+  document.getElementById("cqaNewMidForm").hidden = true;
   cqaRenderMajorTabs();
   cqaRenderMidList();
   cqaRefreshSelectedInfo();
@@ -433,17 +493,21 @@ document.getElementById("productQuickAddClose").addEventListener("click", () => 
 });
 
 /* =====================================================================
-   전사공통코드: 고객스타일 / 스타일 / 평형 / 평형옵션 / 선택형평면 마스터
-   -> 현장별코드에서는 이 마스터 목록 중에서 "선택"해서 배정한다.
-   ===================================================================== */
+   전사공통코드: 고객스타일 / 스타일 마스터
+   -> 현장별코드에서는 이 마스터 목록 전체를 보여주고 적용/미적용만 고른다.
+   평형/평형옵션/선택형 평면은 더 이상 표준 관리 항목이 아니다(평형은
+   현장이 직접 관리하는 현장 전용 목록으로 이동했고, 평형옵션/선택형
+   평면 개념은 삭제됨). ===================================================================== */
 const masterData = {
+  // 고객스타일은 스타일의 "조합"으로 정의된다. styleCodes가 그 조합을 구성하는
+  // 스타일 코드 목록이다 (예: 미니멀 = 스타일 미니멀 + 스타일 미적용).
   custStyles: [
-    { code: "MM", name: "미니멀" },
-    { code: "MN", name: "모던 내추럴" },
-    { code: "NN", name: "스타일 미적용 - None" },
-    { code: "SC", name: "소프트클래식" },
-    { code: "U1", name: "조합기본1" },
-    { code: "U2", name: "조합기본2" },
+    { code: "MM", name: "미니멀", styleCodes: ["MM", "NN"] },
+    { code: "MN", name: "모던 내추럴", styleCodes: ["MN", "NN"] },
+    { code: "NN", name: "스타일 미적용 - None", styleCodes: ["NN"] },
+    { code: "SC", name: "소프트클래식", styleCodes: ["SC", "NN"] },
+    { code: "U1", name: "조합기본1", styleCodes: ["MM", "MN"] },
+    { code: "U2", name: "조합기본2", styleCodes: ["SC", "NN"] },
   ],
   styles: [
     { code: "MM", name: "미니멀 - Minimal" },
@@ -453,33 +517,35 @@ const masterData = {
     { code: "U1", name: "조합 1안 - Union 1" },
     { code: "U2", name: "조합 2안 - Union 2" },
   ],
-  pyeongs: ["0044:44", "0059:59", "0144:144", "075A:75A", "075B:75B", "084A:84A", "084B:84B", "084C:84C", "084D:84D", "110A:110A", "110B:110B", "110C:110C", "121A:121A", "121B:121B", "138A:138A", "138B:138B"]
-    .map((s) => { const [code, name] = s.split(":"); return { code, name }; }),
-  pyeongOptions: [{ code: "NNNN", name: "기본" }],
-  plans: [
-    { code: "00", name: "미적용" },
-    { code: "01", name: "一자형 주방구조 선택시" },
-    { code: "02", name: "ㄱ자형 주방구조 선택시" },
-  ],
 };
 
 const MASTER_META = {
   custStyles: { section: "masterCustStyle" },
   styles: { section: "masterStyle" },
-  pyeongs: { section: "masterPyeong" },
-  pyeongOptions: { section: "masterPyeongOption" },
-  plans: { section: "masterPlan" },
 };
+
+function custStyleComboLabel(item) {
+  return (item.styleCodes || [])
+    .map((code) => { const s = masterData.styles.find((m) => m.code === code); return s ? s.name : code; })
+    .join(" + ");
+}
 
 function renderMasterSection(key) {
   const meta = MASTER_META[key];
   document.getElementById(`${meta.section}Count`).textContent = masterData[key].length;
+  if (key === "custStyles") {
+    document.getElementById(`${meta.section}Body`).innerHTML = masterData[key].map((item) => `
+      <tr><td>${item.code}</td><td>${item.name}</td><td class="ccombo-cell">${custStyleComboLabel(item)}</td></tr>
+    `).join("");
+    return;
+  }
   document.getElementById(`${meta.section}Body`).innerHTML = masterData[key].map((item) => `
     <tr><td>${item.code}</td><td>${item.name}</td></tr>
   `).join("");
 }
 Object.keys(masterData).forEach(renderMasterSection);
 
+// 스타일(styles)은 기존처럼 단순 코드/명칭 마스터로 유지된다.
 document.querySelectorAll(".cmaster-add-btn[data-master]").forEach((btn) => {
   btn.addEventListener("click", () => {
     const key = btn.dataset.master;
@@ -517,6 +583,38 @@ document.querySelectorAll(".cmaster-add-btn[data-master]").forEach((btn) => {
   });
 });
 
+/* ---- 고객스타일 추가 (스타일 조합 선택 모달) ---- */
+const custStyleComboModal = document.getElementById("custStyleComboModal");
+function renderCustStyleComboChecks() {
+  document.getElementById("custStyleComboChecks").innerHTML = masterData.styles.map((s) => `
+    <label class="ccombo-check-item"><input type="checkbox" value="${s.code}" /> ${s.code} · ${s.name}</label>
+  `).join("");
+}
+function openCustStyleComboModal() {
+  document.getElementById("custStyleComboCode").value = "";
+  document.getElementById("custStyleComboName").value = "";
+  document.getElementById("custStyleComboError").hidden = true;
+  renderCustStyleComboChecks();
+  custStyleComboModal.hidden = false;
+}
+document.getElementById("custStyleComboAddBtn").addEventListener("click", openCustStyleComboModal);
+document.getElementById("custStyleComboModalClose").addEventListener("click", () => { custStyleComboModal.hidden = true; });
+document.getElementById("custStyleComboCancelBtn").addEventListener("click", () => { custStyleComboModal.hidden = true; });
+document.getElementById("custStyleComboSaveBtn").addEventListener("click", () => {
+  const errorEl = document.getElementById("custStyleComboError");
+  errorEl.hidden = true;
+  const code = document.getElementById("custStyleComboCode").value.trim();
+  const name = document.getElementById("custStyleComboName").value.trim();
+  const styleCodes = [...document.querySelectorAll("#custStyleComboChecks input:checked")].map((el) => el.value);
+  if (!code || !name) { errorEl.hidden = false; errorEl.textContent = "❌ 코드와 명칭을 입력해주세요."; return; }
+  if (masterData.custStyles.some((m) => m.code === code)) { errorEl.hidden = false; errorEl.textContent = "❌ 이미 존재하는 코드입니다."; return; }
+  if (styleCodes.length === 0) { errorEl.hidden = false; errorEl.textContent = "❌ 구성 스타일을 1개 이상 선택해주세요."; return; }
+  masterData.custStyles.push({ code, name, styleCodes });
+  renderMasterSection("custStyles");
+  custStyleComboModal.hidden = true;
+  dsAddEditLog("전사공통코드", `고객스타일 ${code} ${name} 신규 등록 (구성: ${styleCodes.join("+")})`);
+});
+
 /* ===================== 현장별코드 ===================== */
 const sitesCompact = [
   { code: "001108", name: "ACROHILLS 논현 현장" },
@@ -546,35 +644,20 @@ document.getElementById("siteSelectBody").innerHTML = sitesCompact.map((s) => `
 const SITE_COL_META = {
   custStyles: { section: "custStyle", label: "고객 스타일" },
   styles: { section: "style", label: "스타일" },
-  pyeongs: { section: "pyeong", label: "평형" },
-  pyeongOptions: { section: "pyeongOption", label: "평형옵션" },
-  plans: { section: "plan", label: "선택형 평면" },
 };
 
-// 컬럼별 관리 방식
-// - toggle    : 전사공통코드 표준 목록 전체를 항상 보여주고, 현장에서는 적용/미적용만 선택(고객 스타일/스타일)
-// - freeform  : 표준과 연동하지 않고 현장이 코드/명칭을 직접 등록·관리하는 현장 전용 목록(평형)
-// - assign    : 표준 목록 중 일부를 배정해서 쓰는 기존 방식(평형옵션/선택형 평면)
-const SITE_COL_MODE = {
-  custStyles: "toggle",
-  styles: "toggle",
-  pyeongs: "freeform",
-  pyeongOptions: "assign",
-  plans: "assign",
-};
+// 고객 스타일/스타일은 전사공통코드 표준 목록 전체를 항상 보여주고, 현장에서는
+// 적용/미적용만 고른다. 평형은 표준과 무관한 현장 전용 그리드로 별도 관리한다(아래).
+const PYEONG_SITE_SEED = ["0044:44", "0059:59", "0144:144", "075A:75A", "075B:75B", "084A:84A", "084B:84B", "084C:84C", "084D:84D", "110A:110A", "110B:110B", "110C:110C", "121A:121A", "121B:121B", "138A:138A", "138B:138B"]
+  .map((s) => { const [code, name] = s.split(":"); return { code, name }; });
 
-// 현장별로 배정된 코드 목록(마스터 코드 참조). 190197은 목업과 동일하게 전량 배정된 상태로 시작.
-// pyeongs만 예외로, 표준과 연동되지 않는 현장 자체 {code,name} 목록을 최초 1회 복사해서 시작한다
-// (이후 전사공통코드의 평형 표준이 바뀌어도 이미 생성된 현장의 평형에는 영향을 주지 않는다).
 const siteAssignments = {};
 function getSiteAssignment(siteCode) {
   if (!siteAssignments[siteCode]) {
     siteAssignments[siteCode] = {
       custStyles: masterData.custStyles.map((m) => m.code),
       styles: masterData.styles.map((m) => m.code),
-      pyeongs: masterData.pyeongs.map((m) => ({ code: m.code, name: m.name })),
-      pyeongOptions: masterData.pyeongOptions.map((m) => m.code),
-      plans: masterData.plans.map((m) => m.code),
+      pyeongs: PYEONG_SITE_SEED.map((m) => ({ code: m.code, name: m.name })),
     };
   }
   return siteAssignments[siteCode];
@@ -588,92 +671,119 @@ function isSiteEditable() {
 
 function renderSiteColumn(key) {
   const meta = SITE_COL_META[key];
-  const mode = SITE_COL_MODE[key];
   const assignment = getSiteAssignment(currentSiteCode);
   const editable = isSiteEditable();
   const countEl = document.getElementById(`${meta.section}Count`);
   const bodyEl = document.getElementById(`${meta.section}Body`);
 
-  if (mode === "toggle") {
-    // 표준 전체를 항상 보여주고, 현장에서는 적용/미적용만 토글한다
-    const applied = assignment[key];
-    countEl.textContent = `${applied.length} / ${masterData[key].length}`;
-    bodyEl.innerHTML = masterData[key].map((item) => {
-      const isApplied = applied.includes(item.code);
-      return `
-        <tr data-code="${item.code}" class="${isApplied ? "" : "csite-row-unapplied"}">
-          <td>${item.code}</td>
-          <td>${item.name}</td>
-          <td><button type="button" class="ctoggle-btn ${isApplied ? "applied" : "unapplied"}" data-toggle-master="${key}" data-toggle-code="${item.code}" ${editable ? "" : "disabled"}>${isApplied ? "적용" : "미적용"}</button></td>
-        </tr>
-      `;
-    }).join("");
-    return;
-  }
-
-  if (mode === "freeform") {
-    // 표준과 연동하지 않는 현장 자체 목록 : 현장이 직접 등록한 {code,name}만 보여준다
-    const items = assignment[key];
-    countEl.textContent = items.length;
-    bodyEl.innerHTML = items.map((item) => `
-      <tr data-code="${item.code}">
+  // 표준 전체를 항상 보여주고, 현장에서는 적용/미적용만 토글한다
+  const applied = assignment[key];
+  countEl.textContent = `${applied.length} / ${masterData[key].length}`;
+  bodyEl.innerHTML = masterData[key].map((item) => {
+    const isApplied = applied.includes(item.code);
+    return `
+      <tr data-code="${item.code}" class="${isApplied ? "" : "csite-row-unapplied"}">
         <td>${item.code}</td>
         <td>${item.name}</td>
-        <td><button class="cremove-btn" data-remove-master="${key}" data-remove-code="${item.code}" ${editable ? "" : "disabled"}>✕</button></td>
-      </tr>
-    `).join("");
-    return;
-  }
-
-  // mode === "assign" : 표준 목록 중 배정된 코드만 보여준다(기존 방식)
-  const codes = assignment[key];
-  countEl.textContent = codes.length;
-  bodyEl.innerHTML = codes.map((code) => {
-    const item = masterData[key].find((m) => m.code === code);
-    return `
-      <tr data-code="${code}">
-        <td>${code}</td>
-        <td>${item ? item.name : ""}</td>
-        <td><button class="cremove-btn" data-remove-master="${key}" data-remove-code="${code}" ${editable ? "" : "disabled"}>✕</button></td>
+        <td><button type="button" class="ctoggle-btn ${isApplied ? "applied" : "unapplied"}" data-toggle-master="${key}" data-toggle-code="${item.code}" ${editable ? "" : "disabled"}>${isApplied ? "적용" : "미적용"}</button></td>
       </tr>
     `;
   }).join("");
 }
+
+/* ---- 평형 : 표준과 연동하지 않는 현장 전용 그리드(엑셀처럼 셀 직접 입력 +
+   여러 줄 붙여넣기 지원) ---- */
+function renderPyeongGrid() {
+  const items = getSiteAssignment(currentSiteCode).pyeongs;
+  const editable = isSiteEditable();
+  document.getElementById("pyeongCount").textContent = items.length;
+  document.getElementById("pyeongBody").innerHTML = items.map((item, idx) => `
+    <tr data-idx="${idx}">
+      <td><input type="text" class="cgrid-code-input" data-idx="${idx}" value="${item.code}" ${editable ? "" : "disabled"} /></td>
+      <td><input type="text" class="cgrid-name-input" data-idx="${idx}" value="${item.name}" ${editable ? "" : "disabled"} /></td>
+      <td><button class="cremove-btn" data-remove-pyeong-idx="${idx}" ${editable ? "" : "disabled"}>✕</button></td>
+    </tr>
+  `).join("");
+}
+
+function pyeongGridBulkFill(startIdx, startField, text) {
+  const items = getSiteAssignment(currentSiteCode).pyeongs;
+  const rows = text.replace(/\r/g, "").split("\n").filter((l) => l.length > 0);
+  if (rows.length === 0) return;
+  rows.forEach((rowText, i) => {
+    const cells = rowText.split("\t");
+    const rowIdx = startIdx + i;
+    if (!items[rowIdx]) items[rowIdx] = { code: "", name: "" };
+    if (cells.length > 1) {
+      // 탭으로 구분된 두 칸(코드/명칭)을 붙여넣은 경우
+      items[rowIdx].code = cells[0].trim();
+      items[rowIdx].name = cells[1].trim();
+    } else if (startField === "code") {
+      items[rowIdx].code = cells[0].trim();
+    } else {
+      items[rowIdx].name = cells[0].trim();
+    }
+  });
+  const site = sitesCompact.find((s) => s.code === currentSiteCode);
+  dsAddEditLog("현장별코드", `${site.name}(${currentSiteCode}) - 평형 ${rows.length}행 붙여넣기 입력 (현장 자체 관리)`);
+  renderPyeongGrid();
+}
+
+document.getElementById("pyeongBody").addEventListener("change", (e) => {
+  const codeInput = e.target.closest(".cgrid-code-input");
+  const nameInput = e.target.closest(".cgrid-name-input");
+  if (!codeInput && !nameInput) return;
+  const items = getSiteAssignment(currentSiteCode).pyeongs;
+  const idx = Number((codeInput || nameInput).dataset.idx);
+  if (!items[idx]) return;
+  if (codeInput) items[idx].code = codeInput.value.trim();
+  if (nameInput) items[idx].name = nameInput.value.trim();
+  const site = sitesCompact.find((s) => s.code === currentSiteCode);
+  dsAddEditLog("현장별코드", `${site.name}(${currentSiteCode}) - 평형 ${items[idx].code} ${items[idx].name} 수정 (현장 자체 관리)`);
+});
+
+document.getElementById("pyeongBody").addEventListener("paste", (e) => {
+  const codeInput = e.target.closest(".cgrid-code-input");
+  const nameInput = e.target.closest(".cgrid-name-input");
+  if (!codeInput && !nameInput) return;
+  const text = (e.clipboardData || window.clipboardData).getData("text");
+  if (!text.includes("\n") && !text.includes("\t")) return; // 단일 값 붙여넣기는 기본 동작에 맡긴다
+  e.preventDefault();
+  const idx = Number((codeInput || nameInput).dataset.idx);
+  pyeongGridBulkFill(idx, codeInput ? "code" : "name", text);
+});
+
+document.getElementById("pyeongBody").addEventListener("click", (e) => {
+  const removeBtn = e.target.closest("[data-remove-pyeong-idx]");
+  if (!removeBtn || !isSiteEditable()) return;
+  const idx = Number(removeBtn.dataset.removePyeongIdx);
+  const items = getSiteAssignment(currentSiteCode).pyeongs;
+  const removed = items[idx];
+  items.splice(idx, 1);
+  renderPyeongGrid();
+  const site = sitesCompact.find((s) => s.code === currentSiteCode);
+  dsAddEditLog("현장별코드", `${site.name}(${currentSiteCode}) - 평형 ${removed.code} ${removed.name} 삭제 (현장 자체 관리)`);
+});
+
+document.getElementById("pyeongAddRowBtn").addEventListener("click", () => {
+  if (!isSiteEditable()) return;
+  getSiteAssignment(currentSiteCode).pyeongs.push({ code: "", name: "" });
+  renderPyeongGrid();
+  const rows = document.querySelectorAll("#pyeongBody .cgrid-code-input");
+  if (rows.length) rows[rows.length - 1].focus();
+});
+
 function renderAllSiteColumns() {
   Object.keys(SITE_COL_META).forEach(renderSiteColumn);
+  renderPyeongGrid();
 }
 function renderSiteEditLock() {
   const editable = isSiteEditable();
-  document.querySelectorAll(".cmaster-add-btn[data-site-master]").forEach((el) => { el.disabled = !editable; });
+  document.getElementById("pyeongAddRowBtn").disabled = !editable;
 }
 renderAllSiteColumns();
 
 document.querySelector(".csite-cols").addEventListener("click", (e) => {
-  const removeBtn = e.target.closest("[data-remove-master]");
-  if (removeBtn && isSiteEditable()) {
-    const key = removeBtn.dataset.removeMaster;
-    const code = removeBtn.dataset.removeCode;
-    const meta = SITE_COL_META[key];
-    const mode = SITE_COL_MODE[key];
-    const assignment = getSiteAssignment(currentSiteCode);
-    let label = code;
-    let logVerb = "배정 해제";
-    if (mode === "freeform") {
-      const item = assignment[key].find((x) => x.code === code);
-      label = item ? item.name : code;
-      logVerb = "삭제";
-      assignment[key] = assignment[key].filter((x) => x.code !== code);
-    } else {
-      const item = masterData[key].find((m) => m.code === code);
-      label = item ? item.name : code;
-      assignment[key] = assignment[key].filter((c) => c !== code);
-    }
-    renderSiteColumn(key);
-    const site = sitesCompact.find((s) => s.code === currentSiteCode);
-    dsAddEditLog("현장별코드", `${site.name}(${currentSiteCode}) - ${meta.label}에서 ${code} ${label} ${logVerb}`);
-    return;
-  }
-
   const toggleBtn = e.target.closest("[data-toggle-master]");
   if (toggleBtn && isSiteEditable()) {
     const key = toggleBtn.dataset.toggleMaster;
@@ -688,83 +798,6 @@ document.querySelector(".csite-cols").addEventListener("click", (e) => {
     const site = sitesCompact.find((s) => s.code === currentSiteCode);
     dsAddEditLog("현장별코드", `${site.name}(${currentSiteCode}) - ${meta.label} ${code} ${item ? item.name : ""} ${nowApplied ? "적용" : "미적용"}으로 변경`);
   }
-});
-
-document.querySelectorAll(".cmaster-add-btn[data-site-master]").forEach((btn) => {
-  btn.addEventListener("click", () => {
-    if (!isSiteEditable()) return;
-    const key = btn.dataset.siteMaster;
-    const meta = SITE_COL_META[key];
-    const mode = SITE_COL_MODE[key];
-    const body = document.getElementById(`${meta.section}Body`);
-    if (body.querySelector(".cinline-add-row")) return;
-    const assignment = getSiteAssignment(currentSiteCode);
-
-    if (mode === "freeform") {
-      // 표준 목록과 무관하게 현장이 직접 코드/명칭을 입력해서 등록한다
-      const tr = document.createElement("tr");
-      tr.className = "cinline-add-row";
-      tr.innerHTML = `
-        <td><input type="text" placeholder="코드" class="cnew-code" /></td>
-        <td>
-          <div style="display:flex; gap:4px;">
-            <input type="text" placeholder="명칭" class="cnew-name" />
-            <div class="cinline-add-actions">
-              <button class="cinline-confirm-btn">추가</button>
-              <button class="cinline-cancel-btn">취소</button>
-            </div>
-          </div>
-        </td>
-        <td></td>
-      `;
-      body.prepend(tr);
-      tr.querySelector(".cnew-code").focus();
-      tr.querySelector(".cinline-cancel-btn").addEventListener("click", () => tr.remove());
-      tr.querySelector(".cinline-confirm-btn").addEventListener("click", () => {
-        const code = tr.querySelector(".cnew-code").value.trim();
-        const name = tr.querySelector(".cnew-name").value.trim();
-        if (!code || !name) return;
-        if (assignment[key].some((item) => item.code === code)) { alert("이미 존재하는 코드입니다."); return; }
-        assignment[key].push({ code, name });
-        renderSiteColumn(key);
-        const site = sitesCompact.find((s) => s.code === currentSiteCode);
-        dsAddEditLog("현장별코드", `${site.name}(${currentSiteCode}) - ${meta.label}에 ${code} ${name} 신규 등록 (현장 자체 관리, 표준 미연동)`);
-      });
-      return;
-    }
-
-    // mode === "assign" (기존 방식 : 표준 목록 중 미배정 코드를 골라 배정)
-    const available = masterData[key].filter((m) => !assignment[key].includes(m.code));
-    if (available.length === 0) {
-      alert(`전사공통코드에 등록된 "${meta.label}" 코드가 모두 이미 배정되어 있습니다.\n새 코드는 전사공통코드 탭에서 추가해 주세요.`);
-      return;
-    }
-
-    const tr = document.createElement("tr");
-    tr.className = "cinline-add-row";
-    tr.innerHTML = `
-      <td colspan="2">
-        <select class="cnew-select">
-          ${available.map((m) => `<option value="${m.code}">${m.code} - ${m.name}</option>`).join("")}
-        </select>
-      </td>
-      <td class="cinline-add-actions">
-        <button class="cinline-confirm-btn">추가</button>
-        <button class="cinline-cancel-btn">취소</button>
-      </td>
-    `;
-    body.prepend(tr);
-
-    tr.querySelector(".cinline-cancel-btn").addEventListener("click", () => tr.remove());
-    tr.querySelector(".cinline-confirm-btn").addEventListener("click", () => {
-      const code = tr.querySelector(".cnew-select").value;
-      const item = masterData[key].find((m) => m.code === code);
-      assignment[key].push(code);
-      renderSiteColumn(key);
-      const site = sitesCompact.find((s) => s.code === currentSiteCode);
-      dsAddEditLog("현장별코드", `${site.name}(${currentSiteCode}) - ${meta.label}에 ${code} ${item ? item.name : ""} 배정 추가`);
-    });
-  });
 });
 
 document.getElementById("siteSelectBody").addEventListener("click", (e) => {

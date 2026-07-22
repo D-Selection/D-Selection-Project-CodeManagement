@@ -1085,7 +1085,10 @@ renderPivotTable();
 renderTemplateView();
 renderReviewDoc();
 
-/* ===================== STEP 1 · PANEL 5: 대분류/중분류/제조사 ===================== */
+/* ===================== 대분류/중분류/제조사 (조회/편집 팝업 전용 데이터) =====================
+   STEP 1의 "1.5 대분류/중분류/제조사" 탭은 삭제되었지만, 4.상품고객언어의
+   "🗂 대분류·중분류·제조사 조회/편집"(sortOrderModal) 팝업은 그대로 이 데이터를
+   사용하므로 배열 자체는 유지한다. */
 const majorCats = [
   { name: "스타일", code: "00" }, { name: "현관", code: "01" }, { name: "거실", code: "02" },
   { name: "주방", code: "03" }, { name: "침실", code: "04" }, { name: "욕실", code: "05" },
@@ -1102,19 +1105,6 @@ const makers = [
   { name: "LG하우시스", code: "04" }, { name: "LX하우시스", code: "05" }, { name: "동양엠텍", code: "06" },
   { name: "KCC", code: "07" }, { name: "한샘", code: "08" }, { name: "라이히트", code: "09" },
 ];
-
-function renderCategoryTables() {
-  document.getElementById("majorCatBody").innerHTML = majorCats.map((c, i) => `
-    <tr class="${i === 0 ? "selected" : ""}"><td>${c.name}</td><td>${c.code}</td></tr>
-  `).join("");
-  document.getElementById("midCatBody").innerHTML = midCats.map((c, i) => `
-    <tr class="${i === 0 ? "selected" : ""}"><td>${c.major}</td><td>${c.name}</td><td>${c.code}</td></tr>
-  `).join("");
-  document.getElementById("makerBody").innerHTML = makers.map((c, i) => `
-    <tr class="${i === 0 ? "selected" : ""}"><td>${c.name}</td><td>${c.code}</td></tr>
-  `).join("");
-}
-renderCategoryTables();
 
 /* 별매품 단계(1/2/3) : 상품코드별로 관리되는 값. 4.상품고객언어에서 수정하면
    5.안분표 생성의 같은 상품코드 행에도 그대로 반영된다(단일 소스). */

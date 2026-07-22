@@ -54,11 +54,12 @@
         </aside>
 
         <aside class="ccol ccol-narrow ccol-scrollable">
-          <div class="ccol-title"><span class="ccol-icon">🔎</span> 현장코드 (고객스타일/스타일/평형 등)</div>
+          <div class="ccol-title"><span class="ccol-icon">🔎</span> 현장코드 (고객스타일/스타일)</div>
           <div class="cmini-section" id="masterCustStyleSection">
-            <div class="cmini-header">고객스타일 <span class="ccount" id="masterCustStyleCount">0</span> <button class="cmaster-add-btn" data-master="custStyles">+ 추가</button></div>
+            <div class="cmini-header">고객스타일 <span class="ccount" id="masterCustStyleCount">0</span> <button class="cmaster-add-btn" id="custStyleComboAddBtn">+ 추가</button></div>
+            <div class="ccombo-hint">고객스타일은 스타일의 조합으로 정의됩니다 (예: 미니멀 = 스타일 미니멀 + 스타일 미적용).</div>
             <table class="cmini-table">
-              <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
+              <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th><th>구성(스타일)</th></tr></thead>
               <tbody id="masterCustStyleBody"></tbody>
             </table>
           </div>
@@ -67,27 +68,6 @@
             <table class="cmini-table">
               <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
               <tbody id="masterStyleBody"></tbody>
-            </table>
-          </div>
-          <div class="cmini-section" id="masterPyeongSection">
-            <div class="cmini-header">평형 <span class="ccount" id="masterPyeongCount">0</span> <button class="cmaster-add-btn" data-master="pyeongs">+ 추가</button></div>
-            <table class="cmini-table">
-              <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
-              <tbody id="masterPyeongBody"></tbody>
-            </table>
-          </div>
-          <div class="cmini-section" id="masterPyeongOptionSection">
-            <div class="cmini-header">평형옵션 <span class="ccount" id="masterPyeongOptionCount">0</span> <button class="cmaster-add-btn" data-master="pyeongOptions">+ 추가</button></div>
-            <table class="cmini-table">
-              <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
-              <tbody id="masterPyeongOptionBody"></tbody>
-            </table>
-          </div>
-          <div class="cmini-section" id="masterPlanSection">
-            <div class="cmini-header">선택형평면 <span class="ccount" id="masterPlanCount">0</span> <button class="cmaster-add-btn" data-master="plans">+ 추가</button></div>
-            <table class="cmini-table">
-              <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
-              <tbody id="masterPlanBody"></tbody>
             </table>
           </div>
         </aside>
@@ -191,25 +171,12 @@
                 <tbody id="styleBody"></tbody>
               </table>
             </div>
-            <div class="csite-subcol">
-              <div class="cmini-header">평형 <span class="ccount" id="pyeongCount">16</span> <button class="cmaster-add-btn" data-site-master="pyeongs">+ 추가</button></div>
-              <table class="cmini-table">
-                <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th><th></th></tr></thead>
+            <div class="csite-subcol csite-subcol-wide">
+              <div class="cmini-header">평형 (현장 자체 관리) <span class="ccount" id="pyeongCount">16</span> <button class="cmaster-add-btn" id="pyeongAddRowBtn">+ 행 추가</button></div>
+              <div class="cgrid-hint">코드/명칭 칸을 엑셀처럼 바로 입력·수정할 수 있고, 여러 줄을 붙여넣기(Tab/줄바꿈 구분)할 수도 있습니다.</div>
+              <table class="cmini-table cgrid-table">
+                <thead><tr><th>코드</th><th>명칭</th><th></th></tr></thead>
                 <tbody id="pyeongBody"></tbody>
-              </table>
-            </div>
-            <div class="csite-subcol">
-              <div class="cmini-header">평형옵션 <span class="ccount" id="pyeongOptionCount">1</span> <button class="cmaster-add-btn" data-site-master="pyeongOptions">+ 추가</button></div>
-              <table class="cmini-table">
-                <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th><th></th></tr></thead>
-                <tbody id="pyeongOptionBody"></tbody>
-              </table>
-            </div>
-            <div class="csite-subcol">
-              <div class="cmini-header">선택형 평면 <span class="ccount" id="planCount">3</span> <button class="cmaster-add-btn" data-site-master="plans">+ 추가</button></div>
-              <table class="cmini-table">
-                <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th><th></th></tr></thead>
-                <tbody id="planBody"></tbody>
               </table>
             </div>
           </div>
@@ -240,11 +207,19 @@
 
           <div class="cqa-mid-existing-split">
             <div class="cqa-mid-col">
-              <div class="cqa-step-label">중분류 <span class="ccount" id="cqaMidCount">0</span></div>
+              <div class="cqa-step-label">중분류 <span class="ccount" id="cqaMidCount">0</span> <button type="button" class="cqa-new-mid-btn" id="cqaNewMidBtn" disabled>+ 새 중분류</button></div>
+              <input type="text" id="cqaMidSearchInput" class="cqa-inline-search" placeholder="중분류 코드/명칭 검색 (쉼표로 여러 단어 and 검색)" autocomplete="off" hidden />
+              <div class="cqa-new-mid-form" id="cqaNewMidForm" hidden>
+                <input type="text" id="cqaNewMidName" class="cqa-name-input" placeholder="새 중분류명" autocomplete="off" />
+                <input type="text" id="cqaNewMidGroup" class="cqa-name-input" placeholder="그룹명 (선택)" autocomplete="off" />
+                <button type="button" class="toolbar-btn" id="cqaNewMidConfirmBtn">추가</button>
+                <button type="button" class="toolbar-btn" id="cqaNewMidCancelBtn">취소</button>
+              </div>
               <div class="cqa-mid-list" id="cqaMidList"></div>
             </div>
             <div class="cqa-existing-col">
               <div class="cqa-step-label">기존 소분류 <span class="ccount" id="cqaExistingCount">0</span></div>
+              <input type="text" id="cqaExistingSearchInput" class="cqa-inline-search" placeholder="소분류 코드/상품명 검색 (쉼표로 여러 단어 and 검색)" autocomplete="off" hidden />
               <div class="cqa-existing-list" id="cqaExistingList"></div>
             </div>
           </div>
@@ -273,6 +248,32 @@
           <div class="cqa-step-label">대기 목록 <span class="ccount" id="cqaPendingCount">0</span></div>
           <div class="cqa-pending-list" id="cqaPendingList"></div>
           <button type="button" class="toolbar-btn cqa-save-btn" id="cqaSaveBtn" disabled>💾 전체 저장 (<span id="cqaSaveBtnCount">0</span>건)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 전사공통코드 : 고객스타일 추가 — 고객스타일은 스타일의 조합으로 정의된다 -->
+  <div class="cmodal-backdrop" id="custStyleComboModal" hidden>
+    <div class="csend-modal">
+      <div class="cmodal-header">➕ 고객스타일 추가 <button class="cmodal-close" id="custStyleComboModalClose" type="button">✕</button></div>
+      <div class="cmodal-body">
+        <div class="ccombo-field">
+          <label>코드</label>
+          <input type="text" id="custStyleComboCode" placeholder="예: MX" autocomplete="off" />
+        </div>
+        <div class="ccombo-field">
+          <label>명칭</label>
+          <input type="text" id="custStyleComboName" placeholder="예: 믹스 스타일" autocomplete="off" />
+        </div>
+        <div class="ccombo-field">
+          <label>구성 스타일 (2개 이상 선택 가능)</label>
+          <div class="ccombo-style-checks" id="custStyleComboChecks"></div>
+        </div>
+        <div class="ccombo-error" id="custStyleComboError" hidden></div>
+        <div class="ccombo-actions">
+          <button class="toolbar-btn" id="custStyleComboCancelBtn" type="button">취소</button>
+          <button class="primary-btn" id="custStyleComboSaveBtn" type="button">추가</button>
         </div>
       </div>
     </div>
