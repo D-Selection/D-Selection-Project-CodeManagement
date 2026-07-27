@@ -1262,6 +1262,159 @@ table.pivot-table thead th.pivot-product-col { background: var(--navy); z-index:
 #langEditModal .send-modal { width: 640px; }
 #sortOrderModal .send-modal { width: 820px; }
 
+/* =====================================================================
+   5. 안분표 생성 : 안분표 가생성 팝업
+   (연산량 사전 계산 + 10,000건 초과 시 자동 배치 분할)
+   ===================================================================== */
+.alloc-gen-modal { width: 1180px; }
+.alloc-gen-split { display: flex; gap: 18px; align-items: flex-start; }
+.alloc-gen-left { flex: 0 0 340px; display: flex; flex-direction: column; gap: 12px; }
+.alloc-gen-right { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+
+.alloc-gen-panel-title { font-size: 12.5px; font-weight: 700; }
+.alloc-gen-guide-row { display: flex; gap: 10px; align-items: stretch; }
+.alloc-gen-guide {
+  flex: 1;
+  background: #fff8e6;
+  border: 1px solid #f0d896;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  color: var(--text-main);
+}
+.alloc-gen-guide.ok { background: #e9f9ee; border-color: #b7e8c8; color: #14683c; }
+.alloc-gen-run-btn {
+  flex: 0 0 92px;
+  border: none;
+  border-radius: 6px;
+  background: #1a7f4b;
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.45;
+  cursor: pointer;
+}
+.alloc-gen-run-btn:hover:not(:disabled) { background: #146239; }
+.alloc-gen-run-btn:disabled { background: #c7cad1; cursor: default; }
+
+.alloc-gen-section { border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.alloc-gen-section-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--navy);
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 7px 10px;
+}
+.alloc-gen-step-no {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 15px; height: 15px; border-radius: 3px;
+  background: rgba(255,255,255,0.9); color: #1c2333;
+  font-size: 10px; font-weight: 800;
+}
+.alloc-gen-picked { margin-left: auto; font-size: 10.5px; font-weight: 600; color: #b9f5cf; }
+.alloc-gen-picked.warn { color: #ffd0a8; }
+.alloc-gen-list { max-height: 132px; overflow-y: auto; background: #fff; }
+.alloc-gen-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-bottom: 1px solid #f0f1f4;
+  cursor: pointer;
+}
+.alloc-gen-row:last-child { border-bottom: none; }
+.alloc-gen-row:hover { background: #f5f8ff; }
+.alloc-gen-row.selected { background: var(--blue-light); font-weight: 600; }
+.alloc-gen-row-code { color: var(--text-sub); font-size: 10.5px; min-width: 22px; }
+.alloc-gen-row-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.alloc-gen-row-sub { color: var(--text-sub); font-size: 10.5px; white-space: nowrap; }
+
+.alloc-gen-calc {
+  border: 1px solid var(--border);
+  border-left: 4px solid #6b7280;
+  border-radius: 6px;
+  background: #fbfbfd;
+  padding: 12px 14px;
+}
+.alloc-gen-calc.split { border-left-color: #e2572a; background: #fff6f2; }
+.alloc-gen-calc-title { font-size: 12px; font-weight: 700; margin-bottom: 8px; }
+.alloc-gen-calc-grid {
+  display: grid;
+  grid-template-columns: auto auto auto auto auto auto;
+  gap: 4px 10px;
+  align-items: baseline;
+  font-size: 11.5px;
+  margin-bottom: 8px;
+}
+.alloc-gen-calc-grid span { color: var(--text-sub); }
+.alloc-gen-calc-grid strong { font-variant-numeric: tabular-nums; margin-right: 12px; }
+.alloc-gen-calc-grid strong.over { color: #e2572a; }
+.alloc-gen-calc-note { font-size: 11.5px; line-height: 1.6; color: var(--text-main); }
+.alloc-gen-calc-formula { margin-top: 6px; font-size: 10.5px; color: var(--text-sub); }
+.alloc-gen-progress { margin-top: 10px; }
+.alloc-gen-progress-bar { height: 8px; background: #e6e8ee; border-radius: 999px; overflow: hidden; }
+.alloc-gen-progress-bar i { display: block; height: 100%; background: #1a7f4b; transition: width .2s ease; }
+.alloc-gen-progress-text { margin-top: 5px; font-size: 10.5px; color: var(--text-sub); font-variant-numeric: tabular-nums; }
+
+.alloc-gen-result-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1a7f4b;
+  color: #fff;
+  padding: 7px 12px;
+  border-radius: 6px 6px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+}
+.alloc-gen-result-count {
+  background: rgba(255,255,255,0.92);
+  color: #14683c;
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 10.5px;
+  margin-left: 4px;
+}
+.alloc-gen-clear-btn {
+  border: 1px solid rgba(255,255,255,0.5);
+  background: transparent;
+  color: #fff;
+  border-radius: 4px;
+  font-size: 10.5px;
+  padding: 3px 9px;
+  cursor: pointer;
+}
+.alloc-gen-clear-btn:disabled { opacity: .45; cursor: default; }
+.alloc-gen-result-wrap {
+  border: 1px solid var(--border);
+  border-top: none;
+  border-radius: 0 0 6px 6px;
+  max-height: 320px;
+  overflow: auto;
+}
+.alloc-gen-result-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.alloc-gen-result-table thead th {
+  position: sticky; top: 0;
+  background: #eef0f4;
+  padding: 7px 10px;
+  font-size: 11px;
+  text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.alloc-gen-result-table tbody td { padding: 7px 10px; border-bottom: 1px solid #f0f1f4; white-space: nowrap; }
+.alloc-gen-result-empty { text-align: center; color: var(--text-sub); padding: 28px 10px !important; }
+.alloc-gen-batch-tag {
+  background: #eef1fb; color: #4a5bd0;
+  border-radius: 4px; padding: 1px 7px;
+  font-size: 10.5px; font-weight: 700;
+}
+
 /* 1.2 상품구성코드 : 상품 1개 ↔ 프로덕트 N개 매핑 (검색해서 클릭으로만 추가/해제) */
 .sku-product-cell { display: flex; flex-direction: column; gap: 6px; min-width: 260px; white-space: normal; }
 .sku-product-chips { display: flex; flex-wrap: wrap; gap: 5px; }
@@ -1469,6 +1622,22 @@ table.pivot-table thead th.pivot-product-col { background: var(--navy); z-index:
 }
 .bulk-tier-select:focus { border-color: var(--blue); outline: none; }
 .bulk-selected-row .bulk-tier-select { flex: 0 0 auto; white-space: nowrap; }
+
+/* 별매품 STEP 입력 (4.상품고객언어 일괄 입력 팝업) */
+.bulk-step-input {
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  padding: 6px 8px;
+  font-size: 12px;
+  background: #fff;
+}
+.bulk-step-input:focus { border-color: var(--blue); outline: none; }
+.bulk-selected-row .bulk-step-input { flex: 0 0 130px; }
+
+/* 공통 패키지 생성 : 별매품 STEP 안내 문구 */
+.pkg-field-hint { font-size: 11px; color: var(--text-sub); margin: -2px 0 10px; }
 
 .sort-order-columns { display: flex; gap: 14px; }
 .sort-order-col { flex: 1; min-width: 0; }

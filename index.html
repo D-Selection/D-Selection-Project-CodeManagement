@@ -534,6 +534,7 @@
                 <th>상품 중분류명</th>
                 <th>상품 제조사명</th>
                 <th>별매품 단계</th>
+                <th>별매품 STEP</th>
                 <th class="sortable">공간코드 <span class="sort-icon">⇅</span></th>
                 <th>항목명</th>
                 <th>항목명 (고객용)</th>
@@ -574,7 +575,7 @@
       <div class="toolbar toolbar-slim">
         <div></div>
         <div class="toolbar-right">
-          <button class="ghost-btn green">◉ 1. 안분표 가생성</button>
+          <button class="ghost-btn green" id="allocationGenBtn">◉ 1. 안분표 가생성</button>
           <div class="dropdown-wrap">
             <button class="ghost-btn blue-fill" id="allocationSettingsBtn">☰ 2. 안분표 설정 ⌄</button>
             <div class="dropdown-menu" id="allocationSettingsMenu" hidden>
@@ -618,6 +619,7 @@
               <th>품목명</th>
               <th>항목명</th>
               <th>별매품 단계</th>
+              <th>별매품 STEP</th>
               <th>발송상태</th>
             </tr>
           </thead>
@@ -698,6 +700,16 @@
       <div class="send-modal bulk-map-modal">
         <div class="cmodal-header">✎ 세부사항(고객용) 입력 — 상품명(고객용) (1.1 프로덕트 리스트) <button class="cmodal-close" id="detailCustomerBulkModalClose" type="button">✕</button></div>
         <div class="cmodal-body" id="detailCustomerBulkModalBody"></div>
+      </div>
+    </div>
+
+    <!-- 5. 안분표 생성 : 안분표 가생성 (고객 > 고객스타일 > 상품스타일 선택).
+         총 연산건수가 10,000건을 넘으면 연산 오류가 나므로, 실행 전에 연산건수를
+         계산해 10,000건 단위 배치로 자동 분할 실행한 뒤 결과를 병합한다. -->
+    <div class="cmodal-backdrop" id="allocationGenModal" hidden>
+      <div class="send-modal alloc-gen-modal">
+        <div class="cmodal-header">▤ 「아크로드 서초 현장」 안분표 가생성 <button class="cmodal-close" id="allocationGenModalClose" type="button">✕</button></div>
+        <div class="cmodal-body" id="allocationGenModalBody"></div>
       </div>
     </div>
 

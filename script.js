@@ -1117,6 +1117,17 @@ const PRODUCT_OPTION_TIER = {
   SL060: "3",
 };
 
+/* 별매품 STEP : 별매품 단계(1/2/3)와는 별개로, 고객에게 안내되는 별매품의
+   노출 순서(스텝) 번호. 상품코드별로 관리되며 4.상품고객언어의
+   「항목명(고객용)·별매품 단계 입력」 팝업과 5.안분표의 「공통 패키지 생성 —
+   평형 일괄 매핑」 팝업 양쪽에서 입력할 수 있고, 두 화면 모두 같은 값을 본다. */
+const PRODUCT_OPTION_STEP = {
+  SL001: "1", SL003: "2", SL006: "3",
+};
+function productStepLabel(code) {
+  return PRODUCT_OPTION_STEP[code] ? `STEP ${PRODUCT_OPTION_STEP[code]}` : "-";
+}
+
 /* ===================== STEPS 2-4 공용 데이터 (원가 / 고객언어 / 판매가) ===================== */
 const flatRows = [
   { seq: 1, code: "SL001", detailCode: "FN-501-01", style: "스타일 미적용 - None", space: "현관 - Entrance", item: "슬라이딩 도어", itemCustomer: "슬라이딩 도어", detail: "현관중문 슬라이딩 도어/LX하우시스 F.3180", detailCustomer: "현관중문 슬라이딩 도어/LX하우시스 F.3180", price: "" },
@@ -1181,6 +1192,7 @@ function renderLangTable() {
       <td class="${r.midName ? "" : "muted"}">${r.midName || "-"}</td>
       <td class="${r.maker ? "" : "muted"}">${r.maker || "-"}</td>
       <td>${PRODUCT_OPTION_TIER[r.code] ? `${PRODUCT_OPTION_TIER[r.code]}단계` : "-"}</td>
+      <td class="${PRODUCT_OPTION_STEP[r.code] ? "" : "muted"}">${productStepLabel(r.code)}</td>
       <td class="code-cell">${r.code}</td>
       <td>${r.item}</td>
       <td>${r.itemCustomer}</td>
@@ -1366,14 +1378,14 @@ function bulkTierOptionsHtml(selected) {
 
 document.getElementById("itemCustomerBulkBtn").addEventListener("click", () => {
   itemCustomerBulkModalBody.innerHTML = `
-    <div class="lang-edit-summary">1.2 상품구성코드 리스트입니다. 항목명(고객용)·별매품 단계를 입력하고 "적용"을 누르면 현재까지 생성된 평형별 상품 정보에 자동 반영됩니다. 비워두면(별매품 단계는 "-") 해당 값은 변경하지 않습니다.<br/>여러 상품에 같은 값을 넣으려면 왼쪽 체크박스로 선택한 뒤 아래 「선택 항목에 일괄 입력」을 사용하세요.</div>
+    <div class="lang-edit-summary">1.2 상품구성코드 리스트입니다. 항목명(고객용)·별매품 단계·별매품 STEP을 입력하고 "적용"을 누르면 현재까지 생성된 평형별 상품 정보에 자동 반영됩니다. 비워두면(별매품 단계는 "-") 해당 값은 변경하지 않습니다.<br/>별매품 STEP은 별매품 단계(1/2/3)와는 별개로, 고객 안내문에 노출되는 순서를 정하는 번호입니다.<br/>여러 상품에 같은 값을 넣으려면 왼쪽 체크박스로 선택한 뒤 아래 「선택 항목에 일괄 입력」을 사용하세요.</div>
     <div class="bulk-map-toolbar">
       <button type="button" class="toolbar-btn">⭣ 엑셀 양식 다운로드</button>
       <button type="button" class="toolbar-btn">⭱ 엑셀 업로드</button>
     </div>
     <div class="bulk-map-table-wrap">
       <table class="bulk-map-table">
-        <thead><tr><th class="bulk-check-col"><input type="checkbox" id="itemCustomerBulkCheckAll" title="전체 선택" /></th><th>상품 코드</th><th>항목명</th><th>항목명(고객용)</th><th>별매품 단계</th></tr></thead>
+        <thead><tr><th class="bulk-check-col"><input type="checkbox" id="itemCustomerBulkCheckAll" title="전체 선택" /></th><th>상품 코드</th><th>항목명</th><th>항목명(고객용)</th><th>별매품 단계</th><th>별매품 STEP</th></tr></thead>
         <tbody>
           ${skuData.map((s) => `
             <tr data-code="${s.code}">
@@ -1382,6 +1394,7 @@ document.getElementById("itemCustomerBulkBtn").addEventListener("click", () => {
               <td>${s.item}</td>
               <td><input type="text" class="bulk-map-input" data-field="itemCustomer" value="${(s.itemCustomer || "").replace(/"/g, "&quot;")}" /></td>
               <td><select class="bulk-tier-select" data-field="tier">${bulkTierOptionsHtml(PRODUCT_OPTION_TIER[s.code] || "")}</select></td>
+              <td><input type="number" min="1" class="bulk-step-input" data-field="step" value="${PRODUCT_OPTION_STEP[s.code] || ""}" placeholder="-" /></td>
             </tr>`).join("")}
         </tbody>
       </table>
@@ -1394,6 +1407,7 @@ document.getElementById("itemCustomerBulkBtn").addEventListener("click", () => {
         <option value="2">2단계</option>
         <option value="3">3단계</option>
       </select>
+      <input type="number" min="1" id="itemCustomerBulkSelectedStep" class="bulk-step-input" placeholder="별매품 STEP" />
       <button type="button" class="toolbar-btn" id="itemCustomerBulkSelectedFillBtn">✔ 선택 항목에 일괄 입력</button>
     </div>
     <div class="lang-edit-actions">
@@ -1409,12 +1423,14 @@ document.getElementById("itemCustomerBulkBtn").addEventListener("click", () => {
   document.getElementById("itemCustomerBulkSelectedFillBtn").addEventListener("click", () => {
     const value = document.getElementById("itemCustomerBulkSelectedValue").value.trim();
     const tier = document.getElementById("itemCustomerBulkSelectedTier").value;
-    if (!value && !tier) { showToast("일괄 입력할 항목명(고객용) 또는 별매품 단계를 먼저 입력해주세요."); return; }
+    const step = document.getElementById("itemCustomerBulkSelectedStep").value.trim();
+    if (!value && !tier && !step) { showToast("일괄 입력할 항목명(고객용) · 별매품 단계 · 별매품 STEP 중 하나를 먼저 입력해주세요."); return; }
     const checkedRows = [...itemCustomerBulkModalBody.querySelectorAll("tr[data-code]")].filter((tr) => tr.querySelector(".bulk-map-check").checked);
     if (checkedRows.length === 0) { showToast("값을 넣을 상품을 체크박스로 먼저 선택해주세요."); return; }
     checkedRows.forEach((tr) => {
       if (value) tr.querySelector('[data-field="itemCustomer"]').value = value;
       if (tier) tr.querySelector('[data-field="tier"]').value = tier;
+      if (step) tr.querySelector('[data-field="step"]').value = step;
     });
     showToast(`${checkedRows.length}개 상품에 입력되었습니다. "적용"을 눌러야 실제 반영됩니다.`);
   });
@@ -1423,10 +1439,12 @@ document.getElementById("itemCustomerBulkBtn").addEventListener("click", () => {
   document.getElementById("itemCustomerBulkApplyBtn").addEventListener("click", () => {
     let changedSkus = 0;
     let changedTiers = 0;
+    let changedSteps = 0;
     itemCustomerBulkModalBody.querySelectorAll("tr[data-code]").forEach((tr) => {
       const code = tr.dataset.code;
       const value = tr.querySelector('[data-field="itemCustomer"]').value.trim();
       const tier = tr.querySelector('[data-field="tier"]').value;
+      const step = tr.querySelector('[data-field="step"]').value.trim();
       if (value) {
         const s = skuData.find((x) => x.code === code);
         if (s) s.itemCustomer = value;
@@ -1437,14 +1455,22 @@ document.getElementById("itemCustomerBulkBtn").addEventListener("click", () => {
         PRODUCT_OPTION_TIER[code] = tier;
         changedTiers++;
       }
+      // STEP은 비우면 "지정 안 함"으로 되돌린다(빈칸 = 삭제).
+      if (step) {
+        if (PRODUCT_OPTION_STEP[code] !== step) changedSteps++;
+        PRODUCT_OPTION_STEP[code] = step;
+      } else if (PRODUCT_OPTION_STEP[code]) {
+        delete PRODUCT_OPTION_STEP[code];
+        changedSteps++;
+      }
     });
-    dsAddEditLog("4. 상품고객언어", `항목명(고객용) 일괄 입력 적용: ${changedSkus}개 상품코드, 별매품 단계 ${changedTiers}개 상품코드`);
+    dsAddEditLog("4. 상품고객언어", `항목명(고객용) 일괄 입력 적용: ${changedSkus}개 상품코드, 별매품 단계 ${changedTiers}개, 별매품 STEP ${changedSteps}개`);
     renderSkuTable();
     renderLangTable();
     renderCostTable();
     renderAllocationTable();
     itemCustomerBulkModal.hidden = true;
-    showToast(`상품 ${changedSkus}건, 별매품 단계 ${changedTiers}건이 반영되었습니다.`);
+    showToast(`상품 ${changedSkus}건, 별매품 단계 ${changedTiers}건, 별매품 STEP ${changedSteps}건이 반영되었습니다.`);
   });
 });
 document.getElementById("itemCustomerBulkModalClose").addEventListener("click", () => { itemCustomerBulkModal.hidden = true; });
@@ -1722,6 +1748,7 @@ function renderAllocationTable() {
       <td>${r.item}</td>
       <td>${r.detail}</td>
       <td>${PRODUCT_OPTION_TIER[r.productCode] ? `${PRODUCT_OPTION_TIER[r.productCode]}단계` : "-"}</td>
+      <td class="${PRODUCT_OPTION_STEP[r.productCode] ? "" : "muted"}">${productStepLabel(r.productCode)}</td>
       <td>${statusHtml}</td>
     </tr>
   `;
@@ -2104,10 +2131,15 @@ function renderPackageMapModal() {
             <label>품목명(공통)</label>
             <input type="text" id="pkgMapNameInput" value="공통패키지-${packageSeq}" />
           </div>
+          <div class="pkg-field">
+            <label>별매품 STEP</label>
+            <input type="number" min="1" id="pkgMapStepInput" placeholder="예: 1 (비우면 변경 안 함)" />
+          </div>
         </div>
         <div class="pkg-field-row">
           <div class="pkg-field"><label>비고</label><textarea id="pkgMapNoteInput" rows="2"></textarea></div>
         </div>
+        <div class="pkg-field-hint">별매품 STEP을 입력하면 위에서 선택한 상품 전체에 같은 STEP이 적용되며, 4.상품고객언어의 별매품 STEP과 같은 값을 공유합니다.</div>
         <div class="pkg-summary">
           <span>선택 상품 <strong>${checkedCodes.size}건</strong></span>
           <span>공급가 합계 <strong>${totals.supply}원</strong></span>
@@ -2139,9 +2171,14 @@ function renderPackageMapModal() {
     const baseName = document.getElementById("pkgMapNameInput").value.trim() || "공통패키지";
     const type = document.querySelector('input[name="pkgMapType"]:checked').value;
     const note = document.getElementById("pkgMapNoteInput").value.trim();
+    const step = document.getElementById("pkgMapStepInput").value.trim();
     const batchId = packageSeq;
     const createdAt = dsNowKorean();
     const createdBy = dsRoleName(dsGetCurrentRole());
+
+    // 별매품 STEP은 상품(SKU) 단위 값이라 평형별로 나뉘지 않고, 선택한 상품 전체에
+    // 같은 값으로 반영된다(4.상품고객언어의 별매품 STEP과 동일한 저장소를 공유).
+    if (step) codes.forEach((code) => { PRODUCT_OPTION_STEP[code] = step; });
 
     targetPyeongs.forEach((pyeong) => {
       const id = packageSeq++;
@@ -2162,10 +2199,11 @@ function renderPackageMapModal() {
       });
     });
 
-    dsAddEditLog("5. 안분표 생성", `공통 패키지 「${baseName}」 ${items.length}개 상품을 ${targetPyeongs.length}개 평형(${targetPyeongs.join(", ")})에 일괄 생성`);
+    dsAddEditLog("5. 안분표 생성", `공통 패키지 「${baseName}」 ${items.length}개 상품을 ${targetPyeongs.length}개 평형(${targetPyeongs.join(", ")})에 일괄 생성${step ? ` · 별매품 STEP ${step} 적용(${codes.length}개 상품)` : ""}`);
     renderPackageHistory();
+    if (step) { renderLangTable(); renderAllocationTable(); }
     packageMapModal.hidden = true;
-    showToast(`${targetPyeongs.length}개 평형에 일괄 생성되었습니다.`);
+    showToast(`${targetPyeongs.length}개 평형에 일괄 생성되었습니다.${step ? ` 별매품 STEP ${step}이 ${codes.length}개 상품에 반영되었습니다.` : ""}`);
   });
 }
 
@@ -2175,6 +2213,300 @@ document.getElementById("packageMapMenuItem").addEventListener("click", () => {
   packageMapModal.hidden = false;
 });
 document.getElementById("packageMapModalClose").addEventListener("click", () => { packageMapModal.hidden = true; });
+
+/* =====================================================================
+   5. 안분표 생성 : 안분표 가생성 (고객 → 고객스타일 → 상품스타일 선택)
+   -----------------------------------------------------------------------
+   기존 시스템은 한 번에 처리하는 총 연산건수가 10,000건을 넘으면 연산 오류가
+   발생했다. 그래서 실행 전에 선택 조건으로 총 연산건수를 먼저 계산하고,
+   10,000건을 넘으면 10,000건 단위의 배치로 자동 분할해 순차 실행한 뒤
+   결과를 병합해 하나의 안분표로 보여준다(중간에 실패해도 그 배치만 재실행).
+   ===================================================================== */
+const ALLOCATION_BATCH_LIMIT = 10000;
+// 안분표 1건(=1행)은 (평형 × 상품 × 고객 × 선택형평면) 조합으로 전개된다.
+const ALLOC_PLAN_VARIANTS = [
+  { code: "00", name: "미적용" },
+  { code: "01", name: "一자형 주방구조 선택시" },
+  { code: "02", name: "ㄱ자형 주방구조 선택시" },
+];
+const ALLOC_CUSTOMERS = [
+  { code: "U", name: "조합 - Union" },
+  { code: "C", name: "일반 - Customer" },
+];
+/* (평형 × 상품 × 고객 × 선택형평면) 조합 1건은 다시 세부 구성(공간 · 품목/항목 열)
+   으로 전개되어 여러 개의 안분표 행이 된다. 이 계수는 데모 데이터에서 전체를
+   선택했을 때 이 화면이 표시하는 안분표 규모(5,771건)와 비슷해지도록 맞춘 값이다. */
+const ALLOC_ROW_EXPANSION = 21;
+
+const allocationGenModal = document.getElementById("allocationGenModal");
+const allocationGenModalBody = document.getElementById("allocationGenModalBody");
+
+let allocGenCustomers = ["U"];
+let allocGenComboName = null;
+let allocGenStyleCodes = [];
+let allocGenResults = [];
+let allocGenRunning = false;
+let allocGenProgress = null; // { done, total, rows }
+
+/* 선택한 상품스타일에 해당하는 상품(SKU)이 각 평형에 배정된 건수의 합 */
+function allocGenBaseCount(styleCodes) {
+  const codes = skuData.filter((s) => styleCodes.includes(s.styleCode)).map((s) => s.code);
+  let base = 0;
+  pyeongList.forEach((p) => {
+    const assigned = pivotAssignments[p];
+    if (!assigned) return;
+    codes.forEach((c) => { if (assigned.has(c)) base++; });
+  });
+  return base;
+}
+
+/* 이번 실행에서 새로 연산해야 하는 건수 */
+function allocGenRunCount() {
+  if (allocGenCustomers.length === 0 || allocGenStyleCodes.length === 0) return 0;
+  return allocGenBaseCount(allocGenStyleCodes) * allocGenCustomers.length * ALLOC_PLAN_VARIANTS.length * ALLOC_ROW_EXPANSION;
+}
+
+/* 이미 가생성되어 누적된 건수 ("누적생성" 방식이라 재연산 대상에 함께 들어간다) */
+function allocGenAccumulatedCount() {
+  return allocGenResults.reduce((sum, r) => sum + r.count, 0);
+}
+
+/* 실제로 한 번에 처리해야 하는 총 연산건수 = 누적분 + 이번 실행분 */
+function allocGenTotalCount() {
+  const run = allocGenRunCount();
+  return run === 0 ? 0 : allocGenAccumulatedCount() + run;
+}
+
+function allocGenRelatedCount(styleCode) {
+  return allocGenBaseCount([styleCode]) * ALLOC_PLAN_VARIANTS.length * ALLOC_ROW_EXPANSION;
+}
+
+function renderAllocationGenModal() {
+  const combos = allCustomerStyleCombos();
+  const styles = distinctProductStyles();
+  const total = allocGenTotalCount();
+  const batches = total > 0 ? Math.ceil(total / ALLOCATION_BATCH_LIMIT) : 0;
+  const needsSplit = total > ALLOCATION_BATCH_LIMIT;
+  const ready = allocGenCustomers.length > 0 && allocGenComboName && allocGenStyleCodes.length > 0;
+
+  allocationGenModalBody.innerHTML = `
+    <div class="alloc-gen-split">
+      <div class="alloc-gen-left">
+        <div class="alloc-gen-panel-title">■ 선택한 스타일구성</div>
+        <div class="alloc-gen-guide-row">
+          <div class="alloc-gen-guide ${ready ? "ok" : ""}">
+            ${ready
+              ? `✔ 고객 ${allocGenCustomers.length}종 · 고객스타일 「${allocGenComboName}」 · 상품스타일 ${allocGenStyleCodes.length}종이 선택되었습니다.`
+              : `⚠ 고객, 고객스타일, 상품스타일을 선택해 주세요.`}
+          </div>
+          <button type="button" class="alloc-gen-run-btn" id="allocGenRunBtn" ${ready && !allocGenRunning ? "" : "disabled"}>
+            ${allocGenRunning ? "연산 중…" : "≡ 누적생성<br/>안분표<br/>가생성"}
+          </button>
+        </div>
+
+        <div class="alloc-gen-section">
+          <div class="alloc-gen-section-head"><span class="alloc-gen-step-no">1</span> 고객
+            <span class="alloc-gen-picked">${allocGenCustomers.length ? `☑ 「${allocGenCustomers.map((c) => (ALLOC_CUSTOMERS.find((x) => x.code === c) || {}).name).join(", ")}」 선택` : "미선택"}</span>
+          </div>
+          <div class="alloc-gen-list">
+            ${ALLOC_CUSTOMERS.map((c) => `
+              <label class="alloc-gen-row ${allocGenCustomers.includes(c.code) ? "selected" : ""}">
+                <input type="checkbox" class="alloc-gen-customer" value="${c.code}" ${allocGenCustomers.includes(c.code) ? "checked" : ""} />
+                <span class="alloc-gen-row-code">${c.code}</span>
+                <span class="alloc-gen-row-name">${c.name}</span>
+              </label>
+            `).join("")}
+          </div>
+        </div>
+
+        <div class="alloc-gen-section">
+          <div class="alloc-gen-section-head"><span class="alloc-gen-step-no">2</span> 고객스타일 선택
+            <span class="alloc-gen-picked">${allocGenComboName ? `☑ 「${allocGenComboName}」 선택` : "미선택"}</span>
+          </div>
+          <div class="alloc-gen-list">
+            ${combos.map((c) => `
+              <label class="alloc-gen-row ${allocGenComboName === c.name ? "selected" : ""}">
+                <input type="radio" name="allocGenCombo" class="alloc-gen-combo" value="${c.name}" ${allocGenComboName === c.name ? "checked" : ""} />
+                <span class="alloc-gen-row-name">${c.name}</span>
+                <span class="alloc-gen-row-sub">${c.productStyles.join(" + ")}</span>
+              </label>
+            `).join("")}
+          </div>
+        </div>
+
+        <div class="alloc-gen-section">
+          <div class="alloc-gen-section-head"><span class="alloc-gen-step-no">3</span> 상품스타일 선택
+            <span class="alloc-gen-picked ${allocGenStyleCodes.length ? "" : "warn"}">${allocGenStyleCodes.length ? `${allocGenStyleCodes.length}종 선택` : "⚠ 체크해 주세요"}</span>
+          </div>
+          <div class="alloc-gen-list">
+            ${styles.map((s) => `
+              <label class="alloc-gen-row ${allocGenStyleCodes.includes(s.code) ? "selected" : ""}">
+                <input type="checkbox" class="alloc-gen-style" value="${s.code}" ${allocGenStyleCodes.includes(s.code) ? "checked" : ""} />
+                <span class="alloc-gen-row-code">${s.code}</span>
+                <span class="alloc-gen-row-name">${s.label}</span>
+              </label>
+            `).join("")}
+          </div>
+        </div>
+      </div>
+
+      <div class="alloc-gen-right">
+        <div class="alloc-gen-calc ${needsSplit ? "split" : ""}">
+          <div class="alloc-gen-calc-title">연산량 사전 계산</div>
+          <div class="alloc-gen-calc-grid">
+            <span>이번 연산분</span><strong>${allocGenRunCount().toLocaleString()}건</strong>
+            <span>기존 누적분</span><strong>${allocGenAccumulatedCount().toLocaleString()}건</strong>
+            <span>총 연산건수</span><strong class="${needsSplit ? "over" : ""}">${total.toLocaleString()}건</strong>
+            <span>1회 처리 한도</span><strong>${ALLOCATION_BATCH_LIMIT.toLocaleString()}건</strong>
+            <span>실행 배치 수</span><strong>${batches}회</strong>
+          </div>
+          <div class="alloc-gen-calc-note">
+            ${total === 0
+              ? "고객·고객스타일·상품스타일을 선택하면 연산건수가 계산됩니다."
+              : needsSplit
+                ? `한도(${ALLOCATION_BATCH_LIMIT.toLocaleString()}건)를 초과하므로 <b>${batches}개 배치로 자동 분할</b>해 순차 연산한 뒤 결과를 병합합니다.`
+                : `한도 이내이므로 <b>분할 없이 1회</b>로 연산합니다.`}
+          </div>
+          <div class="alloc-gen-calc-formula">평형 배정 상품 ${allocGenStyleCodes.length ? allocGenBaseCount(allocGenStyleCodes).toLocaleString() : 0}건 × 고객 ${allocGenCustomers.length}종 × 선택형평면 ${ALLOC_PLAN_VARIANTS.length}종 × 행 전개 ${ALLOC_ROW_EXPANSION}배 (누적생성이라 기존 누적분도 함께 재연산)</div>
+          ${allocGenProgress ? `
+            <div class="alloc-gen-progress">
+              <div class="alloc-gen-progress-bar"><i style="width:${Math.round((allocGenProgress.done / allocGenProgress.total) * 100)}%"></i></div>
+              <div class="alloc-gen-progress-text">배치 ${allocGenProgress.done} / ${allocGenProgress.total} 처리 · 누적 ${allocGenProgress.rows.toLocaleString()}건</div>
+            </div>` : ""}
+        </div>
+
+        <div class="alloc-gen-result-head">
+          <span>🗂 가생성된 안분표 <span class="alloc-gen-result-count">${allocGenResults.length}건</span></span>
+          <button type="button" class="alloc-gen-clear-btn" id="allocGenClearBtn" ${allocGenResults.length ? "" : "disabled"}>⊘ 삭제</button>
+        </div>
+        <div class="alloc-gen-result-wrap">
+          <table class="alloc-gen-result-table">
+            <thead><tr><th>고객명</th><th>고객스타일</th><th>상품스타일코드</th><th>상품스타일명</th><th>연관 상품개수</th><th>배치</th></tr></thead>
+            <tbody>
+              ${allocGenResults.length === 0
+                ? `<tr><td colspan="6" class="alloc-gen-result-empty">왼쪽에서 조건을 고르고 「안분표 가생성」을 눌러주세요.</td></tr>`
+                : allocGenResults.map((r) => `
+                  <tr>
+                    <td>${r.customerName}</td>
+                    <td>${r.comboName}</td>
+                    <td class="code-cell">${r.styleCode}</td>
+                    <td>${r.styleName}</td>
+                    <td>${r.count.toLocaleString()}</td>
+                    <td><span class="alloc-gen-batch-tag">${r.batch}차</span></td>
+                  </tr>`).join("")}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // 선택이 바뀌면 직전 실행의 진행률은 더 이상 현재 연산량과 맞지 않으므로 지운다
+  allocationGenModalBody.querySelectorAll(".alloc-gen-customer").forEach((el) => {
+    el.addEventListener("change", () => {
+      allocGenCustomers = [...allocationGenModalBody.querySelectorAll(".alloc-gen-customer:checked")].map((x) => x.value);
+      allocGenProgress = null;
+      renderAllocationGenModal();
+    });
+  });
+  allocationGenModalBody.querySelectorAll(".alloc-gen-combo").forEach((el) => {
+    el.addEventListener("change", () => {
+      allocGenComboName = el.value;
+      // 고객스타일을 고르면 그 조합을 이루는 상품스타일을 기본 선택으로 채워준다
+      const combo = allCustomerStyleCombos().find((c) => c.name === el.value);
+      if (combo) allocGenStyleCodes = [...combo.productStyles];
+      allocGenProgress = null;
+      renderAllocationGenModal();
+    });
+  });
+  allocationGenModalBody.querySelectorAll(".alloc-gen-style").forEach((el) => {
+    el.addEventListener("change", () => {
+      allocGenStyleCodes = [...allocationGenModalBody.querySelectorAll(".alloc-gen-style:checked")].map((x) => x.value);
+      allocGenProgress = null;
+      renderAllocationGenModal();
+    });
+  });
+
+  const clearBtn = document.getElementById("allocGenClearBtn");
+  if (clearBtn) clearBtn.addEventListener("click", () => {
+    allocGenResults = [];
+    allocGenProgress = null;
+    renderAllocationGenModal();
+  });
+
+  const runBtn = document.getElementById("allocGenRunBtn");
+  if (runBtn) runBtn.addEventListener("click", runAllocationGeneration);
+}
+
+/* 총 연산건수가 한도를 넘으면 배치로 쪼개 순차 실행한다. 배치 사이에 화면을
+   양보(setTimeout)해 진행률이 실제로 갱신되도록 한다. */
+function runAllocationGeneration() {
+  const total = allocGenTotalCount();
+  if (total === 0 || allocGenRunning) return;
+  const batchCount = Math.ceil(total / ALLOCATION_BATCH_LIMIT);
+
+  allocGenRunning = true;
+  allocGenProgress = { done: 0, total: batchCount, rows: 0 };
+  renderAllocationGenModal();
+
+  const styles = distinctProductStyles();
+  const newRows = [];
+  allocGenCustomers.forEach((cCode) => {
+    const customer = ALLOC_CUSTOMERS.find((x) => x.code === cCode);
+    allocGenStyleCodes.forEach((sCode) => {
+      const st = styles.find((x) => x.code === sCode);
+      newRows.push({
+        customerName: customer ? customer.name : cCode,
+        comboName: allocGenComboName,
+        styleCode: sCode,
+        styleName: st ? st.label : sCode,
+        count: allocGenRelatedCount(sCode),
+        batch: 1,
+      });
+    });
+  });
+
+  let batchIndex = 0;
+  function step() {
+    batchIndex++;
+    const processed = Math.min(batchIndex * ALLOCATION_BATCH_LIMIT, total);
+    allocGenProgress = { done: batchIndex, total: batchCount, rows: processed };
+
+    // 이번 배치가 담당하는 결과 행에 배치 번호를 매긴다
+    const perBatch = Math.ceil(newRows.length / batchCount);
+    newRows.slice((batchIndex - 1) * perBatch, batchIndex * perBatch).forEach((r) => { r.batch = batchIndex; });
+
+    if (batchIndex < batchCount) {
+      renderAllocationGenModal();
+      setTimeout(step, 260);
+      return;
+    }
+
+    allocGenResults = allocGenResults.concat(newRows);
+    allocGenRunning = false;
+    renderAllocationGenModal();
+    dsAddEditLog(
+      "5. 안분표 생성",
+      `안분표 가생성 : 고객 ${allocGenCustomers.length}종 · 고객스타일 「${allocGenComboName}」 · 상품스타일 ${allocGenStyleCodes.length}종 · 총 ${total.toLocaleString()}건${batchCount > 1 ? ` (${ALLOCATION_BATCH_LIMIT.toLocaleString()}건 한도 초과로 ${batchCount}개 배치 분할 실행)` : ""}`
+    );
+    showToast(
+      batchCount > 1
+        ? `총 ${total.toLocaleString()}건을 ${batchCount}개 배치로 나눠 가생성했습니다.`
+        : `총 ${total.toLocaleString()}건을 가생성했습니다.`
+    );
+  }
+  setTimeout(step, 260);
+}
+
+document.getElementById("allocationGenBtn").addEventListener("click", () => {
+  allocGenProgress = null;
+  renderAllocationGenModal();
+  allocationGenModal.hidden = false;
+});
+document.getElementById("allocationGenModalClose").addEventListener("click", () => {
+  if (allocGenRunning) { showToast("연산이 진행 중입니다. 잠시 후 다시 시도해주세요."); return; }
+  allocationGenModal.hidden = true;
+});
 
 /* ---- 패키지 생성 이력 (현재안/개선안 공통) ---- */
 const packageHistoryBtn = document.getElementById("packageHistoryBtn");
