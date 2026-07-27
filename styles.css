@@ -1266,7 +1266,7 @@ table.pivot-table thead th.pivot-product-col { background: var(--navy); z-index:
    5. 안분표 생성 : 안분표 가생성 팝업
    (연산량 사전 계산 + 10,000건 초과 시 자동 배치 분할)
    ===================================================================== */
-.alloc-gen-modal { width: 1180px; }
+.alloc-gen-modal { width: 1300px; }
 .alloc-gen-split { display: flex; gap: 18px; align-items: flex-start; }
 .alloc-gen-left { flex: 0 0 340px; display: flex; flex-direction: column; gap: 12px; }
 .alloc-gen-right { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 10px; }
@@ -1397,7 +1397,16 @@ table.pivot-table thead th.pivot-product-col { background: var(--navy); z-index:
   max-height: 320px;
   overflow: auto;
 }
-.alloc-gen-result-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+/* 전역 table { min-width: 1200px } 을 덮어써야 팝업 폭 안에 들어온다 */
+.alloc-gen-result-table { width: 100%; min-width: 0; border-collapse: collapse; font-size: 12px; table-layout: fixed; }
+.alloc-gen-result-table th:nth-child(1), .alloc-gen-result-table td:nth-child(1) { width: 20%; }
+.alloc-gen-result-table th:nth-child(2), .alloc-gen-result-table td:nth-child(2) { width: 14%; }
+.alloc-gen-result-table th:nth-child(3), .alloc-gen-result-table td:nth-child(3) { width: 11%; }
+.alloc-gen-result-table th:nth-child(4), .alloc-gen-result-table td:nth-child(4) { width: 23%; }
+.alloc-gen-result-table th:nth-child(5), .alloc-gen-result-table td:nth-child(5) { width: 10%; }
+.alloc-gen-result-table th:nth-child(6), .alloc-gen-result-table td:nth-child(6) { width: 13%; }
+.alloc-gen-result-table th:nth-child(7), .alloc-gen-result-table td:nth-child(7) { width: 9%; }
+.alloc-gen-result-table tbody td { overflow: hidden; text-overflow: ellipsis; }
 .alloc-gen-result-table thead th {
   position: sticky; top: 0;
   background: #eef0f4;
@@ -1408,12 +1417,45 @@ table.pivot-table thead th.pivot-product-col { background: var(--navy); z-index:
   white-space: nowrap;
 }
 .alloc-gen-result-table tbody td { padding: 7px 10px; border-bottom: 1px solid #f0f1f4; white-space: nowrap; }
+.alloc-gen-result-table th.num, .alloc-gen-result-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.alloc-gen-result-table td.name { max-width: 190px; overflow: hidden; text-overflow: ellipsis; }
+.alloc-gen-result-table tbody tr.is-new { background: #f2f8ff; }
 .alloc-gen-result-empty { text-align: center; color: var(--text-sub); padding: 28px 10px !important; }
+.alloc-gen-result-table tbody tr.alloc-gen-total-row td {
+  background: #f3f4f8;
+  font-weight: 700;
+  border-top: 1px solid var(--border);
+  border-bottom: none;
+}
+.alloc-gen-new-tag {
+  margin-left: 5px;
+  background: #2b6cf6; color: #fff;
+  border-radius: 3px; padding: 0 5px;
+  font-size: 9.5px; font-weight: 700;
+}
+.alloc-gen-result-new { margin-left: 6px; font-size: 10.5px; font-weight: 600; opacity: .9; }
 .alloc-gen-batch-tag {
   background: #eef1fb; color: #4a5bd0;
   border-radius: 4px; padding: 1px 7px;
   font-size: 10.5px; font-weight: 700;
 }
+.alloc-gen-batch-tag.done { background: #e9f9ee; color: #1a7f4b; }
+
+/* 배치 분할 계획 : 10,000건 한도 안에서 어떻게 나뉘는지 */
+.alloc-gen-batch-plan { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 9px; }
+.alloc-gen-batch-chip {
+  display: inline-flex; align-items: baseline; gap: 5px;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 11px;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.alloc-gen-batch-chip b { color: #4a5bd0; }
+.alloc-gen-batch-chip i { font-style: normal; color: var(--text-sub); font-size: 10px; }
+.alloc-gen-batch-chip.done { background: #e9f9ee; border-color: #b7e8c8; }
+.alloc-gen-batch-chip.done b { color: #1a7f4b; }
 
 /* 1.2 상품구성코드 : 상품 1개 ↔ 프로덕트 N개 매핑 (검색해서 클릭으로만 추가/해제) */
 .sku-product-cell { display: flex; flex-direction: column; gap: 6px; min-width: 260px; white-space: normal; }

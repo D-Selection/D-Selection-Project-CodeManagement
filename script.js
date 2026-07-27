@@ -2247,6 +2247,9 @@ let allocGenStyleCodes = [];
 let allocGenResults = [];
 let allocGenRunning = false;
 let allocGenProgress = null; // { done, total, rows }
+// 현재 선택분을 "이번에 추가될 안분표"로 미리 보여줄지 여부.
+// 가생성을 마치면 이미 반영된 것이므로 껐다가, 선택을 바꾸면 다시 켠다.
+let allocGenPreviewOn = true;
 
 /* 선택한 상품스타일에 해당하는 상품(SKU)이 각 평형에 배정된 건수의 합 */
 function allocGenBaseCount(styleCodes) {
@@ -2260,34 +2263,87 @@ function allocGenBaseCount(styleCodes) {
   return base;
 }
 
-/* 이번 실행에서 새로 연산해야 하는 건수 */
-function allocGenRunCount() {
-  if (allocGenCustomers.length === 0 || allocGenStyleCodes.length === 0) return 0;
-  return allocGenBaseCount(allocGenStyleCodes) * allocGenCustomers.length * ALLOC_PLAN_VARIANTS.length * ALLOC_ROW_EXPANSION;
+/* 안분표 1건(= 고객 × 고객스타일 × 상품스타일)의 연산 횟수 */
+function allocGenRowOps(products) {
+  return products * ALLOC_PLAN_VARIANTS.length * ALLOC_ROW_EXPANSION;
 }
 
-/* 이미 가생성되어 누적된 건수 ("누적생성" 방식이라 재연산 대상에 함께 들어간다) */
-function allocGenAccumulatedCount() {
-  return allocGenResults.reduce((sum, r) => sum + r.count, 0);
+/* 현재 선택으로 이번에 새로 만들어지는 안분표 행들 */
+function allocGenBuildRows() {
+  if (allocGenCustomers.length === 0 || !allocGenComboName || allocGenStyleCodes.length === 0) return [];
+  const styles = distinctProductStyles();
+  const rows = [];
+  allocGenCustomers.forEach((cCode) => {
+    const customer = ALLOC_CUSTOMERS.find((x) => x.code === cCode);
+    allocGenStyleCodes.forEach((sCode) => {
+      const st = styles.find((x) => x.code === sCode);
+      const products = allocGenBaseCount([sCode]);
+      rows.push({
+        customerName: customer ? customer.name : cCode,
+        comboName: allocGenComboName,
+        styleCode: sCode,
+        styleName: st ? st.label : sCode,
+        products,
+        ops: allocGenRowOps(products),
+        batch: 0,
+        isNew: true,
+      });
+    });
+  });
+  return rows;
 }
 
-/* 실제로 한 번에 처리해야 하는 총 연산건수 = 누적분 + 이번 실행분 */
-function allocGenTotalCount() {
-  const run = allocGenRunCount();
-  return run === 0 ? 0 : allocGenAccumulatedCount() + run;
+/* "누적생성"이라 이미 가생성된 행도 이번 실행에 함께 재연산된다.
+   같은 (고객 · 고객스타일 · 상품스타일) 조합은 다시 생성해도 중복으로 쌓이지
+   않고, 다른 고객스타일을 고르면 그만큼 안분표가 누적된다. */
+function allocGenRowKey(r) {
+  return `${r.customerName}|${r.comboName}|${r.styleCode}`;
+}
+function allocGenAllRows() {
+  const kept = allocGenResults.map((r) => Object.assign({}, r, { isNew: false }));
+  if (!allocGenPreviewOn) return kept;
+  const seen = new Set(kept.map(allocGenRowKey));
+  const fresh = allocGenBuildRows().filter((r) => !seen.has(allocGenRowKey(r)));
+  return kept.concat(fresh);
 }
 
-function allocGenRelatedCount(styleCode) {
-  return allocGenBaseCount([styleCode]) * ALLOC_PLAN_VARIANTS.length * ALLOC_ROW_EXPANSION;
+function allocGenSumOps(rows) {
+  return rows.reduce((sum, r) => sum + r.ops, 0);
+}
+
+/* 안분표 행들을 1회 처리 한도(10,000건) 안에서 순서대로 담아 배치를 만든다.
+   한 행의 연산 횟수가 한도보다 크면 그 행만 단독 배치로 처리한다. */
+function allocGenPackBatches(rows) {
+  const batches = [];
+  let cur = [];
+  let curOps = 0;
+  rows.forEach((r) => {
+    if (cur.length > 0 && curOps + r.ops > ALLOCATION_BATCH_LIMIT) {
+      batches.push({ rows: cur, ops: curOps });
+      cur = [];
+      curOps = 0;
+    }
+    cur.push(r);
+    curOps += r.ops;
+  });
+  if (cur.length > 0) batches.push({ rows: cur, ops: curOps });
+  batches.forEach((b, i) => b.rows.forEach((r) => { r.batch = i + 1; }));
+  return batches;
 }
 
 function renderAllocationGenModal() {
   const combos = allCustomerStyleCombos();
   const styles = distinctProductStyles();
-  const total = allocGenTotalCount();
-  const batches = total > 0 ? Math.ceil(total / ALLOCATION_BATCH_LIMIT) : 0;
+  const allRows = allocGenAllRows();
+  const newRows = allRows.filter((r) => r.isNew);
+  const batchList = allocGenPackBatches(allRows);   // 행마다 batch 번호도 여기서 채워진다
+  const total = allocGenSumOps(allRows);
+  const runOps = allocGenSumOps(newRows);
+  const accOps = allocGenSumOps(allocGenResults);
+  const batches = batchList.length;
   const needsSplit = total > ALLOCATION_BATCH_LIMIT;
   const ready = allocGenCustomers.length > 0 && allocGenComboName && allocGenStyleCodes.length > 0;
+  const displayRows = allocGenRunning || allocGenResults.length > 0 || ready ? allRows : [];
 
   allocationGenModalBody.innerHTML = `
     <div class="alloc-gen-split">
@@ -2354,20 +2410,28 @@ function renderAllocationGenModal() {
         <div class="alloc-gen-calc ${needsSplit ? "split" : ""}">
           <div class="alloc-gen-calc-title">연산량 사전 계산</div>
           <div class="alloc-gen-calc-grid">
-            <span>이번 연산분</span><strong>${allocGenRunCount().toLocaleString()}건</strong>
-            <span>기존 누적분</span><strong>${allocGenAccumulatedCount().toLocaleString()}건</strong>
+            <span>이번 연산분</span><strong>${runOps.toLocaleString()}건</strong>
+            <span>기존 누적분</span><strong>${accOps.toLocaleString()}건</strong>
             <span>총 연산건수</span><strong class="${needsSplit ? "over" : ""}">${total.toLocaleString()}건</strong>
             <span>1회 처리 한도</span><strong>${ALLOCATION_BATCH_LIMIT.toLocaleString()}건</strong>
             <span>실행 배치 수</span><strong>${batches}회</strong>
           </div>
           <div class="alloc-gen-calc-note">
             ${total === 0
-              ? "고객·고객스타일·상품스타일을 선택하면 연산건수가 계산됩니다."
+              ? "고객·고객스타일·상품스타일을 선택하면 안분표별 연산 횟수가 계산됩니다."
               : needsSplit
-                ? `한도(${ALLOCATION_BATCH_LIMIT.toLocaleString()}건)를 초과하므로 <b>${batches}개 배치로 자동 분할</b>해 순차 연산한 뒤 결과를 병합합니다.`
-                : `한도 이내이므로 <b>분할 없이 1회</b>로 연산합니다.`}
+                ? `안분표별 연산 횟수를 더해 <b>한 배치가 ${ALLOCATION_BATCH_LIMIT.toLocaleString()}건을 넘지 않도록</b> ${batches}개로 나눠 순차 연산한 뒤 결과를 병합합니다.`
+                : `총 연산건수가 한도 이내이므로 <b>분할 없이 1회</b>로 연산합니다.`}
           </div>
-          <div class="alloc-gen-calc-formula">평형 배정 상품 ${allocGenStyleCodes.length ? allocGenBaseCount(allocGenStyleCodes).toLocaleString() : 0}건 × 고객 ${allocGenCustomers.length}종 × 선택형평면 ${ALLOC_PLAN_VARIANTS.length}종 × 행 전개 ${ALLOC_ROW_EXPANSION}배 (누적생성이라 기존 누적분도 함께 재연산)</div>
+          ${batchList.length > 0 ? `
+            <div class="alloc-gen-batch-plan">
+              ${batchList.map((b, i) => `
+                <span class="alloc-gen-batch-chip ${allocGenProgress && allocGenProgress.done > i ? "done" : ""}">
+                  <b>${i + 1}차</b> ${b.ops.toLocaleString()}건 <i>· 안분표 ${b.rows.length}건</i>
+                </span>
+              `).join("")}
+            </div>` : ""}
+          <div class="alloc-gen-calc-formula">안분표 1건의 연산 횟수 = 평형 배정 상품 수 × 선택형평면 ${ALLOC_PLAN_VARIANTS.length}종 × 행 전개 ${ALLOC_ROW_EXPANSION}배 · 누적생성이라 기존 누적분도 함께 재연산합니다.</div>
           ${allocGenProgress ? `
             <div class="alloc-gen-progress">
               <div class="alloc-gen-progress-bar"><i style="width:${Math.round((allocGenProgress.done / allocGenProgress.total) * 100)}%"></i></div>
@@ -2376,24 +2440,32 @@ function renderAllocationGenModal() {
         </div>
 
         <div class="alloc-gen-result-head">
-          <span>🗂 가생성된 안분표 <span class="alloc-gen-result-count">${allocGenResults.length}건</span></span>
+          <span>🗂 가생성된 안분표 <span class="alloc-gen-result-count">${displayRows.length}건</span>${newRows.length ? `<span class="alloc-gen-result-new">이번 신규 ${newRows.length}건 포함</span>` : ""}</span>
           <button type="button" class="alloc-gen-clear-btn" id="allocGenClearBtn" ${allocGenResults.length ? "" : "disabled"}>⊘ 삭제</button>
         </div>
         <div class="alloc-gen-result-wrap">
           <table class="alloc-gen-result-table">
-            <thead><tr><th>고객명</th><th>고객스타일</th><th>상품스타일코드</th><th>상품스타일명</th><th>연관 상품개수</th><th>배치</th></tr></thead>
+            <thead><tr><th>고객명</th><th>고객스타일</th><th>스타일코드</th><th>상품스타일명</th><th class="num">상품수</th><th class="num">연산 횟수</th><th>배치</th></tr></thead>
             <tbody>
-              ${allocGenResults.length === 0
-                ? `<tr><td colspan="6" class="alloc-gen-result-empty">왼쪽에서 조건을 고르고 「안분표 가생성」을 눌러주세요.</td></tr>`
-                : allocGenResults.map((r) => `
-                  <tr>
-                    <td>${r.customerName}</td>
+              ${displayRows.length === 0
+                ? `<tr><td colspan="7" class="alloc-gen-result-empty">왼쪽에서 조건을 고르고 「안분표 가생성」을 눌러주세요.</td></tr>`
+                : displayRows.map((r) => `
+                  <tr class="${r.isNew ? "is-new" : ""}">
+                    <td>${r.customerName}${r.isNew ? `<span class="alloc-gen-new-tag">신규</span>` : ""}</td>
                     <td>${r.comboName}</td>
                     <td class="code-cell">${r.styleCode}</td>
-                    <td>${r.styleName}</td>
-                    <td>${r.count.toLocaleString()}</td>
-                    <td><span class="alloc-gen-batch-tag">${r.batch}차</span></td>
+                    <td class="name" title="${r.styleName}">${r.styleName}</td>
+                    <td class="num">${r.products.toLocaleString()}</td>
+                    <td class="num"><b>${r.ops.toLocaleString()}</b></td>
+                    <td><span class="alloc-gen-batch-tag ${allocGenProgress && allocGenProgress.done >= r.batch ? "done" : ""}">${r.batch}차</span></td>
                   </tr>`).join("")}
+              ${displayRows.length > 0 ? `
+                <tr class="alloc-gen-total-row">
+                  <td colspan="4">합계</td>
+                  <td class="num">${displayRows.reduce((s, r) => s + r.products, 0).toLocaleString()}</td>
+                  <td class="num"><b>${total.toLocaleString()}</b></td>
+                  <td>${batches}개 배치</td>
+                </tr>` : ""}
             </tbody>
           </table>
         </div>
@@ -2406,6 +2478,7 @@ function renderAllocationGenModal() {
     el.addEventListener("change", () => {
       allocGenCustomers = [...allocationGenModalBody.querySelectorAll(".alloc-gen-customer:checked")].map((x) => x.value);
       allocGenProgress = null;
+      allocGenPreviewOn = true;
       renderAllocationGenModal();
     });
   });
@@ -2416,6 +2489,7 @@ function renderAllocationGenModal() {
       const combo = allCustomerStyleCombos().find((c) => c.name === el.value);
       if (combo) allocGenStyleCodes = [...combo.productStyles];
       allocGenProgress = null;
+      allocGenPreviewOn = true;
       renderAllocationGenModal();
     });
   });
@@ -2423,6 +2497,7 @@ function renderAllocationGenModal() {
     el.addEventListener("change", () => {
       allocGenStyleCodes = [...allocationGenModalBody.querySelectorAll(".alloc-gen-style:checked")].map((x) => x.value);
       allocGenProgress = null;
+      allocGenPreviewOn = true;
       renderAllocationGenModal();
     });
   });
@@ -2431,6 +2506,7 @@ function renderAllocationGenModal() {
   if (clearBtn) clearBtn.addEventListener("click", () => {
     allocGenResults = [];
     allocGenProgress = null;
+    allocGenPreviewOn = true;
     renderAllocationGenModal();
   });
 
@@ -2438,64 +2514,52 @@ function renderAllocationGenModal() {
   if (runBtn) runBtn.addEventListener("click", runAllocationGeneration);
 }
 
-/* 총 연산건수가 한도를 넘으면 배치로 쪼개 순차 실행한다. 배치 사이에 화면을
-   양보(setTimeout)해 진행률이 실제로 갱신되도록 한다. */
+/* 안분표별 연산 횟수를 순서대로 담아 한 배치가 한도(10,000건)를 넘지 않도록
+   나눈 뒤, 배치를 하나씩 순차 실행한다. 배치 사이에 화면을 양보(setTimeout)해
+   진행률과 배치 처리 상태가 실제로 갱신되도록 한다. */
 function runAllocationGeneration() {
-  const total = allocGenTotalCount();
-  if (total === 0 || allocGenRunning) return;
-  const batchCount = Math.ceil(total / ALLOCATION_BATCH_LIMIT);
+  if (allocGenRunning) return;
+  const rows = allocGenAllRows();
+  if (rows.length === 0) return;
+
+  const batchList = allocGenPackBatches(rows);   // 각 행에 batch 번호가 매겨진다
+  const total = allocGenSumOps(rows);
+  const batchCount = batchList.length;
 
   allocGenRunning = true;
+  allocGenResults = rows;                        // 표에는 처리 예정 상태로 먼저 보여준다
   allocGenProgress = { done: 0, total: batchCount, rows: 0 };
   renderAllocationGenModal();
 
-  const styles = distinctProductStyles();
-  const newRows = [];
-  allocGenCustomers.forEach((cCode) => {
-    const customer = ALLOC_CUSTOMERS.find((x) => x.code === cCode);
-    allocGenStyleCodes.forEach((sCode) => {
-      const st = styles.find((x) => x.code === sCode);
-      newRows.push({
-        customerName: customer ? customer.name : cCode,
-        comboName: allocGenComboName,
-        styleCode: sCode,
-        styleName: st ? st.label : sCode,
-        count: allocGenRelatedCount(sCode),
-        batch: 1,
-      });
-    });
-  });
-
   let batchIndex = 0;
+  let processed = 0;
   function step() {
+    processed += batchList[batchIndex].ops;
     batchIndex++;
-    const processed = Math.min(batchIndex * ALLOCATION_BATCH_LIMIT, total);
     allocGenProgress = { done: batchIndex, total: batchCount, rows: processed };
-
-    // 이번 배치가 담당하는 결과 행에 배치 번호를 매긴다
-    const perBatch = Math.ceil(newRows.length / batchCount);
-    newRows.slice((batchIndex - 1) * perBatch, batchIndex * perBatch).forEach((r) => { r.batch = batchIndex; });
 
     if (batchIndex < batchCount) {
       renderAllocationGenModal();
-      setTimeout(step, 260);
+      setTimeout(step, 320);
       return;
     }
 
-    allocGenResults = allocGenResults.concat(newRows);
     allocGenRunning = false;
+    allocGenPreviewOn = false;   // 이번 선택분은 이미 반영됨
     renderAllocationGenModal();
     dsAddEditLog(
       "5. 안분표 생성",
-      `안분표 가생성 : 고객 ${allocGenCustomers.length}종 · 고객스타일 「${allocGenComboName}」 · 상품스타일 ${allocGenStyleCodes.length}종 · 총 ${total.toLocaleString()}건${batchCount > 1 ? ` (${ALLOCATION_BATCH_LIMIT.toLocaleString()}건 한도 초과로 ${batchCount}개 배치 분할 실행)` : ""}`
+      `안분표 가생성 : 안분표 ${rows.length}건 · 총 연산 ${total.toLocaleString()}건${batchCount > 1
+        ? ` (1회 한도 ${ALLOCATION_BATCH_LIMIT.toLocaleString()}건을 넘지 않도록 ${batchCount}개 배치로 분할: ${batchList.map((b, i) => `${i + 1}차 ${b.ops.toLocaleString()}건`).join(", ")})`
+        : " (한도 이내로 1회 실행)"}`
     );
     showToast(
       batchCount > 1
-        ? `총 ${total.toLocaleString()}건을 ${batchCount}개 배치로 나눠 가생성했습니다.`
-        : `총 ${total.toLocaleString()}건을 가생성했습니다.`
+        ? `안분표 ${rows.length}건 · 총 ${total.toLocaleString()}건을 ${batchCount}개 배치로 나눠 가생성했습니다.`
+        : `안분표 ${rows.length}건 · 총 ${total.toLocaleString()}건을 가생성했습니다.`
     );
   }
-  setTimeout(step, 260);
+  setTimeout(step, 320);
 }
 
 document.getElementById("allocationGenBtn").addEventListener("click", () => {
