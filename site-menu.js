@@ -261,8 +261,30 @@ document.getElementById("gagamStepBody").addEventListener("change", (e) => {
    대해 상호 "제외" 규칙을 자동 생성한다(autoCategoryId로 추적). ---- */
 let gagamCategorySeq = 1;
 const gagamCategories = [
-  { id: gagamCategorySeq++, space: "현관 - Entrance", name: "현관중문 도어 방식", codes: ["FN-501-01", "FN-500-01", "FN-502-01"] },
+  { id: gagamCategorySeq++, space: "현관 - Entrance", name: "현관중문 도어 방식", codes: ["FN-501-01", "FN-500-01", "FN-502-01"], step: 1 },
 ];
+
+/* 카테고리에 매긴 안내문 스텝 (없으면 맨 뒤로 보낸다) */
+function gagamCategoryStep(c) {
+  return Number(c.step) > 0 ? Number(c.step) : Infinity;
+}
+function gagamSortedCategories(space) {
+  return gagamCategories
+    .filter((c) => c.space === space)
+    .slice()
+    .sort((a, b) => gagamCategoryStep(a) - gagamCategoryStep(b) || a.id - b.id);
+}
+/* 새 카테고리에 기본으로 넣어줄 다음 스텝 번호 */
+function gagamNextCategoryStep(space) {
+  const used = gagamCategories.filter((c) => c.space === space && Number(c.step) > 0).map((c) => Number(c.step));
+  return used.length ? Math.max(...used) + 1 : 1;
+}
+/* 조건이 속한 카테고리의 안내문 스텝 (수동 등록 조건은 스텝 없음) */
+function gagamConditionStep(c) {
+  if (!c.autoCategoryId) return null;
+  const cat = gagamCategories.find((x) => x.id === c.autoCategoryId);
+  return cat && Number(cat.step) > 0 ? Number(cat.step) : null;
+}
 
 function gagamRegenerateCategoryConditions(category) {
   for (let i = gagamConditions.length - 1; i >= 0; i--) {
@@ -286,29 +308,70 @@ function gagamRegenerateCategoryConditions(category) {
 }
 gagamCategories.forEach(gagamRegenerateCategoryConditions);
 
+function gagamCategoryChipsHtml(codes) {
+  return codes.map((code) => {
+    const p = DS_PRODUCT_MASTER_CATALOG.find((x) => x.code === code);
+    return `<span class="gagam-category-chip"><span class="code-cell">${code}</span> ${p ? p.name : "알 수 없음"}</span>`;
+  }).join("");
+}
+
 function renderGagamCategoryList() {
-  const list = gagamCategories.filter((c) => c.space === gagamSelectedSpace);
+  const list = gagamSortedCategories(gagamSelectedSpace);
   document.getElementById("gagamCategoryCount").textContent = `${list.length}개`;
   document.getElementById("gagamCategoryList").innerHTML = list.length === 0
-    ? `<div class="gagam-category-empty">이 공간에 등록된 카테고리가 없습니다.</div>`
+    ? `<div class="gagam-category-empty">이 공간에 등록된 카테고리가 없습니다. 「+ 카테고리 추가」로 가감이 발생할 프로덕트를 묶어주세요.</div>`
     : list.map((c) => `
       <div class="gagam-category-card" data-id="${c.id}">
         <div class="gagam-category-card-head">
+          <label class="gagam-cat-step">안내문 스텝
+            <input type="number" min="1" class="gagam-cat-step-input" data-cat-step="${c.id}" value="${Number(c.step) > 0 ? c.step : ""}" placeholder="-" />
+          </label>
           <strong>${c.name}</strong>
+          <span class="gagam-cat-rule-count">상호 제외 ${c.codes.length * (c.codes.length - 1)}건 자동 생성</span>
           <span class="gagam-category-card-actions">
             <button type="button" class="gagam-edit-btn" data-edit-category="${c.id}">수정</button>
             <button type="button" class="gagam-delete-btn" data-delete-category="${c.id}">삭제</button>
           </span>
         </div>
-        <div class="gagam-category-chips">
-          ${c.codes.map((code) => {
-            const p = DS_PRODUCT_MASTER_CATALOG.find((x) => x.code === code);
-            return `<span class="gagam-category-chip"><span class="code-cell">${code}</span> ${p ? p.name : "알 수 없음"}</span>`;
-          }).join("")}
-        </div>
+        <div class="gagam-category-chips">${gagamCategoryChipsHtml(c.codes)}</div>
       </div>
     `).join("");
 }
+
+/* ---- 3. 안내문 스텝 정보를 반영해 배열 : 카테고리를 스텝 순으로 나열한다 ---- */
+function renderGagamArrange() {
+  const list = gagamSortedCategories(gagamSelectedSpace);
+  const withStep = list.filter((c) => Number(c.step) > 0);
+  document.getElementById("gagamArrangeCount").textContent = `${withStep.length}개`;
+  document.getElementById("gagamArrangeList").innerHTML = list.length === 0
+    ? `<div class="gagam-category-empty">②에서 카테고리를 먼저 만들어주세요.</div>`
+    : list.map((c) => {
+      const hasStep = Number(c.step) > 0;
+      return `
+        <div class="gagam-arrange-row ${hasStep ? "" : "nostep"}">
+          <div class="gagam-arrange-step">${hasStep ? `STEP ${c.step}` : "미지정"}</div>
+          <div class="gagam-arrange-body">
+            <div class="gagam-arrange-name">${c.name}</div>
+            <div class="gagam-category-chips">${gagamCategoryChipsHtml(c.codes)}</div>
+          </div>
+          <div class="gagam-arrange-rules">상호 제외<br/><b>${c.codes.length * (c.codes.length - 1)}건</b></div>
+        </div>
+      `;
+    }).join("");
+}
+
+/* 카테고리 카드에서 안내문 스텝을 바로 수정 */
+document.getElementById("gagamCategoryList").addEventListener("change", (e) => {
+  const input = e.target.closest(".gagam-cat-step-input");
+  if (!input) return;
+  const cat = gagamCategories.find((x) => x.id === Number(input.dataset.catStep));
+  if (!cat) return;
+  const raw = input.value.trim();
+  if (raw === "") delete cat.step;
+  else cat.step = Math.max(1, Number(raw) || 1);
+  dsAddEditLog("가감조건 관리", `카테고리 "${cat.name}"의 안내문 스텝을 ${raw === "" ? "미지정" : cat.step}(으)로 변경`);
+  renderGagamAll();
+});
 
 let gagamCategoryEditingId = null;
 const gagamCategoryModal = document.getElementById("gagamCategoryModal");
@@ -410,7 +473,7 @@ function openGagamCategoryModal(editing) {
       Object.assign(category, { space, name, codes: [...workingCodes] });
       dsAddEditLog("가감조건 관리", `카테고리 "${name}" 수정 (${workingCodes.length}건)`);
     } else {
-      category = { id: gagamCategorySeq++, space, name, codes: [...workingCodes] };
+      category = { id: gagamCategorySeq++, space, name, codes: [...workingCodes], step: gagamNextCategoryStep(space) };
       gagamCategories.push(category);
       dsAddEditLog("가감조건 관리", `카테고리 "${name}" 신규 등록 (${workingCodes.length}건) — 상호 제외 규칙 자동 생성`);
     }
@@ -469,8 +532,10 @@ function gagamRowHtml(c) {
   const target = resolveGagamEntity(c.targetLevel, c.targetCode);
   const isAuto = !!c.autoCategoryId;
   const category = isAuto ? gagamCategories.find((x) => x.id === c.autoCategoryId) : null;
+  const step = gagamConditionStep(c);
   return `
     <tr data-id="${c.id}">
+      <td>${step ? `<span class="gagam-step-tag">STEP ${step}</span>` : `<span class="muted">-</span>`}</td>
       <td>${isAuto
         ? `<span class="gagam-priority-readonly">${c.priority}</span>`
         : `<input type="number" class="gagam-priority-input" data-id="${c.id}" value="${c.priority}" min="1" />`}</td>
@@ -492,20 +557,31 @@ function gagamRowHtml(c) {
     </tr>`;
 }
 
+/* 가감조건 목록은 "안내문 스텝 → 우선순위" 순으로 배열한다.
+   스텝이 없는(수동 등록) 조건은 스텝이 있는 조건 뒤로 보낸다. */
 function renderGagamTable(filterText) {
   const q = (filterText || "").trim().toLowerCase();
-  const sorted = [...gagamConditions].sort((a, b) => a.priority - b.priority);
-  const list = !q ? sorted : sorted.filter((c) => {
-    const trigger = resolveGagamEntity(c.triggerLevel, c.triggerCode);
-    const target = resolveGagamEntity(c.targetLevel, c.targetCode);
-    return [c.triggerCode, c.targetCode, c.note, trigger && trigger.name, target && target.name]
-      .filter(Boolean).join(" ").toLowerCase().includes(q);
+  const hideAuto = document.getElementById("gagamHideAutoCheck").checked;
+  const sorted = [...gagamConditions].sort((a, b) => {
+    const sa = gagamConditionStep(a) || Infinity;
+    const sb = gagamConditionStep(b) || Infinity;
+    return sa - sb || a.priority - b.priority || a.id - b.id;
   });
+  let list = hideAuto ? sorted.filter((c) => !c.autoCategoryId) : sorted;
+  if (q) {
+    list = list.filter((c) => {
+      const trigger = resolveGagamEntity(c.triggerLevel, c.triggerCode);
+      const target = resolveGagamEntity(c.targetLevel, c.targetCode);
+      return [c.triggerCode, c.targetCode, c.note, trigger && trigger.name, target && target.name]
+        .filter(Boolean).join(" ").toLowerCase().includes(q);
+    });
+  }
   document.getElementById("gagamTableBody").innerHTML = list.map(gagamRowHtml).join("");
   document.getElementById("gagamCount").textContent = `${list.length}개`;
 }
 
 document.getElementById("gagamSearchInput").addEventListener("input", (e) => renderGagamTable(e.target.value));
+document.getElementById("gagamHideAutoCheck").addEventListener("change", () => renderGagamTable(document.getElementById("gagamSearchInput").value));
 
 document.getElementById("gagamTableBody").addEventListener("change", (e) => {
   const input = e.target.closest(".gagam-priority-input");
@@ -525,9 +601,10 @@ document.getElementById("gagamSpaceTabs").addEventListener("click", (e) => {
 });
 
 function renderGagamAll() {
-  renderGagamSpaceTabs();
-  renderGagamStepSection();
-  renderGagamCategoryList();
+  renderGagamSpaceTabs();          // ① 공간 선택
+  renderGagamCategoryList();       // ② 프로덕트 카테고리 설정
+  renderGagamArrange();            // ③ 안내문 스텝 순서로 배열
+  renderGagamStepSection();        // ③ 참고 : 상품별 안내문 스텝
   renderGagamTable(document.getElementById("gagamSearchInput").value);
 }
 renderGagamAll();
