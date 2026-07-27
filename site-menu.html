@@ -561,9 +561,10 @@
     <!-- ============ STEP (신규): 가감조건 관리 ============ -->
     <section class="view" id="view-6">
       <div class="info-box">
-        가감조건은 <strong>① 공간 선택 → ② 프로덕트 카테고리 설정 → ③ 안내문 스텝 순서로 배열</strong> 순서로 등록합니다.<br/>
-        <strong>프로덕트 카테고리</strong>는 같은 공간 안에서 서로 대체 관계라 동시에 선택될 수 없는(= 가감이 발생하는) 프로덕트들의 묶음이며, 사용자가 직접 만들어 등록합니다. 카테고리를 저장하면 그 안의 프로덕트들 사이에 <strong>상호 제외 규칙이 자동 생성</strong>됩니다.<br/>
-        각 카테고리에 <strong>안내문 스텝</strong>을 지정하면 그 순서대로 배열되어 고객 안내문에 노출됩니다. 아래 <strong>가감조건 목록</strong>도 안내문 스텝 → 우선순위 순으로 정렬됩니다.
+        <strong>① 공간 선택 → ② 상품 × 프로덕트 선택 → ③ 가감 그룹 생성</strong> 순서로 등록합니다.
+        같은 그룹에 담긴 상품·프로덕트끼리는 서로 대체 관계라 동시에 선택될 수 없습니다.<br/>
+        가감 적용 순서는 <strong>안내문 스텝</strong>을 그대로 따릅니다 — 안내문 스텝은 앞 단계(4.상품고객언어)에서 입력한 값을 가져오며, 이 화면에서 따로 관리하지 않습니다.
+        <strong>현장에서 추가한 상품은 우선순위를 가장 낮은 숫자로 잡아 가장 먼저 적용</strong>됩니다.
       </div>
 
       <!-- ① 공간 선택 -->
@@ -572,71 +573,35 @@
         <div class="gagam-space-tabs" id="gagamSpaceTabs"></div>
       </div>
 
-      <!-- ② 공간 내 가감이 발생할 프로덕트 카테고리 설정 -->
+      <!-- ② 해당 공간에서 확인되는 상품 × 프로덕트 선택 -->
       <div class="gagam-stage">
         <div class="gagam-stage-head">
-          <span class="gagam-stage-no">2</span> 공간 내 가감이 발생할 프로덕트 카테고리 설정
-          <span class="count-pill" id="gagamCategoryCount">0개</span>
-          <button type="button" class="toolbar-btn gagam-stage-btn" id="gagamCategoryAddBtn">+ 카테고리 추가</button>
+          <span class="gagam-stage-no">2</span> 해당 공간에서 확인되는 상품 × 프로덕트 선택
+          <span class="count-pill" id="gagamPairCount">0개</span>
+          <span class="gagam-pair-selected" id="gagamPairSelected">선택 0건</span>
         </div>
-        <div id="gagamCategoryList"></div>
-      </div>
-
-      <!-- ③ 안내문 스텝 정보 반영하여 배열 -->
-      <div class="gagam-stage">
-        <div class="gagam-stage-head">
-          <span class="gagam-stage-no">3</span> 안내문 스텝 순서로 배열
-          <span class="count-pill" id="gagamArrangeCount">0개</span>
-        </div>
-        <div class="gagam-arrange-cols">
-          <div class="gagam-arrange-main" id="gagamArrangeList"></div>
-          <div class="gagam-arrange-side">
-            <div class="gagam-section-title">
-              <span>이 공간 상품별 안내문 스텝 <span class="count-pill" id="gagamStepCount">0개</span></span>
-            </div>
-            <div class="gagam-step-table-wrap">
-              <table class="gagam-step-table">
-                <thead><tr><th>스텝</th><th>상품 코드</th><th>항목명</th></tr></thead>
-                <tbody id="gagamStepBody"></tbody>
-              </table>
-            </div>
-          </div>
+        <div class="gagam-pair-wrap">
+          <table class="gagam-pair-table">
+            <thead>
+              <tr>
+                <th class="gagam-pair-check-col"><input type="checkbox" id="gagamPairCheckAll" title="전체 선택" /></th>
+                <th>상품 코드</th><th>항목명</th><th>구분</th><th>안내문 스텝</th>
+                <th>프로덕트 코드</th><th>프로덕트명</th>
+              </tr>
+            </thead>
+            <tbody id="gagamPairBody"></tbody>
+          </table>
         </div>
       </div>
 
-      <div class="section-title-bar">
-        <div class="section-title-left">
-          <h2>가감조건 목록 <span class="count-pill" id="gagamCount">0개</span></h2>
-          <label class="gagam-auto-toggle"><input type="checkbox" id="gagamHideAutoCheck" /> 카테고리 자동 생성 규칙 숨기기</label>
+      <!-- ③ 선택 정보로 가감 그룹 생성 -->
+      <div class="gagam-stage">
+        <div class="gagam-stage-head"><span class="gagam-stage-no">3</span> 선택 정보로 가감 그룹 생성</div>
+        <div class="gagam-create-row">
+          <input type="text" id="gagamGroupNameInput" class="gagam-group-name-input" placeholder="가감 그룹 이름 (비우면 자동 생성)" autocomplete="off" />
+          <button type="button" class="primary-btn" id="gagamGroupCreateBtn" disabled>+ 선택한 항목으로 가감 그룹 만들기</button>
         </div>
-        <div class="filterbar-right">
-          <input type="text" id="gagamSearchInput" class="gagam-search-input" placeholder="기준/대상 코드, 상품명, 비고로 검색" />
-        </div>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th>안내문 스텝</th>
-              <th class="sortable">우선순위 <span class="sort-icon">⇅</span></th>
-              <th>기준 단위</th>
-              <th>기준 코드</th>
-              <th>기준 명칭</th>
-              <th>조건구분</th>
-              <th>대상 단위</th>
-              <th>대상 코드</th>
-              <th>대상 명칭</th>
-              <th>출처</th>
-              <th>비고</th>
-              <th>등록일</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody id="gagamTableBody"></tbody>
-        </table>
-      </div>
-      <div class="floating-action">
-        <button class="primary-btn" id="gagamAddBtn">+ 가감조건 추가</button>
+        <div class="gagam-group-list" id="gagamGroupList"></div>
       </div>
     </section>
 

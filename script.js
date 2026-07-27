@@ -216,8 +216,8 @@ const skuData = [
   { code: "SL016", spaceCode: "EN", space: "현관 - Entrance", styleCode: "NM", style: "내추럴 모던 - Natural Modern", item: "오픈형 프리미엄 신발장+팬트리 도어_NM", itemCustomer: "오픈형 프리미엄 신발장+팬트리 도어_NM" },
   { code: "SL017", spaceCode: "EN", space: "현관 - Entrance", styleCode: "SC", style: "소프트 클래식 - Soft Classic", item: "오픈형 프리미엄 신발장+팬트리 도어_SC", itemCustomer: "오픈형 프리미엄 신발장+팬트리 도어_SC" },
   { code: "SL018", spaceCode: "EN", space: "현관 - Entrance", styleCode: "MM", style: "미니멀 - Minimal", item: "오픈형 프리미엄 신발장+신발장_MM", itemCustomer: "오픈형 프리미엄 신발장+신발장_MM" },
-  { code: "SL019", spaceCode: "EN", space: "현관 - Entrance", styleCode: "NM", style: "내추럴 모던 - Natural Modern", item: "오픈형 프리미엄 신발장+신발장_NM", itemCustomer: "오픈형 프리미엄 신발장+신발장_NM" },
-  { code: "SL020", spaceCode: "EN", space: "현관 - Entrance", styleCode: "SC", style: "소프트 클래식 - Soft Classic", item: "오픈형 프리미엄 신발장+신발장_SC", itemCustomer: "오픈형 프리미엄 신발장+신발장_SC" },
+  { code: "SL019", origin: "현장", spaceCode: "EN", space: "현관 - Entrance", styleCode: "NM", style: "내추럴 모던 - Natural Modern", item: "오픈형 프리미엄 신발장+신발장_NM", itemCustomer: "오픈형 프리미엄 신발장+신발장_NM" },
+  { code: "SL020", origin: "현장", spaceCode: "EN", space: "현관 - Entrance", styleCode: "SC", style: "소프트 클래식 - Soft Classic", item: "오픈형 프리미엄 신발장+신발장_SC", itemCustomer: "오픈형 프리미엄 신발장+신발장_SC" },
 ];
 
 const skuTableBody = document.getElementById("skuTableBody");
@@ -226,7 +226,23 @@ const skuTableBody = document.getElementById("skuTableBody");
    마스터(445건)다. 상품 1개에 프로덕트를 여러 개 매핑할 수 있는데, 코드를
    직접 타이핑하게 하면 445개 중에서 오타·오매핑이 나기 쉬우므로, 검색해서
    클릭으로만 추가/해제하도록 해 오류 여지를 없앤다. */
-const skuProductMap = {}; // { [skuCode]: string[] (프로덕트 소분류코드 PK 목록) }
+/* 상품(SKU) 1개 ↔ 프로덕트(소분류 PK) N개 매핑.
+   현장 메뉴의 가감조건 관리가 "그 공간에서 확인되는 상품 × 프로덕트" 조합을
+   읽어가므로, 현관 상품들에 대한 기본 매핑을 데모 데이터로 깔아둔다. */
+const skuProductMap = { // { [skuCode]: string[] (프로덕트 소분류코드 PK 목록) }
+  SL001: ["FN-501-01"],
+  SL002: ["FN-500-01"],
+  SL003: ["FN-504-02"],
+  SL004: ["FN-504-02", "FN-502-01"],
+  SL005: ["FN-504-02", "FN-504-01"],
+  SL006: ["FN-505-01"],
+  SL007: ["FN-506-01"],
+  SL008: ["FN-506-02"],
+  SL009: ["FN-505-01", "FN-502-01"],
+  SL010: ["FN-506-01", "FN-502-01"],
+  SL019: ["FN-506-01", "FN-504-01"],   // 현장에서 추가·관리하는 상품
+  SL020: ["FN-506-02", "FN-504-01"],   // 현장에서 추가·관리하는 상품
+};
 
 function skuMappedProducts(skuCode) {
   return (skuProductMap[skuCode] || [])
@@ -258,7 +274,7 @@ function renderSkuTable() {
       <td>${s.space}</td>
       <td>${s.styleCode}</td>
       <td>${s.style}</td>
-      <td>본사</td>
+      <td>${s.origin || "본사"}</td>
       <td>${skuProductChipsHtml(s.code)}</td>
       <td>${s.item}</td>
     </tr>
@@ -485,7 +501,7 @@ mappingTableBody.innerHTML = skuData.map((s) => `
     <td>${s.space}</td>
     <td>${s.styleCode}</td>
     <td>${s.style}</td>
-    <td>본사</td>
+    <td>${s.origin || "본사"}</td>
     <td>${s.item}</td>
   </tr>
 `).join("");

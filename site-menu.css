@@ -125,85 +125,6 @@
 }
 .gagam-stage-btn { margin-left: auto; }
 
-/* ③ 안내문 스텝 배열 */
-.gagam-arrange-cols { display: grid; grid-template-columns: 1fr 340px; gap: 16px; align-items: start; }
-.gagam-arrange-main {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: #fff;
-  padding: 10px;
-  min-height: 120px;
-}
-.gagam-arrange-side {
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  background: #fff;
-  padding: 12px 14px;
-}
-.gagam-arrange-row {
-  display: grid;
-  grid-template-columns: 78px 1fr 96px;
-  gap: 12px;
-  align-items: center;
-  padding: 10px;
-  border-bottom: 1px solid var(--border);
-}
-.gagam-arrange-row:last-child { border-bottom: none; }
-.gagam-arrange-row.nostep { background: #fbfbfa; }
-.gagam-arrange-step {
-  background: var(--blue);
-  color: #fff;
-  border-radius: 6px;
-  padding: 7px 4px;
-  text-align: center;
-  font-size: 11.5px;
-  font-weight: 800;
-  white-space: nowrap;
-}
-.gagam-arrange-row.nostep .gagam-arrange-step { background: #c7cad1; }
-.gagam-arrange-name { font-size: 13px; font-weight: 700; margin-bottom: 6px; }
-.gagam-arrange-rules {
-  text-align: center;
-  font-size: 10.5px;
-  color: var(--text-sub);
-  line-height: 1.5;
-}
-.gagam-arrange-rules b { font-size: 12.5px; color: var(--text-main); }
-
-/* 카테고리 카드의 안내문 스텝 입력 */
-.gagam-cat-step { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--text-sub); font-weight: 600; }
-.gagam-cat-step-input {
-  width: 48px;
-  border: 1px solid var(--border);
-  border-radius: 4px;
-  padding: 3px 5px;
-  font-size: 12px;
-  text-align: center;
-}
-.gagam-cat-step-input:focus { border-color: var(--blue); outline: none; }
-.gagam-cat-rule-count { margin-left: auto; font-size: 10.5px; color: var(--text-sub); white-space: nowrap; }
-
-/* 가감조건 목록의 안내문 스텝 태그 / 자동규칙 숨기기 토글 */
-.gagam-step-tag {
-  display: inline-block;
-  background: var(--blue-light);
-  color: var(--blue);
-  border-radius: 4px;
-  padding: 2px 7px;
-  font-size: 10.5px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-.gagam-auto-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 11.5px;
-  color: var(--text-sub);
-  cursor: pointer;
-  white-space: nowrap;
-}
-
 /* 가감조건 관리 : 공간 탭 */
 .gagam-space-tabs { display: flex; flex-wrap: wrap; gap: 6px; padding: 0; }
 .gagam-space-tab {
@@ -317,3 +238,82 @@
   font-size: 10.5px;
   white-space: nowrap;
 }
+
+/* ② 상품 × 프로덕트 선택 표 */
+.gagam-pair-selected { margin-left: auto; font-size: 11.5px; font-weight: 700; color: var(--blue); }
+.gagam-pair-wrap {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  max-height: 340px;
+  overflow: auto;
+}
+.gagam-pair-table { width: 100%; min-width: 0; border-collapse: collapse; font-size: 12.5px; }
+.gagam-pair-table thead th {
+  position: sticky; top: 0;
+  background: #f7f8fb;
+  color: var(--text-sub);
+  font-weight: 700;
+  font-size: 11px;
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.gagam-pair-table tbody td { padding: 7px 10px; border-bottom: 1px solid #f0f1f4; white-space: nowrap; }
+.gagam-pair-table tbody tr:hover { background: #f5f8ff; }
+.gagam-pair-table tbody tr.selected { background: var(--blue-light); }
+.gagam-pair-check-col { width: 34px; text-align: center; }
+.gagam-pair-empty { text-align: center; color: var(--text-sub); padding: 28px 10px !important; white-space: normal !important; }
+.gagam-origin-site {
+  background: #fff2e3; color: #b6710f;
+  border-radius: 4px; padding: 1px 7px;
+  font-size: 10.5px; font-weight: 700;
+}
+
+/* 안내문 스텝 분류 태그 (현장 / STEP n / 미지정) */
+.gagam-bucket-tag {
+  display: inline-block;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 10.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.gagam-bucket-tag.site { background: #fff2e3; color: #b6710f; }
+.gagam-bucket-tag.step { background: var(--blue-light); color: var(--blue); }
+.gagam-bucket-tag.none { background: #f0f1f4; color: var(--text-sub); }
+
+/* ③ 가감 그룹 생성 */
+.gagam-create-row { display: flex; gap: 8px; margin-bottom: 12px; }
+.gagam-group-name-input {
+  flex: 0 0 320px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 12.5px;
+}
+.gagam-group-name-input:focus { border-color: var(--blue); outline: none; }
+
+/* ④ 가감 그룹 카드 (안내문 스텝별 분류) */
+.gagam-group-card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+  padding: 12px 14px;
+  margin-bottom: 12px;
+}
+.gagam-group-card-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.gagam-group-meta { margin-left: auto; font-size: 10.5px; font-weight: 400; color: var(--text-sub); }
+.gagam-bucket { border-top: 1px solid #f0f1f4; padding: 9px 0 4px; }
+.gagam-bucket:first-of-type { border-top: none; }
+.gagam-bucket-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.gagam-bucket-note { font-size: 10.5px; color: var(--text-sub); }
+.gagam-category-chip em { font-style: normal; color: var(--text-sub); margin: 0 2px; }
