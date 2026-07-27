@@ -247,16 +247,40 @@ document.getElementById("gagamSpaceTabs").addEventListener("click", (e) => {
   if (!btn) return;
   gagamSelectedSpace = btn.dataset.space;
   gagamSelectedPairs.clear();
+  gagamPairQuery = "";
+  document.getElementById("gagamPairSearch").value = "";
   renderGagamAll();
 });
 
-/* ---- ② 상품 × 프로덕트 선택 ---- */
+/* ---- ② 상품 × 프로덕트 선택 ----
+   조합이 많아 하나씩 고르기 어려우므로, 검색해서 걸러낸 결과를 한 번에
+   선택/해제할 수 있게 한다. 검색어는 쉼표로 나누면 모두 포함(AND)해야
+   매치된다. 예) "신발장,아크로" */
+let gagamPairQuery = "";
+
+function gagamPairMatches(r, query) {
+  const terms = (query || "").split(",").map((t) => t.trim().toLowerCase()).filter(Boolean);
+  if (terms.length === 0) return true;
+  const haystack = [r.skuCode, r.item, r.origin, r.productCode, r.productName, gagamBucketOf(r.skuCode).label]
+    .join(" ").toLowerCase();
+  return terms.every((t) => haystack.includes(t));
+}
+
+function gagamFilteredPairs() {
+  return gagamSpacePairs(gagamSelectedSpace).filter((r) => gagamPairMatches(r, gagamPairQuery));
+}
+
 function renderGagamPairTable() {
-  const pairs = gagamSpacePairs(gagamSelectedSpace);
-  document.getElementById("gagamPairCount").textContent = `${pairs.length}개`;
+  const total = gagamSpacePairs(gagamSelectedSpace).length;
+  const pairs = gagamFilteredPairs();
+  document.getElementById("gagamPairCount").textContent = gagamPairQuery.trim()
+    ? `${total}개 중 ${pairs.length}개`
+    : `${total}개`;
   document.getElementById("gagamPairSelected").textContent = `선택 ${gagamSelectedPairs.size}건`;
   document.getElementById("gagamPairBody").innerHTML = pairs.length === 0
-    ? `<tr><td colspan="7" class="gagam-pair-empty">이 공간에는 매핑된 상품 × 프로덕트가 없습니다. 「1. 상품구성 &gt; 상품구성코드」에서 프로덕트를 먼저 매핑해주세요.</td></tr>`
+    ? `<tr><td colspan="7" class="gagam-pair-empty">${total === 0
+        ? "이 공간에는 매핑된 상품 × 프로덕트가 없습니다. 「1. 상품구성 &gt; 상품구성코드」에서 프로덕트를 먼저 매핑해주세요."
+        : "검색과 일치하는 상품 × 프로덕트가 없습니다."}</td></tr>`
     : pairs.map((r) => {
       const key = gagamPairKey(r.skuCode, r.productCode);
       return `
@@ -271,9 +295,24 @@ function renderGagamPairTable() {
         </tr>`;
     }).join("");
 
+  // 헤더 체크박스는 "지금 보이는(검색된) 행" 기준으로 동작한다
   const all = document.getElementById("gagamPairCheckAll");
   all.checked = pairs.length > 0 && pairs.every((r) => gagamSelectedPairs.has(gagamPairKey(r.skuCode, r.productCode)));
+  document.getElementById("gagamPairSelectFiltered").disabled = pairs.length === 0;
+  document.getElementById("gagamPairClearFiltered").disabled = pairs.length === 0;
+  document.getElementById("gagamPairClearAll").disabled = gagamSelectedPairs.size === 0;
   document.getElementById("gagamGroupCreateBtn").disabled = gagamSelectedPairs.size < 2;
+}
+
+function gagamApplyToFiltered(select) {
+  const pairs = gagamFilteredPairs();
+  pairs.forEach((r) => {
+    const key = gagamPairKey(r.skuCode, r.productCode);
+    if (select) gagamSelectedPairs.add(key);
+    else gagamSelectedPairs.delete(key);
+  });
+  renderGagamPairTable();
+  return pairs.length;
 }
 
 document.getElementById("gagamPairBody").addEventListener("change", (e) => {
@@ -284,13 +323,24 @@ document.getElementById("gagamPairBody").addEventListener("change", (e) => {
   renderGagamPairTable();
 });
 document.getElementById("gagamPairCheckAll").addEventListener("change", (e) => {
-  const pairs = gagamSpacePairs(gagamSelectedSpace);
-  pairs.forEach((r) => {
-    const key = gagamPairKey(r.skuCode, r.productCode);
-    if (e.target.checked) gagamSelectedPairs.add(key);
-    else gagamSelectedPairs.delete(key);
-  });
+  gagamApplyToFiltered(e.target.checked);
+});
+document.getElementById("gagamPairSearch").addEventListener("input", (e) => {
+  gagamPairQuery = e.target.value;
   renderGagamPairTable();
+});
+document.getElementById("gagamPairSelectFiltered").addEventListener("click", () => {
+  const n = gagamApplyToFiltered(true);
+  showToast(`${n}건이 선택되었습니다.`);
+});
+document.getElementById("gagamPairClearFiltered").addEventListener("click", () => {
+  const n = gagamApplyToFiltered(false);
+  showToast(`${n}건의 선택이 해제되었습니다.`);
+});
+document.getElementById("gagamPairClearAll").addEventListener("click", () => {
+  gagamSelectedPairs.clear();
+  renderGagamPairTable();
+  showToast("선택이 모두 해제되었습니다.");
 });
 
 /* ---- ③ 선택 정보로 가감 그룹 생성 ---- */

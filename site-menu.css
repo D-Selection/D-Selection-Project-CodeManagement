@@ -241,6 +241,17 @@
 
 /* ② 상품 × 프로덕트 선택 표 */
 .gagam-pair-selected { margin-left: auto; font-size: 11.5px; font-weight: 700; color: var(--blue); }
+.gagam-pair-toolbar { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+.gagam-pair-search {
+  flex: 1;
+  min-width: 280px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-size: 12.5px;
+}
+.gagam-pair-search:focus { border-color: var(--blue); outline: none; }
+.gagam-pair-toolbar .toolbar-btn:disabled { opacity: .45; cursor: default; }
 .gagam-pair-wrap {
   border: 1px solid var(--border);
   border-radius: 8px;
