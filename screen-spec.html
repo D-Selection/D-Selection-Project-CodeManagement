@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>D.Selection 코드 관리시스템 | 전체 화면정의서</title>
+<link rel="stylesheet" href="screen-spec.css" />
+</head>
+<body>
+  <div class="ss-app">
+    <header class="ss-topbar">
+      <div class="ss-topbar-left">
+        <span class="ss-logo">DL<sub>E&amp;C</sub></span>
+        <h1>D.Selection 코드 관리시스템 — 전체 화면정의서</h1>
+      </div>
+      <nav class="ss-topbar-right">
+        <a href="screen-spec-deck.html" class="ss-nav-link">🖼 이미지 슬라이드로 보기</a>
+        <a href="codes-landing.html" class="ss-nav-link">📋 현장 목록</a>
+        <a href="codes-standard.html" class="ss-nav-link">📖 현장별 표준코드</a>
+      </nav>
+    </header>
+
+    <div class="ss-info-box">
+      이 문서는 시스템의 모든 화면과 팝업(별도 화면으로 취급)의 주요 기능을 정리한 화면정의서입니다.
+      화면/팝업별로 코멘트를 입력할 수 있고, 입력한 코멘트는 이 브라우저에 자동 저장됩니다.
+      <strong>저장하기</strong>를 누르면 지금까지의 내용(코멘트 포함) 전체를 엑셀에서 바로 열리는 파일로 내려받습니다.
+    </div>
+
+    <div class="ss-toolbar">
+      <div class="ss-toolbar-left">
+        <button type="button" class="ss-type-chip active" data-type="all">전체 <span id="ssCount" class="ss-count-pill">0개</span></button>
+        <button type="button" class="ss-type-chip" data-type="screen">화면 <span class="ss-count-pill">(<span id="ssScreenCountTotal">0</span>)</span></button>
+        <button type="button" class="ss-type-chip" data-type="popup">팝업 <span class="ss-count-pill">(<span id="ssPopupCountTotal">0</span>)</span></button>
+      </div>
+      <div class="ss-toolbar-right">
+        <input type="text" id="ssSearchInput" class="ss-search-input" placeholder="화면명, 메뉴, 기능, 코멘트로 검색" />
+        <button type="button" class="ss-save-btn" id="ssSaveBtn">💾 저장하기 (엑셀로 내보내기)</button>
+      </div>
+    </div>
+
+    <div class="ss-list" id="ssList"></div>
+  </div>
+
+<script src="screen-spec.js"></script>
+</body>
+</html>

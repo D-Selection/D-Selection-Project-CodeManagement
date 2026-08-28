@@ -2,470 +2,12 @@
    대분류/중분류는 전사공통코드로 관리되고(1.5 대분류/중분류/제조사, 현장별
    표준코드 > 전사공통코드와 같은 코드 체계), 소분류(PK)는 이제 "현장별
    관리 항목"이다 — 현장마다 마스터 카탈로그 중 자기가 쓰는 소분류만
-   보유한다. PRODUCT_MASTER_CATALOG가 전체 마스터, products는 "현재
+   보유한다. 마스터 카탈로그(DS_PRODUCT_MASTER_CATALOG)와 현장별 배정
+   데모 데이터(DS_OTHER_SITE_PRODUCT_SETS)는 현장별 표준코드 화면과
+   공유해야 하므로 shared-state.js에서 관리한다. products는 "현재
    현장(아크로드 서초 현장)"이 보유한 소분류 목록이다. */
-const PRODUCT_MASTER_CATALOG = [
-  { no: 1, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "001", midName: "수전/샤워 액세서리", code: "AC-001-01", name: "국산 주방수전/워터웍스유진" },
-  { no: 2, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "001", midName: "수전/샤워 액세서리", code: "AC-001-02", name: "국산 주방수전/대림바스" },
-  { no: 3, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "001", midName: "수전/샤워 액세서리", code: "AC-001-03", name: "국산 다용도실 하부장 수전/대림바스" },
-  { no: 4, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "001", midName: "수전/샤워 액세서리", code: "AC-001-04", name: "국산 일반 세면기 수전/대림바스" },
-  { no: 5, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "001", midName: "수전/샤워 액세서리", code: "AC-001-05", name: "국산 언더볼 세면기 수전/대림바스" },
-  { no: 6, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "001", midName: "수전/샤워 액세서리", code: "AC-001-06", name: "국산 선반형 샤워수전/대림바스" },
-  { no: 7, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "001", midName: "수전/샤워 액세서리", code: "AC-001-07", name: "국산 선반형 욕조수전/대림바스" },
-  { no: 8, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "001", midName: "수전/샤워 액세서리", code: "AC-001-08", name: "국산 슬라이드바/대림바스" },
-  { no: 9, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "001", midName: "수전/샤워 액세서리", code: "AC-001-09", name: "국산 안마샤워헤드/대림바스" },
-  { no: 10, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "002", midName: "세면기류", code: "AC-002-01", name: "국산 일반 세면기(공용욕실)/대림바스" },
-  { no: 11, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "002", midName: "세면기류", code: "AC-002-02", name: "국산 일반 세면기(부부욕실)/대림바스" },
-  { no: 12, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "002", midName: "세면기류", code: "AC-002-03", name: "국산 언더볼 세면기/대림바스" },
-  { no: 13, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "002", midName: "세면기류", code: "AC-002-04", name: "국산 탑볼 세면기/대림바스" },
-  { no: 14, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "003", midName: "양변기/비데류", code: "AC-003-01", name: "국산 양변기/대림바스" },
-  { no: 15, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "003", midName: "양변기/비데류", code: "AC-003-02", name: "국산 양변기(벽배수)/대림바스" },
-  { no: 16, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "003", midName: "양변기/비데류", code: "AC-003-03", name: "국산 양변기(벽걸이형)/대림바스" },
-  { no: 17, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "003", midName: "양변기/비데류", code: "AC-003-04", name: "국산 비데일체형 양변기/대림바스" },
-  { no: 18, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "003", midName: "양변기/비데류", code: "AC-003-05", name: "국산 비데일체형 양변기(벽배수)/대림바스" },
-  { no: 19, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "003", midName: "양변기/비데류", code: "AC-003-06", name: "국산 분리형 비데/대림바스" },
-  { no: 20, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "004", midName: "욕조류", code: "AC-004-01", name: "국산 세라믹 욕조" },
-  { no: 21, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "004", midName: "욕조류", code: "AC-004-02", name: "국산 아크릴 욕조" },
-  { no: 22, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "005", midName: "수건걸이류", code: "AC-005-01", name: "국산 일반 수건걸이/대림바스" },
-  { no: 23, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "005", midName: "수건걸이류", code: "AC-005-02", name: "국산 슬림형 수건걸이/대림바스" },
-  { no: 24, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "001", midName: "수전/샤워 액세서리", code: "AC-001-10", name: "외산 주방수전/한스그로헤" },
-  { no: 25, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "001", midName: "수전/샤워 액세서리", code: "AC-001-11", name: "외산 일반,언더볼 세면기 수전/한스그로헤-서초(단종)" },
-  { no: 26, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "001", midName: "수전/샤워 액세서리", code: "AC-001-12", name: "외산 일반,언더볼 세면기 수전/한스그로헤-방배(단종)" },
-  { no: 27, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "001", midName: "수전/샤워 액세서리", code: "AC-001-13", name: "외산 일반,언더볼 세면기 수전/한스그로헤" },
-  { no: 28, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "001", midName: "수전/샤워 액세서리", code: "AC-001-14", name: "외산 탑볼 세면기 수전/한스그로헤" },
-  { no: 29, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "001", midName: "수전/샤워 액세서리", code: "AC-001-15", name: "외산 선반형 샤워수전/한스그로헤" },
-  { no: 30, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "001", midName: "수전/샤워 액세서리", code: "AC-001-16", name: "외산 선반형 욕조수전/한스그로헤" },
-  { no: 31, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "001", midName: "수전/샤워 액세서리", code: "AC-001-17", name: "외산 슬라이드바/한스그로헤" },
-  { no: 32, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "001", midName: "수전/샤워 액세서리", code: "AC-001-18", name: "외산 안마샤워헤드/한스그로헤" },
-  { no: 33, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "002", midName: "세면기류", code: "AC-002-05", name: "외산 일반 세면기/아메리칸스탠다드" },
-  { no: 34, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "002", midName: "세면기류", code: "AC-002-06", name: "외산 언더볼 세면기/아메리칸스탠다드" },
-  { no: 35, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "002", midName: "세면기류", code: "AC-002-07", name: "외산 탑볼 세면기/아메리칸스탠다드" },
-  { no: 36, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "003", midName: "양변기/비데류", code: "AC-003-07", name: "외산 양변기" },
-  { no: 37, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "003", midName: "양변기/비데류", code: "AC-003-08", name: "외산 양변기(벽배수)" },
-  { no: 38, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "003", midName: "양변기/비데류", code: "AC-003-09", name: "외산 양변기(벽걸이형)/게버릿" },
-  { no: 39, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "003", midName: "양변기/비데류", code: "AC-003-10", name: "외산 비데일체형 양변기" },
-  { no: 40, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "003", midName: "양변기/비데류", code: "AC-003-11", name: "외산 비데일체형 양변기(벽배수)/아메리칸스탠다드" },
-  { no: 41, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "004", midName: "욕조류", code: "AC-004-03", name: "외산 세라믹 욕조" },
-  { no: 42, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "004", midName: "욕조류", code: "AC-004-04", name: "외산 아크릴 욕조" },
-  { no: 43, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "006", midName: "스마트 기기", code: "AC-006-01", name: "무선 물내림 스마트 스위치" },
-  { no: 44, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "007", midName: "환기/공조기기", code: "AC-007-01", name: "기본 욕실팬/고효율 3단" },
-  { no: 45, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "007", midName: "환기/공조기기", code: "AC-007-02", name: "기본 욕실팬/고효율 1단" },
-  { no: 46, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "007", midName: "환기/공조기기", code: "AC-007-03", name: "기본 욕실팬/정풍량" },
-  { no: 47, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "007", midName: "환기/공조기기", code: "AC-007-04", name: "복합환풍기" },
-  { no: 48, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "007", midName: "환기/공조기기", code: "AC-007-05", name: "실별 환기시스템(D-Air Planner)" },
-  { no: 49, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "007", midName: "환기/공조기기", code: "AC-007-06", name: "고효율 전열교환기" },
-  { no: 50, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "007", midName: "환기/공조기기", code: "AC-007-07", name: "공기청정형 전열교환기" },
-  { no: 51, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "007", midName: "환기/공조기기", code: "AC-007-08", name: "안티바이러스 공기청정형 전열교환기" },
-  { no: 52, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "007", midName: "환기/공조기기", code: "AC-007-09", name: "렌지후드(일반침니형)" },
-  { no: 53, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "007", midName: "환기/공조기기", code: "AC-007-10", name: "렌지후드(디사일런트)" },
-  { no: 54, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "007", midName: "환기/공조기기", code: "AC-007-11", name: "제습기(덕트 연결형)" },
-  { no: 55, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "007", midName: "환기/공조기기", code: "AC-007-12", name: "제습기(단독 장비형)" },
-  { no: 56, majorCode: "AC", majorName: "위생기구/수전 액세서리", midCode: "008", midName: "설비공사", code: "AC-008-01", name: "설비공사" },
-  { no: 57, majorCode: "CW", majorName: "구조변경/창호", midCode: "001", midName: "구조변경", code: "CW-001-01", name: "발코니 확장" },
-  { no: 58, majorCode: "CW", majorName: "구조변경/창호", midCode: "001", midName: "구조변경", code: "CW-001-02", name: "시스템 창호" },
-  { no: 59, majorCode: "CW", majorName: "구조변경/창호", midCode: "001", midName: "구조변경", code: "CW-001-03", name: "건식 벽체" },
-  { no: 60, majorCode: "CW", majorName: "구조변경/창호", midCode: "001", midName: "구조변경", code: "CW-001-04", name: "방화도어" },
-  { no: 61, majorCode: "CW", majorName: "구조변경/창호", midCode: "001", midName: "구조변경", code: "CW-001-05", name: "우물천정" },
-  { no: 62, majorCode: "CW", majorName: "구조변경/창호", midCode: "001", midName: "구조변경", code: "CW-001-06", name: "주방 레이아웃 변경(ㄱ자형)" },
-  { no: 63, majorCode: "CW", majorName: "구조변경/창호", midCode: "001", midName: "구조변경", code: "CW-001-07", name: "주방 레이아웃 변경(一자형)" },
-  { no: 64, majorCode: "CW", majorName: "구조변경/창호", midCode: "002", midName: "수납가구(클로젯)", code: "CW-002-01", name: "R1 Closet" },
-  { no: 65, majorCode: "CW", majorName: "구조변경/창호", midCode: "002", midName: "수납가구(클로젯)", code: "CW-002-02", name: "R1 Closet Dress" },
-  { no: 66, majorCode: "CW", majorName: "구조변경/창호", midCode: "002", midName: "수납가구(클로젯)", code: "CW-002-03", name: "R2 Closet" },
-  { no: 67, majorCode: "CW", majorName: "구조변경/창호", midCode: "002", midName: "수납가구(클로젯)", code: "CW-002-04", name: "R3 Closet" },
-  { no: 68, majorCode: "CW", majorName: "구조변경/창호", midCode: "002", midName: "수납가구(클로젯)", code: "CW-002-05", name: "R4 Closet" },
-  { no: 69, majorCode: "CW", majorName: "구조변경/창호", midCode: "002", midName: "수납가구(클로젯)", code: "CW-002-06", name: "R4 Closet Dress" },
-  { no: 70, majorCode: "CW", majorName: "구조변경/창호", midCode: "002", midName: "수납가구(클로젯)", code: "CW-002-07", name: "Alpha Closet" },
-  { no: 71, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "001", midName: "조명기기", code: "EE-001-01", name: "직부등" },
-  { no: 72, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "002", midName: "조명제어/스위치", code: "EE-002-01", name: "거실 디밍 제어시스템(12단계 밝기 조절)" },
-  { no: 73, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "003", midName: "커튼시스템", code: "EE-003-01", name: "거실 커튼박스 간접조명" },
-  { no: 74, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "001", midName: "조명기기", code: "EE-001-02", name: "거실/주방/복도 조명 다운라이트 특화" },
-  { no: 75, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "001", midName: "조명기기", code: "EE-001-03", name: "현관/거실/주방/복도 조명 다운라이트 특화(NGR)" },
-  { no: 76, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "001", midName: "조명기기", code: "EE-001-04", name: "복도 스텝등" },
-  { no: 77, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "002", midName: "조명제어/스위치", code: "EE-002-02", name: "침실 디밍 제어시스템(12단계 색온도,밝기 조절)" },
-  { no: 78, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "001", midName: "조명기기", code: "EE-001-05", name: "매입형 욕실장 하부 간접조명" },
-  { no: 79, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "001", midName: "조명기기", code: "EE-001-06", name: "욕실 센서미등 겸용 다운라이트" },
-  { no: 80, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "002", midName: "조명제어/스위치", code: "EE-002-03", name: "거실 스마트 디스플레이 스위치 V1" },
-  { no: 81, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "002", midName: "조명제어/스위치", code: "EE-002-04", name: "거실 스마트 디스플레이 스위치 V2" },
-  { no: 82, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "002", midName: "조명제어/스위치", code: "EE-002-05", name: "침실 스마트 디스플레이 스위치 V1" },
-  { no: 83, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "002", midName: "조명제어/스위치", code: "EE-002-06", name: "침실 스마트 디스플레이 스위치 V2" },
-  { no: 84, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "001", midName: "조명기기", code: "EE-001-07", name: "벽등/내추럴 모던" },
-  { no: 85, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "001", midName: "조명기기", code: "EE-001-08", name: "벽등/소프트 클래식" },
-  { no: 86, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "001", midName: "조명기기", code: "EE-001-09", name: "벽등/내추럴 클래식" },
-  { no: 87, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "001", midName: "조명기기", code: "EE-001-10", name: "벽등/블랑 클래식" },
-  { no: 88, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "001", midName: "조명기기", code: "EE-001-11", name: "독서등(사이드테이블*1)" },
-  { no: 89, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "001", midName: "조명기기", code: "EE-001-12", name: "독서등(사이드테이블*2)" },
-  { no: 90, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "002", midName: "조명제어/스위치", code: "EE-002-07", name: "통합컨트롤 조명제어시스템(사이드테이블*1)" },
-  { no: 91, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "002", midName: "조명제어/스위치", code: "EE-002-08", name: "통합컨트롤 조명제어시스템(사이드테이블*2)" },
-  { no: 92, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "003", midName: "커튼시스템", code: "EE-003-02", name: "스마트 전동커튼레일 2열" },
-  { no: 93, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "001", midName: "조명기기", code: "EE-001-13", name: "침실1 다운라이트 특화" },
-  { no: 94, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "001", midName: "조명기기", code: "EE-001-14", name: "다운라이트" },
-  { no: 95, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "004", midName: "콘센트류", code: "EE-004-01", name: "무선충전 상판매입 콘센트" },
-  { no: 96, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "004", midName: "콘센트류", code: "EE-004-02", name: "상판매입 콘센트" },
-  { no: 97, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "004", midName: "콘센트류", code: "EE-004-03", name: "밥솥장 콘센트" },
-  { no: 98, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "001", midName: "조명기기", code: "EE-001-15", name: "가구 조명" },
-  { no: 99, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "004", midName: "콘센트류", code: "EE-004-04", name: "통합형 콘센트" },
-  { no: 100, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "004", midName: "콘센트류", code: "EE-004-05", name: "콘센트" },
-  { no: 101, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "004", midName: "콘센트류", code: "EE-004-06", name: "콘센트(방우)" },
-  { no: 102, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "004", midName: "콘센트류", code: "EE-004-07", name: "유럽형 콘센트" },
-  { no: 103, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "004", midName: "콘센트류", code: "EE-004-08", name: "유럽형 콘센트(방우)" },
-  { no: 104, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "005", midName: "기타 전기기기", code: "EE-005-01", name: "주방TV" },
-  { no: 105, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "001", midName: "조명기기", code: "EE-001-16", name: "우물천장 간접조명(12단계 밝기 제어)" },
-  { no: 106, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "001", midName: "조명기기", code: "EE-001-17", name: "마그네틱 트랙조명" },
-  { no: 107, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "006", midName: "환기기기", code: "EE-006-01", name: "실링팬" },
-  { no: 108, majorCode: "EE", majorName: "전기(조명/스위치/콘센트)", midCode: "007", midName: "전기공사", code: "EE-007-01", name: "전기공사" },
-  { no: 109, majorCode: "FM", majorName: "마감재", midCode: "001", midName: "바닥재(마루)", code: "FM-001-01", name: "강마루" },
-  { no: 110, majorCode: "FM", majorName: "마감재", midCode: "001", midName: "바닥재(마루)", code: "FM-001-02", name: "광폭 강마루" },
-  { no: 111, majorCode: "FM", majorName: "마감재", midCode: "001", midName: "바닥재(마루)", code: "FM-001-03", name: "원목마루/캄리아이보리(11.5t)" },
-  { no: 112, majorCode: "FM", majorName: "마감재", midCode: "001", midName: "바닥재(마루)", code: "FM-001-04", name: "원목마루/딤그레이(11.5t)" },
-  { no: 113, majorCode: "FM", majorName: "마감재", midCode: "001", midName: "바닥재(마루)", code: "FM-001-05", name: "원목마루/캄리아이보리(12.5t)" },
-  { no: 114, majorCode: "FM", majorName: "마감재", midCode: "001", midName: "바닥재(마루)", code: "FM-001-06", name: "원목마루/딤그레이(12.5t)" },
-  { no: 115, majorCode: "FM", majorName: "마감재", midCode: "001", midName: "바닥재(마루)", code: "FM-001-07", name: "원목마루/캄리아이보리(노량진-조합)" },
-  { no: 116, majorCode: "FM", majorName: "마감재", midCode: "001", midName: "바닥재(마루)", code: "FM-001-08", name: "원목마루/딤그레이(노량진-조합)" },
-  { no: 117, majorCode: "FM", majorName: "마감재", midCode: "001", midName: "바닥재(마루)", code: "FM-001-09", name: "외산 원목마루" },
-  { no: 118, majorCode: "FM", majorName: "마감재", midCode: "002", midName: "벽면 마감재(패널)", code: "FM-002-01", name: "디자인 월/e편한세상" },
-  { no: 119, majorCode: "FM", majorName: "마감재", midCode: "002", midName: "벽면 마감재(패널)", code: "FM-002-02", name: "디자인 월/아크로" },
-  { no: 120, majorCode: "FM", majorName: "마감재", midCode: "002", midName: "벽면 마감재(패널)", code: "FM-002-03", name: "디자인 월/e편한세상 목창호 패턴" },
-  { no: 121, majorCode: "FM", majorName: "마감재", midCode: "002", midName: "벽면 마감재(패널)", code: "FM-002-04", name: "디자인 월/아크로 목창호 패턴" },
-  { no: 122, majorCode: "FM", majorName: "마감재", midCode: "002", midName: "벽면 마감재(패널)", code: "FM-002-05", name: "세라믹 패널/ARLES BLANCO" },
-  { no: 123, majorCode: "FM", majorName: "마감재", midCode: "002", midName: "벽면 마감재(패널)", code: "FM-002-06", name: "세라믹 패널/LASA DELUXE" },
-  { no: 124, majorCode: "FM", majorName: "마감재", midCode: "003", midName: "도어/창호 마감재", code: "FM-003-01", name: "목창호(튜블러 손잡이 포함)" },
-  { no: 125, majorCode: "FM", majorName: "마감재", midCode: "003", midName: "도어/창호 마감재", code: "FM-003-02", name: "목창호(모티스 손잡이 포함)" },
-  { no: 126, majorCode: "FM", majorName: "마감재", midCode: "002", midName: "벽면 마감재(패널)", code: "FM-002-07", name: "디자인 월 인피니티 도어/e편한세상" },
-  { no: 127, majorCode: "FM", majorName: "마감재", midCode: "002", midName: "벽면 마감재(패널)", code: "FM-002-08", name: "디자인 월 인피니티 도어(튜블러 손잡이 포함)/아크로" },
-  { no: 128, majorCode: "FM", majorName: "마감재", midCode: "002", midName: "벽면 마감재(패널)", code: "FM-002-09", name: "디자인 월 인피니티 도어(모티스 손잡이 포함)/아크로" },
-  { no: 129, majorCode: "FM", majorName: "마감재", midCode: "002", midName: "벽면 마감재(패널)", code: "FM-002-10", name: "세라믹 패널 인피니티 도어(튜블러 손잡이 포함)/ARLES BLANCO" },
-  { no: 130, majorCode: "FM", majorName: "마감재", midCode: "002", midName: "벽면 마감재(패널)", code: "FM-002-11", name: "세라믹 패널 인피니티 도어(튜블러 손잡이 포함)/LASA DELUXE" },
-  { no: 131, majorCode: "FM", majorName: "마감재", midCode: "002", midName: "벽면 마감재(패널)", code: "FM-002-12", name: "세라믹 패널 인피니티 도어(모티스 손잡이 포함)/ARLES BLANCO" },
-  { no: 132, majorCode: "FM", majorName: "마감재", midCode: "002", midName: "벽면 마감재(패널)", code: "FM-002-13", name: "세라믹 패널 인피니티 도어(모티스 손잡이 포함)/LASA DELUXE" },
-  { no: 133, majorCode: "FM", majorName: "마감재", midCode: "004", midName: "도장 마감재", code: "FM-004-01", name: "도장" },
-  { no: 134, majorCode: "FM", majorName: "마감재", midCode: "004", midName: "도장 마감재", code: "FM-004-02", name: "탄성코트" },
-  { no: 135, majorCode: "FM", majorName: "마감재", midCode: "004", midName: "도장 마감재", code: "FM-004-03", name: "세라믹 탄성코트" },
-  { no: 136, majorCode: "FM", majorName: "마감재", midCode: "005", midName: "도배 마감재", code: "FM-005-01", name: "천장지" },
-  { no: 137, majorCode: "FM", majorName: "마감재", midCode: "005", midName: "도배 마감재", code: "FM-005-02", name: "벽지" },
-  { no: 138, majorCode: "FM", majorName: "마감재", midCode: "006", midName: "타일류", code: "FM-006-01", name: "자기질 타일" },
-  { no: 139, majorCode: "FM", majorName: "마감재", midCode: "006", midName: "타일류", code: "FM-006-02", name: "도기질 타일" },
-  { no: 140, majorCode: "FM", majorName: "마감재", midCode: "006", midName: "타일류", code: "FM-006-03", name: "포세린 타일/가영세라믹스" },
-  { no: 141, majorCode: "FM", majorName: "마감재", midCode: "006", midName: "타일류", code: "FM-006-04", name: "포세린 타일/대동산업" },
-  { no: 142, majorCode: "FM", majorName: "마감재", midCode: "006", midName: "타일류", code: "FM-006-05", name: "포세린 타일/건식세탁실" },
-  { no: 143, majorCode: "FM", majorName: "마감재", midCode: "007", midName: "인조대리석/스톤 마감재", code: "FM-007-01", name: "엔지니어드 스톤-스탠다드/실버쉐이드" },
-  { no: 144, majorCode: "FM", majorName: "마감재", midCode: "007", midName: "인조대리석/스톤 마감재", code: "FM-007-02", name: "엔지니어드 스톤-스탠다드/골든쇼어" },
-  { no: 145, majorCode: "FM", majorName: "마감재", midCode: "007", midName: "인조대리석/스톤 마감재", code: "FM-007-03", name: "엔지니어드 스톤-스탠다드/마터호른" },
-  { no: 146, majorCode: "FM", majorName: "마감재", midCode: "007", midName: "인조대리석/스톤 마감재", code: "FM-007-04", name: "엔지니어드 스톤-프리미엄/솔라로" },
-  { no: 147, majorCode: "FM", majorName: "마감재", midCode: "007", midName: "인조대리석/스톤 마감재", code: "FM-007-05", name: "엔지니어드 스톤-프리미엄/델라카토" },
-  { no: 148, majorCode: "FM", majorName: "마감재", midCode: "007", midName: "인조대리석/스톤 마감재", code: "FM-007-06", name: "엔지니어드 스톤-프레스티지/나폴리베이지" },
-  { no: 149, majorCode: "FM", majorName: "마감재", midCode: "007", midName: "인조대리석/스톤 마감재", code: "FM-007-07", name: "엔지니어드 스톤-프레스티지/몬테비소" },
-  { no: 150, majorCode: "FM", majorName: "마감재", midCode: "007", midName: "인조대리석/스톤 마감재", code: "FM-007-08", name: "엔지니어드 스톤-칸스톤/르블랑" },
-  { no: 151, majorCode: "FM", majorName: "마감재", midCode: "007", midName: "인조대리석/스톤 마감재", code: "FM-007-09", name: "엔지니어드 스톤-칸스톤/루나화이트" },
-  { no: 152, majorCode: "FM", majorName: "마감재", midCode: "007", midName: "인조대리석/스톤 마감재", code: "FM-007-10", name: "MMA/샌디드구스" },
-  { no: 153, majorCode: "FM", majorName: "마감재", midCode: "007", midName: "인조대리석/스톤 마감재", code: "FM-007-11", name: "MMA/콜리나차이" },
-  { no: 154, majorCode: "FM", majorName: "마감재", midCode: "007", midName: "인조대리석/스톤 마감재", code: "FM-007-12", name: "컴파운드스톤/아부루조" },
-  { no: 155, majorCode: "FM", majorName: "마감재", midCode: "002", midName: "벽면 마감재(패널)", code: "FM-002-14", name: "패널형마감재/콜렉트월 라임스톤화이트" },
-  { no: 156, majorCode: "FM", majorName: "마감재", midCode: "002", midName: "벽면 마감재(패널)", code: "FM-002-15", name: "패널형마감재/콜렉트월 318" },
-  { no: 157, majorCode: "FM", majorName: "마감재", midCode: "003", midName: "도어/창호 마감재", code: "FM-003-03", name: "터닝도어/e편한세상 목창호 패턴" },
-  { no: 158, majorCode: "FM", majorName: "마감재", midCode: "003", midName: "도어/창호 마감재", code: "FM-003-04", name: "터닝도어/아크로 목창호 패턴" },
-  { no: 159, majorCode: "FM", majorName: "마감재", midCode: "003", midName: "도어/창호 마감재", code: "FM-003-05", name: "터닝도어/e편한세상 디자인월 패턴" },
-  { no: 160, majorCode: "FM", majorName: "마감재", midCode: "003", midName: "도어/창호 마감재", code: "FM-003-06", name: "터닝도어/아크로 디자인월 패턴" },
-  { no: 161, majorCode: "FM", majorName: "마감재", midCode: "003", midName: "도어/창호 마감재", code: "FM-003-07", name: "시트패널/e편한세상 목창호 패턴" },
-  { no: 162, majorCode: "FM", majorName: "마감재", midCode: "003", midName: "도어/창호 마감재", code: "FM-003-08", name: "시트패널/아크로 목창호 패턴" },
-  { no: 163, majorCode: "FM", majorName: "마감재", midCode: "003", midName: "도어/창호 마감재", code: "FM-003-09", name: "시트패널/e편한세상 디자인월 패턴" },
-  { no: 164, majorCode: "FM", majorName: "마감재", midCode: "003", midName: "도어/창호 마감재", code: "FM-003-10", name: "시트패널/아크로 디자인월 패턴" },
-  { no: 165, majorCode: "FM", majorName: "마감재", midCode: "007", midName: "인조대리석/스톤 마감재", code: "FM-007-13", name: "엔지니어드 스톤-미존/사비아베이지" },
-  { no: 166, majorCode: "FN", majorName: "가구", midCode: "001", midName: "주방가전(HA 이관대상)", code: "FN-001-01", name: "빌트인 식기세척기/LG 디오스 14인용(DUE5NSE)" },
-  { no: 167, majorCode: "FN", majorName: "가구", midCode: "002", midName: "현관중문", code: "FN-002-01", name: "현관중문 스윙 도어/LX하우시스 F.3180" },
-  { no: 168, majorCode: "FN", majorName: "가구", midCode: "002", midName: "현관중문", code: "FN-002-02", name: "현관중문 스윙 도어/LX하우시스 F.3373" },
-  { no: 169, majorCode: "FN", majorName: "가구", midCode: "002", midName: "현관중문", code: "FN-002-03", name: "현관중문 스윙 도어/KCC글라스 F.3373" },
-  { no: 170, majorCode: "FN", majorName: "가구", midCode: "002", midName: "현관중문", code: "FN-002-04", name: "현관중문 슬라이딩 도어/LX하우시스 F.3180" },
-  { no: 171, majorCode: "FN", majorName: "가구", midCode: "002", midName: "현관중문", code: "FN-002-05", name: "현관중문 슬라이딩 도어/LX하우시스 F.3373" },
-  { no: 172, majorCode: "FN", majorName: "가구", midCode: "002", midName: "현관중문", code: "FN-002-06", name: "현관중문 슬라이딩 도어/KCC글라스 F.3373" },
-  { no: 173, majorCode: "FN", majorName: "가구", midCode: "002", midName: "현관중문", code: "FN-002-07", name: "현관중문 3연동 도어/LX하우시스 F.3180" },
-  { no: 174, majorCode: "FN", majorName: "가구", midCode: "002", midName: "현관중문", code: "FN-002-08", name: "현관중문 3연동 도어/LX하우시스 F.3373" },
-  { no: 175, majorCode: "FN", majorName: "가구", midCode: "002", midName: "현관중문", code: "FN-002-09", name: "현관중문 3연동 도어/KCC글라스 F.3373" },
-  { no: 176, majorCode: "FN", majorName: "가구", midCode: "002", midName: "현관중문", code: "FN-002-10", name: "4도어 슬라이딩" },
-  { no: 177, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-01", name: "신발장(pp)/e편한세상" },
-  { no: 178, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-02", name: "신발장(pp)/아크로" },
-  { no: 179, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-03", name: "신발장(pp)/e편한세상(추가)" },
-  { no: 180, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-04", name: "신발장(pp)/아크로(추가)" },
-  { no: 181, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-05", name: "신발장(PET)/미니멀" },
-  { no: 182, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-06", name: "신발장(PET)/미니멀(추가)" },
-  { no: 183, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-07", name: "신발장(FUTURA)/내추럴 모던" },
-  { no: 184, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-08", name: "신발장(FUTURA)/소프트 클래식" },
-  { no: 185, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-09", name: "신발장(FUTURA)/내추럴 클래식" },
-  { no: 186, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-10", name: "신발장(FUTURA)/블랑 클래식" },
-  { no: 187, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-11", name: "신발장(FUTURA)/모던 내추럴" },
-  { no: 188, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-12", name: "신발장(FUTURA)/내추럴 모던(추가)" },
-  { no: 189, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-13", name: "신발장(FUTURA)/소프트 클래식(추가)" },
-  { no: 190, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-14", name: "신발장(FUTURA)/내추럴 클래식(추가)" },
-  { no: 191, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-15", name: "신발장(FUTURA)/블랑 클래식(추가)" },
-  { no: 192, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-16", name: "오픈형 신발장(PET)/미니멀" },
-  { no: 193, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-17", name: "오픈형 신발장(FUTURA)/내추럴 모던" },
-  { no: 194, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-18", name: "오픈형 신발장(FUTURA)/소프트 클래식" },
-  { no: 195, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-19", name: "오픈형 신발장(FUTURA)/내추럴 클래식" },
-  { no: 196, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-20", name: "오픈형 신발장(FUTURA)/블랑 클래식" },
-  { no: 197, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-21", name: "오픈형 신발장(FUTURA)/모던 내추럴" },
-  { no: 198, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-22", name: "에어브러시" },
-  { no: 199, majorCode: "FN", majorName: "가구", midCode: "003", midName: "신발장/현관수납", code: "FN-003-23", name: "신발살균기" },
-  { no: 200, majorCode: "FN", majorName: "가구", midCode: "004", midName: "가구 도어", code: "FN-004-01", name: "가구 도어(PP)/e편한세상 목창호 패턴" },
-  { no: 201, majorCode: "FN", majorName: "가구", midCode: "004", midName: "가구 도어", code: "FN-004-02", name: "가구 도어(PP)/아크로 목창호 패턴" },
-  { no: 202, majorCode: "FN", majorName: "가구", midCode: "004", midName: "가구 도어", code: "FN-004-03", name: "가구 도어(PP)/e편한세상 디자인월 패턴" },
-  { no: 203, majorCode: "FN", majorName: "가구", midCode: "004", midName: "가구 도어", code: "FN-004-04", name: "가구 도어(PP)/아크로 디자인월 패턴" },
-  { no: 204, majorCode: "FN", majorName: "가구", midCode: "004", midName: "가구 도어", code: "FN-004-05", name: "가구 도어(PET)/미니멀" },
-  { no: 205, majorCode: "FN", majorName: "가구", midCode: "004", midName: "가구 도어", code: "FN-004-06", name: "가구 도어(FUTURA)/내추럴 모던" },
-  { no: 206, majorCode: "FN", majorName: "가구", midCode: "004", midName: "가구 도어", code: "FN-004-07", name: "가구 도어(FUTURA)/소프트 클래식" },
-  { no: 207, majorCode: "FN", majorName: "가구", midCode: "004", midName: "가구 도어", code: "FN-004-08", name: "가구 도어(FUTURA)/내추럴 클래식" },
-  { no: 208, majorCode: "FN", majorName: "가구", midCode: "004", midName: "가구 도어", code: "FN-004-09", name: "가구 도어(FUTURA)/블랑 클래식" },
-  { no: 209, majorCode: "FN", majorName: "가구", midCode: "004", midName: "가구 도어", code: "FN-004-10", name: "가구 도어(FUTURA)/모던 내추럴" },
-  { no: 210, majorCode: "FN", majorName: "가구", midCode: "005", midName: "시스템 선반", code: "FN-005-01", name: "포스트형 시스템 선반/070" },
-  { no: 211, majorCode: "FN", majorName: "가구", midCode: "005", midName: "시스템 선반", code: "FN-005-02", name: "포스트형 시스템 선반/048" },
-  { no: 212, majorCode: "FN", majorName: "가구", midCode: "005", midName: "시스템 선반", code: "FN-005-03", name: "포스트형 시스템 선반/샤트데코" },
-  { no: 213, majorCode: "FN", majorName: "가구", midCode: "005", midName: "시스템 선반", code: "FN-005-04", name: "후면 포스트형 시스템 선반" },
-  { no: 214, majorCode: "FN", majorName: "가구", midCode: "005", midName: "시스템 선반", code: "FN-005-05", name: "벽 찬넬형 시스템 선반" },
-  { no: 215, majorCode: "FN", majorName: "가구", midCode: "005", midName: "시스템 선반", code: "FN-005-06", name: "벽 패널형 시스템 선반" },
-  { no: 216, majorCode: "FN", majorName: "가구", midCode: "006", midName: "세탁실 가구", code: "FN-006-01", name: "다용도실 수납장(PET)" },
-  { no: 217, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-01", name: "상,하부장(PET)/미니멀" },
-  { no: 218, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-02", name: "상,하부장(FUTURA)/내추럴 모던" },
-  { no: 219, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-03", name: "상,하부장(FUTURA)/소프트 클래식" },
-  { no: 220, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-04", name: "상,하부장(FUTURA)/내추럴 클래식" },
-  { no: 221, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-05", name: "상,하부장(FUTURA)/블랑 클래식" },
-  { no: 222, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-06", name: "상,하부장(FUTURA)/모던 내추럴" },
-  { no: 223, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-07", name: "아일랜드장 기본형(PET)/미니멀" },
-  { no: 224, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-08", name: "아일랜드장 기본형(FUTURA)/내추럴 모던" },
-  { no: 225, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-09", name: "아일랜드장 기본형(FUTURA)/소프트 클래식" },
-  { no: 226, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-10", name: "아일랜드장 기본형(FUTURA)/내추럴 클래식" },
-  { no: 227, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-11", name: "아일랜드장 기본형(FUTURA)/블랑 클래식" },
-  { no: 228, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-12", name: "아일랜드장 기본형(FUTURA)/모던 내추럴" },
-  { no: 229, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-13", name: "아일랜드장 바 타입형(PET)/미니멀" },
-  { no: 230, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-14", name: "아일랜드장 바 타입형(FUTURA)/내추럴 모던" },
-  { no: 231, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-15", name: "아일랜드장 바 타입형(FUTURA)/소프트 클래식" },
-  { no: 232, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-16", name: "아일랜드장 바 타입형(FUTURA)/내추럴 클래식" },
-  { no: 233, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-17", name: "아일랜드장 바 타입형(FUTURA)/블랑 클래식" },
-  { no: 234, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-18", name: "아일랜드장 바 타입형(FUTURA)/모던 내추럴" },
-  { no: 235, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-19", name: "아일랜드장 식탁결합형(PET)/미니멀" },
-  { no: 236, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-20", name: "아일랜드장 식탁결합형(FUTURA)/내추럴 모던" },
-  { no: 237, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-21", name: "아일랜드장 식탁결합형(FUTURA)/소프트 클래식" },
-  { no: 238, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-22", name: "아일랜드장 식탁결합형(FUTURA)/내추럴 클래식" },
-  { no: 239, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-23", name: "아일랜드장 식탁결합형(FUTURA)/블랑 클래식" },
-  { no: 240, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-24", name: "아일랜드장 식탁결합형(FUTURA)/모던 내추럴" },
-  { no: 241, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-25", name: "아일랜드장 양면수납형(PET)/미니멀" },
-  { no: 242, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-26", name: "아일랜드장 양면수납형(FUTURA)/내추럴 모던" },
-  { no: 243, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-27", name: "아일랜드장 양면수납형(FUTURA)/소프트 클래식" },
-  { no: 244, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-28", name: "아일랜드장 양면수납형(FUTURA)/내추럴 클래식" },
-  { no: 245, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-29", name: "아일랜드장 양면수납형(FUTURA)/블랑 클래식" },
-  { no: 246, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-30", name: "아일랜드장 양면수납형(FUTURA)/모던 내추럴" },
-  { no: 247, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-31", name: "아일랜드장 양면수납 식탁결합형(PET)/미니멀" },
-  { no: 248, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-32", name: "아일랜드장 양면수납 식탁결합형(FUTURA)/내추럴 모던" },
-  { no: 249, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-33", name: "아일랜드장 양면수납 식탁결합형(FUTURA)/소프트 클래식" },
-  { no: 250, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-34", name: "아일랜드장 양면수납 식탁결합형(FUTURA)/내추럴 클래식" },
-  { no: 251, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-35", name: "아일랜드장 양면수납 식탁결합형(FUTURA)/블랑 클래식" },
-  { no: 252, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-36", name: "아일랜드장 양면수납 식탁결합형(FUTURA)/모던 내추럴" },
-  { no: 253, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-37", name: "냉장고장 기본형(PET)/미니멀" },
-  { no: 254, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-38", name: "냉장고장 기본형(FUTURA)/내추럴 모던" },
-  { no: 255, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-39", name: "냉장고장 기본형(FUTURA)/소프트 클래식" },
-  { no: 256, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-40", name: "냉장고장 기본형(FUTURA)/내추럴 클래식" },
-  { no: 257, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-41", name: "냉장고장 기본형(FUTURA)/블랑 클래식" },
-  { no: 258, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-42", name: "냉장고장 기본형(FUTURA)/모던 내추럴" },
-  { no: 259, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-43", name: "선반 수납형 키큰장(PET)/미니멀" },
-  { no: 260, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-44", name: "선반 수납형 키큰장(FUTURA)/내추럴 모던" },
-  { no: 261, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-45", name: "선반 수납형 키큰장(FUTURA)/소프트 클래식" },
-  { no: 262, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-46", name: "선반 수납형 키큰장(FUTURA)/내추럴 클래식" },
-  { no: 263, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-47", name: "선반 수납형 키큰장(FUTURA)/블랑 클래식" },
-  { no: 264, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-48", name: "선반 수납형 키큰장(FUTURA)/모던 내추럴" },
-  { no: 265, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-49", name: "인출식 수납형 키큰장(PET)/미니멀" },
-  { no: 266, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-50", name: "인출식 수납형 키큰장(FUTURA)/내추럴 모던" },
-  { no: 267, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-51", name: "인출식 수납형 키큰장(FUTURA)/소프트 클래식" },
-  { no: 268, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-52", name: "인출식 수납형 키큰장(FUTURA)/내추럴 클래식" },
-  { no: 269, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-53", name: "인출식 수납형 키큰장(FUTURA)/블랑 클래식" },
-  { no: 270, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-54", name: "인출식 수납형 키큰장(FUTURA)/모던 내추럴" },
-  { no: 271, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-55", name: "대형 선반 수납형 키큰장(PET)/미니멀" },
-  { no: 272, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-56", name: "대형 선반 수납형 키큰장(FUTURA)/내추럴 모던" },
-  { no: 273, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-57", name: "대형 선반 수납형 키큰장(FUTURA)/소프트 클래식" },
-  { no: 274, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-58", name: "대형 선반 수납형 키큰장(FUTURA)/내추럴 클래식" },
-  { no: 275, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-59", name: "대형 선반 수납형 키큰장(FUTURA)/블랑 클래식" },
-  { no: 276, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-60", name: "대형 선반 수납형 키큰장(FUTURA)/모던 내추럴" },
-  { no: 277, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-61", name: "대형 인출식 수납형 키큰장(PET)/미니멀" },
-  { no: 278, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-62", name: "대형 인출식 수납형 키큰장(FUTURA)/내추럴 모던" },
-  { no: 279, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-63", name: "대형 인출식 수납형 키큰장(FUTURA)/소프트 클래식" },
-  { no: 280, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-64", name: "대형 인출식 수납형 키큰장(FUTURA)/내추럴 클래식" },
-  { no: 281, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-65", name: "대형 인출식 수납형 키큰장(FUTURA)/블랑 클래식" },
-  { no: 282, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-66", name: "대형 인출식 수납형 키큰장(FUTURA)/모던 내추럴" },
-  { no: 283, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-67", name: "홈바 수납형(PET)/미니멀" },
-  { no: 284, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-68", name: "홈바 수납형(FUTURA)/내추럴 모던" },
-  { no: 285, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-69", name: "홈바 수납형(FUTURA)/소프트 클래식" },
-  { no: 286, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-70", name: "홈바 수납형(FUTURA)/내추럴 클래식" },
-  { no: 287, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-71", name: "홈바 수납형(FUTURA)/블랑 클래식" },
-  { no: 288, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-72", name: "홈바 수납형(FUTURA)/모던 내추럴" },
-  { no: 289, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-73", name: "홈바 윈도우형(PET)/미니멀" },
-  { no: 290, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-74", name: "홈바 윈도우형(FUTURA)/내추럴 모던" },
-  { no: 291, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-75", name: "홈바 윈도우형(FUTURA)/소프트 클래식" },
-  { no: 292, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-76", name: "홈바 윈도우형(FUTURA)/내추럴 클래식" },
-  { no: 293, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-77", name: "홈바 윈도우형(FUTURA)/블랑 클래식" },
-  { no: 294, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-78", name: "홈바 윈도우형(FUTURA)/모던 내추럴" },
-  { no: 295, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-79", name: "상부장" },
-  { no: 296, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-80", name: "하부장" },
-  { no: 297, majorCode: "FN", majorName: "가구", midCode: "006", midName: "세탁실 가구", code: "FN-006-02", name: "손빨래 하부장" },
-  { no: 298, majorCode: "FN", majorName: "가구", midCode: "006", midName: "세탁실 가구", code: "FN-006-03", name: "세탁기장(수직형)" },
-  { no: 299, majorCode: "FN", majorName: "가구", midCode: "006", midName: "세탁실 가구", code: "FN-006-04", name: "세탁기장(수직형+키큰장 결합형)" },
-  { no: 300, majorCode: "FN", majorName: "가구", midCode: "006", midName: "세탁실 가구", code: "FN-006-05", name: "세탁기장(병렬형)" },
-  { no: 301, majorCode: "FN", majorName: "가구", midCode: "008", midName: "붙박이장", code: "FN-008-01", name: "도어형 붙박이장(PP)/e편한세상 목창호 패턴" },
-  { no: 302, majorCode: "FN", majorName: "가구", midCode: "008", midName: "붙박이장", code: "FN-008-02", name: "도어형 붙박이장(PP)/아크로 목창호 패턴" },
-  { no: 303, majorCode: "FN", majorName: "가구", midCode: "008", midName: "붙박이장", code: "FN-008-03", name: "도어형 붙박이장(PET)/미니멀" },
-  { no: 304, majorCode: "FN", majorName: "가구", midCode: "008", midName: "붙박이장", code: "FN-008-04", name: "도어형 붙박이장(PET)/미니멀(추가)" },
-  { no: 305, majorCode: "FN", majorName: "가구", midCode: "008", midName: "붙박이장", code: "FN-008-05", name: "도어형 붙박이장(FUTURA)/내추럴 모던" },
-  { no: 306, majorCode: "FN", majorName: "가구", midCode: "008", midName: "붙박이장", code: "FN-008-06", name: "도어형 붙박이장(FUTURA)/소프트 클래식" },
-  { no: 307, majorCode: "FN", majorName: "가구", midCode: "008", midName: "붙박이장", code: "FN-008-07", name: "도어형 붙박이장(FUTURA)/내추럴 클래식" },
-  { no: 308, majorCode: "FN", majorName: "가구", midCode: "008", midName: "붙박이장", code: "FN-008-08", name: "도어형 붙박이장(FUTURA)/블랑 클래식" },
-  { no: 309, majorCode: "FN", majorName: "가구", midCode: "008", midName: "붙박이장", code: "FN-008-09", name: "도어형 붙박이장(FUTURA)/모던 내추럴" },
-  { no: 310, majorCode: "FN", majorName: "가구", midCode: "009", midName: "침실가구(침대/매트리스)", code: "FN-009-01", name: "침대(내추럴 헤드보드+사이드테이블*1)" },
-  { no: 311, majorCode: "FN", majorName: "가구", midCode: "009", midName: "침실가구(침대/매트리스)", code: "FN-009-02", name: "침대(내추럴 헤드보드+사이드테이블*2)" },
-  { no: 312, majorCode: "FN", majorName: "가구", midCode: "009", midName: "침실가구(침대/매트리스)", code: "FN-009-03", name: "침대(브라운 헤드보드+사이드테이블*1)" },
-  { no: 313, majorCode: "FN", majorName: "가구", midCode: "009", midName: "침실가구(침대/매트리스)", code: "FN-009-04", name: "침대(브라운 헤드보드+사이드테이블*2)" },
-  { no: 314, majorCode: "FN", majorName: "가구", midCode: "009", midName: "침실가구(침대/매트리스)", code: "FN-009-05", name: "매트리스/ACE SUITE GRAND(킹사이즈, 가로1600, 세로2000, 높이320)" },
-  { no: 315, majorCode: "FN", majorName: "가구", midCode: "009", midName: "침실가구(침대/매트리스)", code: "FN-009-06", name: "매트리스/ACE SUITE ROYAL-PLUS(킹사이즈, 가로1600, 세로2000, 높이350)" },
-  { no: 316, majorCode: "FN", majorName: "가구", midCode: "009", midName: "침실가구(침대/매트리스)", code: "FN-009-07", name: "매트리스/ACE SUITE COZY(슈퍼싱글사이즈, 가로1100, 세로2000, 높이270)" },
-  { no: 317, majorCode: "FN", majorName: "가구", midCode: "010", midName: "데스크/책상", code: "FN-010-01", name: "데스크(PET)" },
-  { no: 318, majorCode: "FN", majorName: "가구", midCode: "009", midName: "침실가구(침대/매트리스)", code: "FN-009-08", name: "데스크+침대프레임(PET)" },
-  { no: 319, majorCode: "FN", majorName: "가구", midCode: "011", midName: "화장대", code: "FN-011-01", name: "화장대(PP)/e편한세상" },
-  { no: 320, majorCode: "FN", majorName: "가구", midCode: "011", midName: "화장대", code: "FN-011-02", name: "화장대(PP)/아크로" },
-  { no: 321, majorCode: "FN", majorName: "가구", midCode: "011", midName: "화장대", code: "FN-011-03", name: "화장대(PET)/미니멀" },
-  { no: 322, majorCode: "FN", majorName: "가구", midCode: "011", midName: "화장대", code: "FN-011-04", name: "화장대(FUTURA)/내추럴 모던" },
-  { no: 323, majorCode: "FN", majorName: "가구", midCode: "011", midName: "화장대", code: "FN-011-05", name: "화장대(FUTURA)/소프트 클래식" },
-  { no: 324, majorCode: "FN", majorName: "가구", midCode: "011", midName: "화장대", code: "FN-011-06", name: "화장대(FUTURA)/내추럴 클래식" },
-  { no: 325, majorCode: "FN", majorName: "가구", midCode: "011", midName: "화장대", code: "FN-011-07", name: "화장대(FUTURA)/블랑 클래식" },
-  { no: 326, majorCode: "FN", majorName: "가구", midCode: "011", midName: "화장대", code: "FN-011-08", name: "화장대(FUTURA)/모던 내추럴" },
-  { no: 327, majorCode: "FN", majorName: "가구", midCode: "011", midName: "화장대", code: "FN-011-09", name: "측면수납형 화장대(PET)/미니멀" },
-  { no: 328, majorCode: "FN", majorName: "가구", midCode: "011", midName: "화장대", code: "FN-011-10", name: "측면수납형 화장대(FUTURA)/내추럴 모던" },
-  { no: 329, majorCode: "FN", majorName: "가구", midCode: "011", midName: "화장대", code: "FN-011-11", name: "측면수납형 화장대(FUTURA)/소프트 클래식" },
-  { no: 330, majorCode: "FN", majorName: "가구", midCode: "011", midName: "화장대", code: "FN-011-12", name: "측면수납형 화장대(FUTURA)/내추럴 클래식" },
-  { no: 331, majorCode: "FN", majorName: "가구", midCode: "011", midName: "화장대", code: "FN-011-13", name: "측면수납형 화장대(FUTURA)/블랑 클래식" },
-  { no: 332, majorCode: "FN", majorName: "가구", midCode: "011", midName: "화장대", code: "FN-011-14", name: "측면수납형 화장대(FUTURA)/모던 내추럴" },
-  { no: 333, majorCode: "FN", majorName: "가구", midCode: "012", midName: "건식세면대", code: "FN-012-01", name: "건식세면대(PET)/미니멀" },
-  { no: 334, majorCode: "FN", majorName: "가구", midCode: "012", midName: "건식세면대", code: "FN-012-02", name: "건식세면대(FUTURA)/내추럴 모던" },
-  { no: 335, majorCode: "FN", majorName: "가구", midCode: "012", midName: "건식세면대", code: "FN-012-03", name: "건식세면대(FUTURA)/소프트 클래식" },
-  { no: 336, majorCode: "FN", majorName: "가구", midCode: "012", midName: "건식세면대", code: "FN-012-04", name: "건식세면대(FUTURA)/내추럴 클래식" },
-  { no: 337, majorCode: "FN", majorName: "가구", midCode: "012", midName: "건식세면대", code: "FN-012-05", name: "건식세면대(FUTURA)/블랑 클래식" },
-  { no: 338, majorCode: "FN", majorName: "가구", midCode: "012", midName: "건식세면대", code: "FN-012-06", name: "건식세면대(FUTURA)/모던 내추럴" },
-  { no: 339, majorCode: "FN", majorName: "가구", midCode: "005", midName: "시스템 선반", code: "FN-005-07", name: "시스템 선반 의류관리기장" },
-  { no: 340, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-01", name: "의류관리기장(PET)/미니멀" },
-  { no: 341, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-02", name: "의류관리기장(FUTURA)/내추럴 모던" },
-  { no: 342, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-03", name: "의류관리기장(FUTURA)/소프트 클래식" },
-  { no: 343, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-04", name: "의류관리기장(FUTURA)/내추럴 클래식" },
-  { no: 344, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-05", name: "의류관리기장(FUTURA)/블랑 클래식" },
-  { no: 345, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-06", name: "의류관리기장(FUTURA)/모던 내추럴" },
-  { no: 346, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-07", name: "오픈형 행거+서랍장(PET)/미니멀" },
-  { no: 347, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-08", name: "오픈형 행거+서랍장(FUTURA)/내추럴 모던" },
-  { no: 348, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-09", name: "오픈형 행거+서랍장(FUTURA)/소프트 클래식" },
-  { no: 349, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-10", name: "오픈형 행거+서랍장(FUTURA)/내추럴 클래식" },
-  { no: 350, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-11", name: "오픈형 행거+서랍장(FUTURA)/블랑 클래식" },
-  { no: 351, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-12", name: "오픈형 행거+서랍장(FUTURA)/모던 내추럴" },
-  { no: 352, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-13", name: "오픈형 책장(PET)/미니멀" },
-  { no: 353, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-14", name: "오픈형 책장(FUTURA)/내추럴 모던" },
-  { no: 354, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-15", name: "오픈형 책장(FUTURA)/소프트 클래식" },
-  { no: 355, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-16", name: "오픈형 책장(FUTURA)/내추럴 클래식" },
-  { no: 356, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-17", name: "오픈형 책장(FUTURA)/블랑 클래식" },
-  { no: 357, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-18", name: "오픈형 책장(FUTURA)/모던 내추럴" },
-  { no: 358, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-19", name: "드레스룸 유리도어(PET)/미니멀" },
-  { no: 359, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-20", name: "드레스룸 유리도어(FUTURA)/내추럴 모던" },
-  { no: 360, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-21", name: "드레스룸 유리도어(FUTURA)/소프트 클래식" },
-  { no: 361, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-22", name: "드레스룸 유리도어(FUTURA)/내추럴 클래식" },
-  { no: 362, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-23", name: "드레스룸 유리도어(FUTURA)/블랑 클래식" },
-  { no: 363, majorCode: "FN", majorName: "가구", midCode: "013", midName: "드레스룸 수납가구", code: "FN-013-24", name: "드레스룸 유리도어(FUTURA)/모던 내추럴" },
-  { no: 364, majorCode: "FN", majorName: "가구", midCode: "014", midName: "샤워부스", code: "FN-014-01", name: "샤워 부스" },
-  { no: 365, majorCode: "FN", majorName: "가구", midCode: "014", midName: "샤워부스", code: "FN-014-02", name: "고급형 샤워부스/F.3373" },
-  { no: 366, majorCode: "FN", majorName: "가구", midCode: "014", midName: "샤워부스", code: "FN-014-03", name: "고급형 샤워부스/F.3180" },
-  { no: 367, majorCode: "FN", majorName: "가구", midCode: "007", midName: "주방/수납 가구", code: "FN-007-81", name: "카운터형 욕실 하부장" },
-  { no: 368, majorCode: "FN", majorName: "가구", midCode: "010", midName: "데스크/책상", code: "FN-010-02", name: "데스크(FUTURA)/내추럴 모던" },
-  { no: 369, majorCode: "FN", majorName: "가구", midCode: "010", midName: "데스크/책상", code: "FN-010-03", name: "데스크(FUTURA)/소프트 클래식" },
-  { no: 370, majorCode: "FN", majorName: "가구", midCode: "010", midName: "데스크/책상", code: "FN-010-04", name: "데스크(FUTURA)/내추럴 클래식" },
-  { no: 371, majorCode: "FN", majorName: "가구", midCode: "010", midName: "데스크/책상", code: "FN-010-05", name: "데스크(FUTURA)/블랑 클래식" },
-  { no: 372, majorCode: "FN", majorName: "가구", midCode: "010", midName: "데스크/책상", code: "FN-010-06", name: "책상 측면 옵션장_상부찬넬형" },
-  { no: 373, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-01", name: "상,하부장/한샘 U1" },
-  { no: 374, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-02", name: "상,하부장/한샘 U2" },
-  { no: 375, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-03", name: "상,하부장/라이히트" },
-  { no: 376, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-04", name: "상,하부장/베네타쿠치네 U1" },
-  { no: 377, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-05", name: "상,하부장/베네타쿠치네 U2" },
-  { no: 378, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-06", name: "상,하부장/해커 U1" },
-  { no: 379, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-07", name: "상,하부장/해커 U2" },
-  { no: 380, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-08", name: "아일랜드장/한샘 U1" },
-  { no: 381, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-09", name: "아일랜드장/한샘 U2" },
-  { no: 382, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-10", name: "아일랜드장/라이히트" },
-  { no: 383, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-11", name: "아일랜드장/베네타쿠치네 U1" },
-  { no: 384, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-12", name: "아일랜드장/베네타쿠치네 U2" },
-  { no: 385, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-13", name: "아일랜드장/해커 U1" },
-  { no: 386, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-14", name: "아일랜드장/해커 U2" },
-  { no: 387, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-15", name: "냉장고장 기본형/한샘" },
-  { no: 388, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-16", name: "냉장고장 기본형/라이히트" },
-  { no: 389, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-17", name: "냉장고장 기본형/베네타쿠치네 U1" },
-  { no: 390, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-18", name: "냉장고장 기본형/베네타쿠치네 U2" },
-  { no: 391, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-19", name: "선반 수납형 키큰장/한샘" },
-  { no: 392, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-20", name: "선반 수납형 키큰장/라이히트" },
-  { no: 393, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-21", name: "인출식 수납형 키큰장/한샘" },
-  { no: 394, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-22", name: "인출식 수납형 키큰장/라이히트" },
-  { no: 395, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-23", name: "홈바 수납형/한샘 U1" },
-  { no: 396, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-24", name: "홈바 수납형/한샘 U2" },
-  { no: 397, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-25", name: "상부장 전동 플랩장/한샘" },
-  { no: 398, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-26", name: "전기오븐장/베네타쿠치네 U1" },
-  { no: 399, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-27", name: "전기오븐장/베네타쿠치네 U2" },
-  { no: 400, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-28", name: "가전 맞춤형 빌트인 냉장고장/베네타쿠치네 U1" },
-  { no: 401, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-29", name: "가전 맞춤형 빌트인 냉장고장/베네타쿠치네 U2" },
-  { no: 402, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-30", name: "가전 맞춤형 빌트인 냉장고장/해커 U1" },
-  { no: 403, majorCode: "FN", majorName: "가구", midCode: "015", midName: "프리미엄 브랜드 주방가구(한샘/라이히트 등)", code: "FN-015-31", name: "가전 맞춤형 빌트인 냉장고장/해커 U2" },
-  { no: 404, majorCode: "FN", majorName: "가구", midCode: "016", midName: "데이터오류(삭제대상)", code: "FN-016-01", name: "998" },
-  { no: 405, majorCode: "FN", majorName: "가구", midCode: "016", midName: "데이터오류(삭제대상)", code: "FN-016-02", name: "999" },
-  { no: 406, majorCode: "HA", majorName: "가전", midCode: "001", midName: "냉방기기", code: "HA-001-01", name: "에어컨/LG" },
-  { no: 407, majorCode: "HA", majorName: "가전", midCode: "001", midName: "냉방기기", code: "HA-001-02", name: "에어컨/삼성" },
-  { no: 408, majorCode: "HA", majorName: "가전", midCode: "001", midName: "냉방기기", code: "HA-001-03", name: "프리미엄 에어컨/LG" },
-  { no: 409, majorCode: "HA", majorName: "가전", midCode: "001", midName: "냉방기기", code: "HA-001-04", name: "프리미엄 에어컨/삼성" },
-  { no: 410, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-01", name: "빌트인 전기오븐/나비엔 매직 컨벡션 스팀 오븐" },
-  { no: 411, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-02", name: "빌트인 전기오븐/LG 광파오븐" },
-  { no: 412, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-03", name: "빌트인 전기오븐/삼성 전기오븐" },
-  { no: 413, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-04", name: "빌트인 식기세척기/LG 디오스 14인용(DIE6PT)" },
-  { no: 414, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-05", name: "빌트인 식기세척기/LG 오브제 14인용(DUE6BG)" },
-  { no: 415, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-06", name: "빌트인 식기세척기/LG 시그니처 14인용(DBS14)" },
-  { no: 416, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-07", name: "빌트인 식기세척기/삼성 12인용(DW60T7065SS)" },
-  { no: 417, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-08", name: "빌트인 식기세척기/삼성 12인용(DW80F71Y1SEW)" },
-  { no: 418, majorCode: "HA", majorName: "가전", midCode: "003", midName: "세탁/의류관리기기", code: "HA-003-01", name: "의류관리기/LG 스타일러 5벌" },
-  { no: 419, majorCode: "HA", majorName: "가전", midCode: "003", midName: "세탁/의류관리기기", code: "HA-003-02", name: "세탁기" },
-  { no: 420, majorCode: "HA", majorName: "가전", midCode: "003", midName: "세탁/의류관리기기", code: "HA-003-03", name: "건조기" },
-  { no: 421, majorCode: "HA", majorName: "가전", midCode: "004", midName: "냉장고", code: "HA-004-01", name: "빌트인 냉장고/LG 오브제 1도어 냉장+냉동+김치(설치키트 포함)" },
-  { no: 422, majorCode: "HA", majorName: "가전", midCode: "004", midName: "냉장고", code: "HA-004-02", name: "빌트인 냉장고/LG 오브제 4도어(FIT&MAX)+3도어 김치(FIT&MAX)(설치키트 포함)" },
-  { no: 423, majorCode: "HA", majorName: "가전", midCode: "004", midName: "냉장고", code: "HA-004-03", name: "빌트인 냉장고/LG 오브제 4도어+김치(설치키트 포함)" },
-  { no: 424, majorCode: "HA", majorName: "가전", midCode: "004", midName: "냉장고", code: "HA-004-04", name: "빌트인 냉장고/LG 오브제 4도어" },
-  { no: 425, majorCode: "HA", majorName: "가전", midCode: "004", midName: "냉장고", code: "HA-004-05", name: "빌트인 냉장고/LG 시그니처 냉장+냉동+와인(설치키트 포함)" },
-  { no: 426, majorCode: "HA", majorName: "가전", midCode: "004", midName: "냉장고", code: "HA-004-06", name: "빌트인 냉장고/삼성 비스포크 냉장+냉동+김치(설치키트 포함)" },
-  { no: 427, majorCode: "HA", majorName: "가전", midCode: "004", midName: "냉장고", code: "HA-004-07", name: "빌트인 냉장고/삼성 비스포크 냉장+냉동+김치(Cotta)(설치키트 포함)" },
-  { no: 428, majorCode: "HA", majorName: "가전", midCode: "004", midName: "냉장고", code: "HA-004-08", name: "빌트인 냉장고/삼성 비스포크 냉장+변온+김치(설치키트 포함)" },
-  { no: 429, majorCode: "HA", majorName: "가전", midCode: "004", midName: "냉장고", code: "HA-004-09", name: "빌트인 냉장고/삼성 인피니트 냉장+냉동+와인(설치키트,정수필터 포함)" },
-  { no: 430, majorCode: "HA", majorName: "가전", midCode: "004", midName: "냉장고", code: "HA-004-10", name: "빌트인 냉장고/삼성 인피니트 냉장+냉동+김치(설치키트,정수필터 포함)" },
-  { no: 431, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-09", name: "하이브리드 쿡탑 인덕션/나비엔 매직 가스 3구" },
-  { no: 432, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-10", name: "하이브리드 쿡탑 인덕션/나비엔 매직 인덕션 2구+가스 1구" },
-  { no: 433, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-11", name: "하이브리드 쿡탑 인덕션/나비엔 매직 하이라이트 2구+가스 1구" },
-  { no: 434, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-12", name: "하이브리드 쿡탑 인덕션/나비엔 매직 인덕션 2구+하이라이트 1구" },
-  { no: 435, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-13", name: "하이브리드 쿡탑 인덕션/나비엔 매직 보더리스 인덕션 4구" },
-  { no: 436, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-14", name: "하이브리드 쿡탑 인덕션/LG 인덕션 2구+하이라이트 1구" },
-  { no: 437, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-15", name: "하이브리드 쿡탑 인덕션/LG 인덕션 3구" },
-  { no: 438, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-16", name: "하이브리드 쿡탑 인덕션/LG 인덕션 3구 25년5월~26년4월" },
-  { no: 439, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-17", name: "하이브리드 쿡탑 인덕션/삼성 인덕션 3구" },
-  { no: 440, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-18", name: "빌트인 식기세척기/LG 디오스 14인용(DUE5NSE)" },
-  { no: 441, majorCode: "HA", majorName: "가전", midCode: "004", midName: "냉장고", code: "HA-004-11", name: "빌트인 냉장고/삼성 비스포크 4도어 키친핏" },
-  { no: 442, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-19", name: "하이브리드 쿡탑 인덕션/나비엔 매직 가스 2구" },
-  { no: 443, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-20", name: "빌트인 식기세척기/LG 시그니처 12인용(DBS12)-방배" },
-  { no: 444, majorCode: "HA", majorName: "가전", midCode: "004", midName: "냉장고", code: "HA-004-12", name: "빌트인 냉장고/LG 오브제 4도어(FIT&MAX)" },
-  { no: 445, majorCode: "HA", majorName: "가전", midCode: "004", midName: "냉장고", code: "HA-004-13", name: "빌트인 냉장고/삼성 비스포크 4도어 키친핏+삼성 비스포크 김치(설치키트 포함)" },
-  { no: 446, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-21", name: "하이브리드 쿡탑 인덕션/나비엔 매직 하이라이트 2구/단종" },
-  { no: 447, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-22", name: "하이브리드 쿡탑 인덕션/나비엔 매직 하이라이트 3구" },
-  { no: 448, majorCode: "HA", majorName: "가전", midCode: "004", midName: "냉장고", code: "HA-004-14", name: "빌트인 냉장고/LG 시그니처 냉장+냉동(설치키트 포함)" },
-  { no: 449, majorCode: "HA", majorName: "가전", midCode: "004", midName: "냉장고", code: "HA-004-15", name: "빌트인 냉장고/LG 오브제 1도어 냉장+냉동+김치(FIT&MAX)(설치키트 포함)" },
-  { no: 450, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-23", name: "빌트인 식기세척기/LG 디오스 14인용(DIE5PT)" },
-  { no: 451, majorCode: "HA", majorName: "가전", midCode: "003", midName: "세탁/의류관리기기", code: "HA-003-04", name: "의류관리기/LG 스타일러 3벌" },
-  { no: 452, majorCode: "HA", majorName: "가전", midCode: "002", midName: "주방가전", code: "HA-002-24", name: "하이브리드 쿡탑 인덕션/나비엔 매직 인덕션 3구" },
-];
-
-// "다른현장 불러오기"로 가져올 수 있는 예시 현장들 — 각 현장이 마스터 카탈로그 중
-// 서로 다른 부분집합을 소분류로 보유한다는 것을 보여주기 위한 데모 데이터.
-const OTHER_SITE_PRODUCT_SETS = [
-  { name: "e편한세상 강동 프레스티지 현장", codes: PRODUCT_MASTER_CATALOG.filter((r) => r.majorCode !== "HA").map((r) => r.code) },
-  { name: "아크로 리버스카이 현장", codes: PRODUCT_MASTER_CATALOG.filter((r) => ["AC", "FM", "FN"].includes(r.majorCode)).map((r) => r.code) },
-  { name: "e편한세상 분당 퍼스트빌리지 현장", codes: PRODUCT_MASTER_CATALOG.filter((r) => r.no % 2 === 1).map((r) => r.code) },
-];
+const PRODUCT_MASTER_CATALOG = DS_PRODUCT_MASTER_CATALOG;
+const OTHER_SITE_PRODUCT_SETS = DS_OTHER_SITE_PRODUCT_SETS;
 
 // 현재 현장이 보유한 소분류 목록(현장별 관리 항목). 기본값은 마스터 전체.
 let products = PRODUCT_MASTER_CATALOG.slice();
@@ -479,6 +21,7 @@ function renderRows(list) {
       <td>${p.no}</td>
       <td class="code-cell">${p.majorCode}</td>
       <td>${p.majorName}</td>
+      <td>${p.groupName || "-"}</td>
       <td>${p.midCode}</td>
       <td>${p.midName}</td>
       <td class="code-cell">${p.code}</td>
@@ -506,7 +49,7 @@ searchInput.addEventListener("input", () => {
   const q = searchInput.value.trim().toLowerCase();
   if (!q) { renderRows(products); return; }
   const filtered = products.filter((p) =>
-    [p.code, p.name, p.majorName, p.midName].join(" ").toLowerCase().includes(q)
+    [p.code, p.name, p.majorName, p.groupName, p.midName].join(" ").toLowerCase().includes(q)
   );
   renderRows(filtered);
 });
@@ -673,28 +216,281 @@ const skuData = [
   { code: "SL016", spaceCode: "EN", space: "현관 - Entrance", styleCode: "NM", style: "내추럴 모던 - Natural Modern", item: "오픈형 프리미엄 신발장+팬트리 도어_NM", itemCustomer: "오픈형 프리미엄 신발장+팬트리 도어_NM" },
   { code: "SL017", spaceCode: "EN", space: "현관 - Entrance", styleCode: "SC", style: "소프트 클래식 - Soft Classic", item: "오픈형 프리미엄 신발장+팬트리 도어_SC", itemCustomer: "오픈형 프리미엄 신발장+팬트리 도어_SC" },
   { code: "SL018", spaceCode: "EN", space: "현관 - Entrance", styleCode: "MM", style: "미니멀 - Minimal", item: "오픈형 프리미엄 신발장+신발장_MM", itemCustomer: "오픈형 프리미엄 신발장+신발장_MM" },
-  { code: "SL019", spaceCode: "EN", space: "현관 - Entrance", styleCode: "NM", style: "내추럴 모던 - Natural Modern", item: "오픈형 프리미엄 신발장+신발장_NM", itemCustomer: "오픈형 프리미엄 신발장+신발장_NM" },
-  { code: "SL020", spaceCode: "EN", space: "현관 - Entrance", styleCode: "SC", style: "소프트 클래식 - Soft Classic", item: "오픈형 프리미엄 신발장+신발장_SC", itemCustomer: "오픈형 프리미엄 신발장+신발장_SC" },
+  { code: "SL019", origin: "현장", spaceCode: "EN", space: "현관 - Entrance", styleCode: "NM", style: "내추럴 모던 - Natural Modern", item: "오픈형 프리미엄 신발장+신발장_NM", itemCustomer: "오픈형 프리미엄 신발장+신발장_NM" },
+  { code: "SL020", origin: "현장", spaceCode: "EN", space: "현관 - Entrance", styleCode: "SC", style: "소프트 클래식 - Soft Classic", item: "오픈형 프리미엄 신발장+신발장_SC", itemCustomer: "오픈형 프리미엄 신발장+신발장_SC" },
 ];
 
 const skuTableBody = document.getElementById("skuTableBody");
-skuTableBody.innerHTML = skuData.map((s) => `
-  <tr>
-    <td class="code-cell">${s.code}</td>
-    <td>${s.spaceCode}</td>
-    <td>${s.space}</td>
-    <td>${s.styleCode}</td>
-    <td>${s.style}</td>
-    <td>본사</td>
-    <td class="muted">-</td>
-    <td class="muted">-</td>
-    <td class="muted">-</td>
-    <td class="muted">-</td>
-    <td class="muted">-</td>
-    <td>${s.item}</td>
-    <td>${s.itemCustomer}</td>
-  </tr>
-`).join("");
+
+/* 상품(SKU)은 직접 입력하는 텍스트 데이터, 프로덕트는 1.1의 소분류(PK)
+   마스터(445건)다. 상품 1개에 프로덕트를 여러 개 매핑할 수 있는데, 코드를
+   직접 타이핑하게 하면 445개 중에서 오타·오매핑이 나기 쉬우므로, 검색해서
+   클릭으로만 추가/해제하도록 해 오류 여지를 없앤다. */
+/* 상품(SKU) 1개 ↔ 프로덕트(소분류 PK) N개 매핑.
+   현장 메뉴의 가감조건 관리가 "그 공간에서 확인되는 상품 × 프로덕트" 조합을
+   읽어가므로, 현관 상품들에 대한 기본 매핑을 데모 데이터로 깔아둔다. */
+const skuProductMap = { // { [skuCode]: string[] (프로덕트 소분류코드 PK 목록) }
+  SL001: ["FN-501-01"],
+  SL002: ["FN-500-01"],
+  SL003: ["FN-504-02"],
+  SL004: ["FN-504-02", "FN-502-01"],
+  SL005: ["FN-504-02", "FN-504-01"],
+  SL006: ["FN-505-01"],
+  SL007: ["FN-506-01"],
+  SL008: ["FN-506-02"],
+  SL009: ["FN-505-01", "FN-502-01"],
+  SL010: ["FN-506-01", "FN-502-01"],
+  SL019: ["FN-506-01", "FN-504-01"],   // 현장에서 추가·관리하는 상품
+  SL020: ["FN-506-02", "FN-504-01"],   // 현장에서 추가·관리하는 상품
+};
+
+function skuMappedProducts(skuCode) {
+  return (skuProductMap[skuCode] || [])
+    .map((code) => PRODUCT_MASTER_CATALOG.find((p) => p.code === code))
+    .filter(Boolean);
+}
+
+function skuProductChipsHtml(skuCode) {
+  const mapped = skuMappedProducts(skuCode);
+  const chips = mapped.map((p) => `
+    <span class="sku-product-chip" title="${p.majorName} · ${p.midName}">
+      <span class="code-cell">${p.code}</span> ${p.name}
+      <button type="button" class="sku-product-remove" data-sku="${skuCode}" data-code="${p.code}" title="매핑 해제">✕</button>
+    </span>
+  `).join("");
+  return `
+    <div class="sku-product-cell">
+      <div class="sku-product-chips">${chips}</div>
+      <button type="button" class="sku-product-add-btn" data-sku="${skuCode}">+ 프로덕트 매핑</button>
+    </div>
+  `;
+}
+
+function renderSkuTable() {
+  skuTableBody.innerHTML = skuData.map((s) => `
+    <tr>
+      <td class="code-cell">${s.code}</td>
+      <td>${s.spaceCode}</td>
+      <td>${s.space}</td>
+      <td>${s.styleCode}</td>
+      <td>${s.style}</td>
+      <td>${s.origin || "본사"}</td>
+      <td>${skuProductChipsHtml(s.code)}</td>
+      <td>${s.item}</td>
+    </tr>
+  `).join("");
+}
+renderSkuTable();
+
+skuTableBody.addEventListener("click", (e) => {
+  const addBtn = e.target.closest(".sku-product-add-btn");
+  if (addBtn) { openSkuProductModal(addBtn.dataset.sku); return; }
+  const removeBtn = e.target.closest(".sku-product-remove");
+  if (removeBtn) {
+    const { sku, code } = removeBtn.dataset;
+    skuProductMap[sku] = (skuProductMap[sku] || []).filter((c) => c !== code);
+    dsAddEditLog("1.2 상품구성코드", `${sku} · 프로덕트 매핑 해제: ${code}`);
+    renderSkuTable();
+  }
+});
+
+/* ---- 프로덕트 매핑 모달 : 445개 소분류 마스터에서 검색해서 클릭 한 번으로 추가/해제 ---- */
+const skuProductModal = document.getElementById("skuProductModal");
+const skuProductModalBody = document.getElementById("skuProductModalBody");
+const skuProductModalSkuLabel = document.getElementById("skuProductModalSkuLabel");
+const skuProductModalNav = document.getElementById("skuProductModalNav");
+let skuProductModalSku = null;
+let skuProductModalIndex = -1;
+
+function skuNavOptionLabel(s) {
+  const cnt = (skuProductMap[s.code] || []).length;
+  return `${s.code} · ${s.itemCustomer || s.item} (${cnt === 0 ? "미매핑" : cnt + "개 매핑"})`;
+}
+
+function renderSkuProductModalNav() {
+  if (!skuProductModalNav || skuProductModalIndex < 0) return;
+  const s = skuData[skuProductModalIndex];
+  const mappedCount = (skuProductMap[s.code] || []).length;
+  skuProductModalNav.innerHTML = `
+    <button type="button" class="sku-nav-btn" id="skuNavPrev" title="이전 상품 (←)">◀ 이전</button>
+    <div class="sku-nav-info">
+      <select class="sku-nav-jump-select" id="skuNavJumpSelect" title="맵핑할 상품 바로 선택">
+        ${skuData.map((row, i) => `<option value="${row.code}" ${i === skuProductModalIndex ? "selected" : ""}>${skuNavOptionLabel(row)}</option>`).join("")}
+      </select>
+      <span class="sku-nav-pos">${skuProductModalIndex + 1} / ${skuData.length}</span>
+      ${mappedCount === 0 ? `<span class="sku-nav-unmapped-tag">미매핑</span>` : `<span class="sku-nav-mapped-count">${mappedCount}개 매핑됨</span>`}
+    </div>
+    <button type="button" class="sku-nav-btn" id="skuNavNext" title="다음 상품 (→)">다음 ▶</button>
+    <button type="button" class="sku-nav-btn sku-nav-jump" id="skuNavJumpUnmapped" title="프로덕트가 아직 매핑되지 않은 다음 상품으로 이동">⏭ 다음 미매핑</button>
+  `;
+  document.getElementById("skuNavPrev").addEventListener("click", () => {
+    const i = (skuProductModalIndex - 1 + skuData.length) % skuData.length;
+    openSkuProductModal(skuData[i].code);
+  });
+  document.getElementById("skuNavNext").addEventListener("click", () => {
+    const i = (skuProductModalIndex + 1) % skuData.length;
+    openSkuProductModal(skuData[i].code);
+  });
+  document.getElementById("skuNavJumpSelect").addEventListener("change", (e) => {
+    openSkuProductModal(e.target.value);
+  });
+  document.getElementById("skuNavJumpUnmapped").addEventListener("click", () => {
+    const n = skuData.length;
+    for (let step = 1; step <= n; step++) {
+      const i = (skuProductModalIndex + step) % n;
+      if ((skuProductMap[skuData[i].code] || []).length === 0) { openSkuProductModal(skuData[i].code); return; }
+    }
+    showToast("모든 상품에 프로덕트가 매핑되어 있습니다.");
+  });
+}
+
+document.addEventListener("keydown", (e) => {
+  if (!skuProductModal || skuProductModal.hidden) return;
+  const active = document.activeElement;
+  const typingInSearch = active && active.id === "skuProductSearchInput" && active.value.length > 0;
+  if (typingInSearch) return;
+  if (e.key === "ArrowLeft") { e.preventDefault(); document.getElementById("skuNavPrev")?.click(); }
+  if (e.key === "ArrowRight") { e.preventDefault(); document.getElementById("skuNavNext")?.click(); }
+});
+
+function renderSkuModalMappedList() {
+  const list = document.getElementById("skuModalMappedList");
+  if (!list) return;
+  const mapped = skuMappedProducts(skuProductModalSku);
+  list.innerHTML = mapped.length === 0
+    ? `<div class="sku-modal-mapped-empty">아직 매핑된 프로덕트가 없습니다.</div>`
+    : mapped.map((p) => `
+      <span class="sku-product-chip"><span class="code-cell">${p.code}</span> ${p.name}
+        <button type="button" class="sku-product-remove" data-code="${p.code}" title="매핑 해제">✕</button>
+      </span>
+    `).join("");
+}
+
+function renderSkuProductResults(query) {
+  const resultsEl = document.getElementById("skuProductResults");
+  if (!resultsEl) return;
+  const q = query.trim().toLowerCase();
+  const mappedCodes = new Set(skuProductMap[skuProductModalSku] || []);
+  if (!q) { resultsEl.innerHTML = `<div class="sku-product-results-hint">코드, 상품명, 대분류/중분류명으로 검색해보세요 (445건 중 검색).</div>`; return; }
+  const matches = PRODUCT_MASTER_CATALOG
+    .filter((p) => !mappedCodes.has(p.code))
+    .filter((p) => [p.code, p.name, p.majorName, p.midName].join(" ").toLowerCase().includes(q))
+    .slice(0, 30);
+  resultsEl.innerHTML = matches.length === 0
+    ? `<div class="sku-product-results-hint">일치하는 프로덕트가 없습니다.</div>`
+    : matches.map((p) => `
+      <button type="button" class="sku-product-result" data-code="${p.code}">
+        <span class="code-cell">${p.code}</span>
+        <span class="sku-product-result-name">${p.name}</span>
+        <span class="sku-product-result-cat">${p.majorName} · ${p.midName}</span>
+      </button>
+    `).join("");
+}
+
+function renderSkuProductModalBody() {
+  skuProductModalBody.innerHTML = `
+    <div class="lang-edit-summary">이미 매핑된 프로덕트는 아래에서 바로 해제할 수 있고, 검색으로 새 프로덕트를 찾아 클릭하면 바로 추가됩니다.</div>
+    <div class="sku-modal-mapped" id="skuModalMappedList"></div>
+    <input type="text" id="skuProductSearchInput" class="sku-product-search-input" placeholder="소분류코드(PK), 상품명, 대분류명, 중분류명으로 검색" autocomplete="off" />
+    <div class="sku-product-results" id="skuProductResults"></div>
+  `;
+  renderSkuModalMappedList();
+  renderSkuProductResults("");
+  const searchInput = document.getElementById("skuProductSearchInput");
+  searchInput.addEventListener("input", (e) => renderSkuProductResults(e.target.value));
+  searchInput.focus();
+}
+
+function openSkuProductModal(skuCode) {
+  skuProductModalSku = skuCode;
+  skuProductModalIndex = skuData.findIndex((s) => s.code === skuCode);
+  skuProductModalSkuLabel.textContent = `— ${skuCode}`;
+  renderSkuProductModalNav();
+  renderSkuProductModalBody();
+  skuProductModal.hidden = false;
+}
+
+document.getElementById("skuProductModalClose").addEventListener("click", () => { skuProductModal.hidden = true; renderSkuTable(); });
+skuProductModalBody.addEventListener("click", (e) => {
+  const resultBtn = e.target.closest(".sku-product-result");
+  if (resultBtn) {
+    const code = resultBtn.dataset.code;
+    skuProductMap[skuProductModalSku] = [...(skuProductMap[skuProductModalSku] || []), code];
+    dsAddEditLog("1.2 상품구성코드", `${skuProductModalSku} · 프로덕트 매핑 추가: ${code}`);
+    renderSkuModalMappedList();
+    renderSkuProductResults(document.getElementById("skuProductSearchInput").value);
+    renderSkuProductModalNav();
+    renderSkuTable();
+    return;
+  }
+  const removeBtn = e.target.closest(".sku-product-remove");
+  if (removeBtn) {
+    const code = removeBtn.dataset.code;
+    skuProductMap[skuProductModalSku] = (skuProductMap[skuProductModalSku] || []).filter((c) => c !== code);
+    dsAddEditLog("1.2 상품구성코드", `${skuProductModalSku} · 프로덕트 매핑 해제: ${code}`);
+    renderSkuModalMappedList();
+    renderSkuProductResults(document.getElementById("skuProductSearchInput").value);
+    renderSkuProductModalNav();
+    renderSkuTable();
+  }
+});
+
+/* ---- 상품 추가 모달 (직접 입력) ---- */
+const skuAddModal = document.getElementById("skuAddModal");
+const skuAddModalBody = document.getElementById("skuAddModalBody");
+
+function nextSkuCode() {
+  const nums = skuData.map((s) => Number(String(s.code).replace(/\D/g, "")) || 0);
+  return `SL${String((nums.length ? Math.max(...nums) : 0) + 1).padStart(3, "0")}`;
+}
+
+document.getElementById("skuAddBtn").addEventListener("click", () => {
+  skuAddModalBody.innerHTML = `
+    <div class="lang-edit-field"><label>상품 코드</label><input type="text" id="skuAddCode" value="${nextSkuCode()}" /></div>
+    <div class="lang-edit-field"><label>공간코드</label><input type="text" id="skuAddSpaceCode" placeholder="예: EN" /></div>
+    <div class="lang-edit-field"><label>공간명</label><input type="text" id="skuAddSpace" placeholder="예: 현관 - Entrance" /></div>
+    <div class="lang-edit-field"><label>스타일코드</label><input type="text" id="skuAddStyleCode" placeholder="예: NN" /></div>
+    <div class="lang-edit-field"><label>스타일명</label><input type="text" id="skuAddStyle" placeholder="예: 스타일 미적용 - None" /></div>
+    <div class="lang-edit-field"><label>항목명</label><input type="text" id="skuAddItem" placeholder="예: 슬라이딩 도어" /></div>
+    <div class="lang-edit-error" id="skuAddError" hidden></div>
+    <div class="lang-edit-actions">
+      <button class="toolbar-btn" id="skuAddCancelBtn" type="button">취소</button>
+      <button class="primary-btn" id="skuAddSaveBtn" type="button">추가</button>
+    </div>
+  `;
+  skuAddModal.hidden = false;
+  document.getElementById("skuAddCancelBtn").addEventListener("click", () => { skuAddModal.hidden = true; });
+  document.getElementById("skuAddSaveBtn").addEventListener("click", () => {
+    const errorEl = document.getElementById("skuAddError");
+    errorEl.hidden = true;
+    const code = document.getElementById("skuAddCode").value.trim();
+    const item = document.getElementById("skuAddItem").value.trim();
+    if (!code || !item) {
+      errorEl.hidden = false;
+      errorEl.textContent = "❌ 상품 코드와 항목명은 반드시 입력해야 합니다.";
+      return;
+    }
+    if (skuData.some((s) => s.code === code)) {
+      errorEl.hidden = false;
+      errorEl.textContent = `❌ 이미 존재하는 상품 코드입니다: ${code}`;
+      return;
+    }
+    skuData.push({
+      code,
+      spaceCode: document.getElementById("skuAddSpaceCode").value.trim(),
+      space: document.getElementById("skuAddSpace").value.trim(),
+      styleCode: document.getElementById("skuAddStyleCode").value.trim(),
+      style: document.getElementById("skuAddStyle").value.trim(),
+      item,
+      itemCustomer: item,
+    });
+    renderSkuTable();
+    dsAddEditLog("1.2 상품구성코드", `상품 ${code} 신규 추가 (항목명: ${item})`);
+    skuAddModal.hidden = true;
+    showToast(`상품 ${code}이(가) 추가되었습니다.`);
+  });
+});
+document.getElementById("skuAddModalClose").addEventListener("click", () => { skuAddModal.hidden = true; });
 
 /* ===================== STEP 1 · PANEL 3: 프로덕트 × 상품구성코드 ===================== */
 const mappingTableBody = document.getElementById("mappingTableBody");
@@ -705,7 +501,7 @@ mappingTableBody.innerHTML = skuData.map((s) => `
     <td>${s.space}</td>
     <td>${s.styleCode}</td>
     <td>${s.style}</td>
-    <td>본사</td>
+    <td>${s.origin || "본사"}</td>
     <td>${s.item}</td>
   </tr>
 `).join("");
@@ -1153,10 +949,123 @@ document.getElementById("templateCloneBtn").addEventListener("click", () => {
 document.getElementById("reviewPyeongSelect").innerHTML = pyeongList.map((p) => `<option value="${p}">${p}</option>`).join("");
 document.getElementById("reviewPyeongSelect").addEventListener("change", renderReviewDoc);
 
+/* 고객스타일 = 상품 스타일(styleCode)의 조합. 이 화면에서만 쓰는 조회용 그룹핑이며
+   pivotAssignments/skuData 등 실제 데이터는 전혀 건드리지 않는다. */
+const CUSTOMER_STYLE_COMBOS = [
+  { name: "미니멀", productStyles: ["NN", "MM"] },
+  { name: "네츄럴모던", productStyles: ["NN", "NM"] },
+  { name: "소프트클래식", productStyles: ["NN", "SC"] },
+];
+const skuStyleCodeByCode = {};
+skuData.forEach((s) => { skuStyleCodeByCode[s.code] = s.styleCode; });
+
+/* 화면에서 임시로 만든 고객스타일 (새로고침하면 사라지는 이 화면 전용 조회용 데이터,
+   pivotAssignments/skuData 등 실제 데이터에는 저장/반영되지 않음) */
+const customStyleCombos = [];
+
+function distinctProductStyles() {
+  const seen = new Map();
+  skuData.forEach((s) => { if (!seen.has(s.styleCode)) seen.set(s.styleCode, s.style); });
+  return [...seen.entries()].map(([code, label]) => ({ code, label }));
+}
+
+function allCustomerStyleCombos() {
+  return CUSTOMER_STYLE_COMBOS.concat(customStyleCombos);
+}
+
+const reviewCustomerStyleSelect = document.getElementById("reviewCustomerStyleSelect");
+
+function refreshCustomerStyleSelect(selectName) {
+  if (!reviewCustomerStyleSelect) return;
+  const keep = selectName !== undefined ? selectName : reviewCustomerStyleSelect.value;
+  reviewCustomerStyleSelect.innerHTML =
+    `<option value="">전체 스타일</option>` +
+    allCustomerStyleCombos().map((c) => `<option value="${c.name}">${c.name}${customStyleCombos.includes(c) ? " (임시)" : ""}</option>`).join("");
+  reviewCustomerStyleSelect.value = allCustomerStyleCombos().some((c) => c.name === keep) ? keep : "";
+}
+refreshCustomerStyleSelect("");
+if (reviewCustomerStyleSelect) reviewCustomerStyleSelect.addEventListener("change", renderReviewDoc);
+
+/* ---- 고객스타일 임시 생성/관리 패널 ---- */
+const customStyleManageBtn = document.getElementById("customStyleManageBtn");
+const customerStylePanel = document.getElementById("customerStylePanel");
+const customerStyleCheckboxes = document.getElementById("customerStyleCheckboxes");
+const customerStyleExistingList = document.getElementById("customerStyleExistingList");
+const customerStyleNameInput = document.getElementById("customerStyleNameInput");
+
+function renderCustomerStyleCheckboxes() {
+  if (!customerStyleCheckboxes) return;
+  customerStyleCheckboxes.innerHTML = distinctProductStyles().map((s) => `
+    <label class="customer-style-checkbox">
+      <input type="checkbox" value="${s.code}" />
+      <span>${s.label}</span>
+    </label>
+  `).join("");
+}
+
+function renderCustomerStyleExistingList() {
+  if (!customerStyleExistingList) return;
+  customerStyleExistingList.innerHTML = customStyleCombos.length === 0
+    ? `<div class="customer-style-existing-empty">아직 임시로 만든 고객스타일이 없습니다.</div>`
+    : customStyleCombos.map((c, i) => `
+      <div class="customer-style-existing-item">
+        <span class="customer-style-existing-name">${c.name}</span>
+        <span class="customer-style-existing-styles">${c.productStyles.map((code) => (skuData.find((s) => s.styleCode === code) || {}).style || code).join(" + ")}</span>
+        <button type="button" class="customer-style-remove-btn" data-index="${i}" title="삭제">✕</button>
+      </div>
+    `).join("");
+}
+
+if (customStyleManageBtn) {
+  customStyleManageBtn.addEventListener("click", () => {
+    const opening = customerStylePanel.hidden;
+    customerStylePanel.hidden = !opening;
+    if (opening) {
+      renderCustomerStyleCheckboxes();
+      renderCustomerStyleExistingList();
+    }
+  });
+}
+
+const customerStyleAddBtn = document.getElementById("customerStyleAddBtn");
+if (customerStyleAddBtn) {
+  customerStyleAddBtn.addEventListener("click", () => {
+    const name = customerStyleNameInput.value.trim();
+    const codes = [...customerStyleCheckboxes.querySelectorAll("input:checked")].map((cb) => cb.value);
+    if (!name) { showToast("고객스타일 이름을 입력해주세요."); return; }
+    if (codes.length === 0) { showToast("포함할 상품 스타일을 1개 이상 선택해주세요."); return; }
+    if (allCustomerStyleCombos().some((c) => c.name === name)) { showToast("이미 같은 이름의 고객스타일이 있습니다."); return; }
+    customStyleCombos.push({ name, productStyles: codes });
+    dsAddEditLog("1.4 평형그룹매핑(검수화면)", `임시 고객스타일 생성: ${name} (${codes.join(", ")}) — 이 화면 전용, 저장되지 않음`);
+    customerStyleNameInput.value = "";
+    renderCustomerStyleCheckboxes();
+    renderCustomerStyleExistingList();
+    refreshCustomerStyleSelect(name);
+    renderReviewDoc();
+  });
+}
+
+if (customerStyleExistingList) {
+  customerStyleExistingList.addEventListener("click", (e) => {
+    const btn = e.target.closest(".customer-style-remove-btn");
+    if (!btn) return;
+    const removed = customStyleCombos.splice(Number(btn.dataset.index), 1)[0];
+    renderCustomerStyleExistingList();
+    refreshCustomerStyleSelect(reviewCustomerStyleSelect.value === (removed && removed.name) ? "" : undefined);
+    renderReviewDoc();
+  });
+}
+
 function renderReviewDoc() {
   const pyeong = document.getElementById("reviewPyeongSelect").value || pyeongList[0];
   const assigned = pivotAssignments[pyeong];
-  const items = pivotProducts.filter((p) => assigned.has(p.code));
+  let items = pivotProducts.filter((p) => assigned.has(p.code));
+
+  const customerStyleName = reviewCustomerStyleSelect ? reviewCustomerStyleSelect.value : "";
+  const combo = allCustomerStyleCombos().find((c) => c.name === customerStyleName);
+  if (combo) {
+    items = items.filter((it) => combo.productStyles.includes(skuStyleCodeByCode[it.code]));
+  }
 
   if (items.length === 0) {
     document.getElementById("reviewDoc").innerHTML = `<div class="review-doc-empty">배정된 상품이 없습니다.</div>`;
@@ -1170,8 +1079,8 @@ function renderReviewDoc() {
   });
 
   document.getElementById("reviewDoc").innerHTML = `
-    <div class="review-doc-title">${pyeong} 세대 마감재 안내문 (초안)</div>
-    <div class="review-doc-subtitle">본 안내문은 검수용 초안이며 판매가 · 패키지 구성 정보는 포함하지 않습니다.</div>
+    <div class="review-doc-title">${pyeong} 세대 마감재 안내문 (초안)${combo ? ` · 고객스타일: ${combo.name}` : ""}</div>
+    <div class="review-doc-subtitle">본 안내문은 검수용 초안이며 판매가 · 패키지 구성 정보는 포함하지 않습니다.${combo ? ` (고객스타일 분류는 이 화면 전용 조회 필터입니다)` : ""}</div>
     ${Object.keys(bySpace).map((space) => `
       <div class="review-doc-space">
         <div class="review-doc-space-title">${space}</div>
@@ -1192,7 +1101,10 @@ renderPivotTable();
 renderTemplateView();
 renderReviewDoc();
 
-/* ===================== STEP 1 · PANEL 5: 대분류/중분류/제조사 ===================== */
+/* ===================== 대분류/중분류/제조사 (조회/편집 팝업 전용 데이터) =====================
+   STEP 1의 "1.5 대분류/중분류/제조사" 탭은 삭제되었지만, 4.상품고객언어의
+   "🗂 대분류·중분류·제조사 조회/편집"(sortOrderModal) 팝업은 그대로 이 데이터를
+   사용하므로 배열 자체는 유지한다. */
 const majorCats = [
   { name: "스타일", code: "00" }, { name: "현관", code: "01" }, { name: "거실", code: "02" },
   { name: "주방", code: "03" }, { name: "침실", code: "04" }, { name: "욕실", code: "05" },
@@ -1210,19 +1122,6 @@ const makers = [
   { name: "KCC", code: "07" }, { name: "한샘", code: "08" }, { name: "라이히트", code: "09" },
 ];
 
-function renderCategoryTables() {
-  document.getElementById("majorCatBody").innerHTML = majorCats.map((c, i) => `
-    <tr class="${i === 0 ? "selected" : ""}"><td>${c.name}</td><td>${c.code}</td></tr>
-  `).join("");
-  document.getElementById("midCatBody").innerHTML = midCats.map((c, i) => `
-    <tr class="${i === 0 ? "selected" : ""}"><td>${c.major}</td><td>${c.name}</td><td>${c.code}</td></tr>
-  `).join("");
-  document.getElementById("makerBody").innerHTML = makers.map((c, i) => `
-    <tr class="${i === 0 ? "selected" : ""}"><td>${c.name}</td><td>${c.code}</td></tr>
-  `).join("");
-}
-renderCategoryTables();
-
 /* 별매품 단계(1/2/3) : 상품코드별로 관리되는 값. 4.상품고객언어에서 수정하면
    5.안분표 생성의 같은 상품코드 행에도 그대로 반영된다(단일 소스). */
 const PRODUCT_OPTION_TIER = {
@@ -1233,6 +1132,17 @@ const PRODUCT_OPTION_TIER = {
   SL048: "1", SL052: "1", SL054: "2", SL055: "2",
   SL060: "3",
 };
+
+/* 별매품 STEP : 별매품 단계(1/2/3)와는 별개로, 고객에게 안내되는 별매품의
+   노출 순서(스텝) 번호. 상품코드별로 관리되며 4.상품고객언어의
+   「항목명(고객용)·별매품 단계 입력」 팝업과 5.안분표의 「공통 패키지 생성 —
+   평형 일괄 매핑」 팝업 양쪽에서 입력할 수 있고, 두 화면 모두 같은 값을 본다. */
+const PRODUCT_OPTION_STEP = {
+  SL001: "1", SL003: "2", SL006: "3",
+};
+function productStepLabel(code) {
+  return PRODUCT_OPTION_STEP[code] ? `STEP ${PRODUCT_OPTION_STEP[code]}` : "-";
+}
 
 /* ===================== STEPS 2-4 공용 데이터 (원가 / 고객언어 / 판매가) ===================== */
 const flatRows = [
@@ -1262,23 +1172,25 @@ const flatRows = [
   { seq: 24, code: "SL055", detailCode: "FN-552-01", style: "내추럴 모던 - Natural Modern", space: "침실1 - Bedroom 1", item: "침실1 와이드 붙박이장_NM", itemCustomer: "침실1 와이드 붙박이장_NM", detail: "도어형 붙박이장/내추럴 모던", detailCustomer: "도어형 붙박이장/내추럴 모던", price: 10 },
 ].map((r) => ({
   customer: "일반 - Customer", pyeong: "059A", hq: "본사", option: "기본", plan: "미적용",
-  majorCode: "", majorName: "", midCode: "", midName: "", makerCode: "", makerName: "",
+  majorName: "", midName: "", maker: "",
   ...r,
 }));
 
-document.getElementById("costTableBody").innerHTML = flatRows.map((r) => `
-  <tr>
-    <td>${r.seq}</td>
-    <td>${r.customer} ${r.pyeong} ${r.option} 미적용</td>
-    <td class="muted">-</td>
-    <td class="code-cell">${r.code}</td>
-    <td>${r.detailCode}</td>
-    <td>${r.item}</td>
-    <td>${r.itemCustomer}</td>
-    <td>${r.detail}</td>
-    <td>${r.detailCustomer}</td>
-  </tr>
-`).join("");
+function renderCostTable() {
+  document.getElementById("costTableBody").innerHTML = flatRows.map((r) => `
+    <tr>
+      <td>${r.seq}</td>
+      <td>${r.customer} ${r.pyeong} ${r.option} 미적용</td>
+      <td class="muted">-</td>
+      <td class="code-cell">${r.code}</td>
+      <td>${r.detailCode}</td>
+      <td>${r.item}</td>
+      <td>${r.itemCustomer}</td>
+      <td>${r.detail}</td>
+    </tr>
+  `).join("");
+}
+renderCostTable();
 
 function renderLangTable() {
   document.getElementById("langTableBody").innerHTML = flatRows.map((r) => `
@@ -1294,8 +1206,9 @@ function renderLangTable() {
       <td>${r.space}</td>
       <td class="${r.majorName ? "" : "muted"}">${r.majorName || "-"}</td>
       <td class="${r.midName ? "" : "muted"}">${r.midName || "-"}</td>
-      <td class="${r.makerName ? "" : "muted"}">${r.makerName || "-"}</td>
+      <td class="${r.maker ? "" : "muted"}">${r.maker || "-"}</td>
       <td>${PRODUCT_OPTION_TIER[r.code] ? `${PRODUCT_OPTION_TIER[r.code]}단계` : "-"}</td>
+      <td class="${PRODUCT_OPTION_STEP[r.code] ? "" : "muted"}">${productStepLabel(r.code)}</td>
       <td class="code-cell">${r.code}</td>
       <td>${r.item}</td>
       <td>${r.itemCustomer}</td>
@@ -1322,17 +1235,16 @@ function renderPriceTable() {
       <td class="code-cell">${r.code}</td>
       <td>${r.detailCode}</td>
       <td>${r.item}</td>
-      <td>${r.itemCustomer}</td>
-      <td class="${r.majorName ? "" : "muted"}">${r.majorName || "-"}</td>
-      <td class="${r.midName ? "" : "muted"}">${r.midName || "-"}</td>
-      <td class="${r.makerName ? "" : "muted"}">${r.makerName || "-"}</td>
       <td>${r.price === "" ? "" : r.price}</td>
     </tr>
   `).join("");
 }
 renderPriceTable();
 
-/* ===================== STEP 4 개선 : 선택 항목 일괄수정(대분류/중분류/제조사명 검증) + 정렬순서 설정 ===================== */
+/* ===================== STEP 4 개선 : 선택 항목 일괄수정(별매품 단계 · 고객용 언어) ===================== */
+// 대분류/중분류/제조사 매핑과 항목명(고객용)/세부사항(고객용) "대량 입력"은 바로 아래
+// 3개의 별도 버튼(1.2/1.1 리스트를 띄워 매핑 후 "적용")으로 처리한다. 이 모달은 이미
+// 화면에 나열된 행 중 선택한 몇 건만 빠르게 고쳐야 할 때 쓰는 보조 수단이다.
 const langEditModal = document.getElementById("langEditModal");
 const langEditModalBody = document.getElementById("langEditModalBody");
 const langEditBtn = document.getElementById("langEditBtn");
@@ -1346,24 +1258,6 @@ langEditBtn.addEventListener("click", () => {
 
   langEditModalBody.innerHTML = `
     <div class="lang-edit-summary">선택 ${checkedSeqs.length}건에 아래 입력값을 동일하게 적용합니다. 비워두면 해당 항목은 변경하지 않습니다.</div>
-    <div class="lang-edit-field">
-      <label>상품 대분류명</label>
-      <input type="text" id="langEditMajor" placeholder="예: 현관" />
-      <div class="field-hint">분양수금 시스템에 등록된 대분류명과 정확히 일치해야 합니다.</div>
-      <div class="lang-edit-error" id="langEditMajorError" hidden></div>
-    </div>
-    <div class="lang-edit-field">
-      <label>상품 중분류명</label>
-      <input type="text" id="langEditMid" placeholder="예: 블랑클래식" />
-      <div class="field-hint">분양수금 시스템에 등록된 중분류명과 정확히 일치해야 합니다.</div>
-      <div class="lang-edit-error" id="langEditMidError" hidden></div>
-    </div>
-    <div class="lang-edit-field">
-      <label>상품 제조사명</label>
-      <input type="text" id="langEditMaker" placeholder="예: LX하우시스" />
-      <div class="field-hint">분양수금 시스템에 등록된 제조사명과 정확히 일치해야 합니다.</div>
-      <div class="lang-edit-error" id="langEditMakerError" hidden></div>
-    </div>
     <div class="lang-edit-field">
       <label>별매품 단계</label>
       <select id="langEditTier">
@@ -1392,50 +1286,13 @@ langEditBtn.addEventListener("click", () => {
   document.getElementById("langEditCancelBtn").addEventListener("click", () => { langEditModal.hidden = true; });
 
   document.getElementById("langEditSaveBtn").addEventListener("click", () => {
-    ["langEditMajorError", "langEditMidError", "langEditMakerError"].forEach((id) => { document.getElementById(id).hidden = true; });
-
-    const majorInput = document.getElementById("langEditMajor").value.trim();
-    const midInput = document.getElementById("langEditMid").value.trim();
-    const makerInput = document.getElementById("langEditMaker").value.trim();
     const tierInput = document.getElementById("langEditTier").value;
     const itemCustomerInput = document.getElementById("langEditItemCustomer").value.trim();
     const detailCustomerInput = document.getElementById("langEditDetailCustomer").value.trim();
 
-    let hasError = false;
-    let majorMatch = null, midMatch = null, makerMatch = null;
-
-    if (majorInput) {
-      majorMatch = majorCats.find((c) => c.name === majorInput);
-      if (!majorMatch) {
-        document.getElementById("langEditMajorError").hidden = false;
-        document.getElementById("langEditMajorError").textContent = `❌ '${majorInput}'은(는) 분양수금 시스템에 없는 상품 대분류명입니다.`;
-        hasError = true;
-      }
-    }
-    if (midInput) {
-      midMatch = midCats.find((c) => c.name === midInput);
-      if (!midMatch) {
-        document.getElementById("langEditMidError").hidden = false;
-        document.getElementById("langEditMidError").textContent = `❌ '${midInput}'은(는) 분양수금 시스템에 없는 상품 중분류명입니다.`;
-        hasError = true;
-      }
-    }
-    if (makerInput) {
-      makerMatch = makers.find((c) => c.name === makerInput);
-      if (!makerMatch) {
-        document.getElementById("langEditMakerError").hidden = false;
-        document.getElementById("langEditMakerError").textContent = `❌ '${makerInput}'은(는) 분양수금 시스템에 없는 상품 제조사명입니다.`;
-        hasError = true;
-      }
-    }
-    if (hasError) return;
-
     const changed = [];
     flatRows.forEach((r) => {
       if (!checkedSeqs.includes(r.seq)) return;
-      if (majorMatch) { r.majorName = majorMatch.name; r.majorCode = majorMatch.code; }
-      if (midMatch) { r.midName = midMatch.name; r.midCode = midMatch.code; }
-      if (makerMatch) { r.makerName = makerMatch.name; r.makerCode = makerMatch.code; }
       if (tierInput) PRODUCT_OPTION_TIER[r.code] = tierInput;
       if (itemCustomerInput) r.itemCustomer = itemCustomerInput;
       if (detailCustomerInput) r.detailCustomer = detailCustomerInput;
@@ -1450,6 +1307,307 @@ langEditBtn.addEventListener("click", () => {
     showToast(`${changed.length}건이 수정되었습니다.`);
   });
 });
+
+/* =====================================================================
+   4.상품고객언어 : 대량 입력 도구 3종 (버튼 → 1.1/1.2 리스트 표시 → 입력/엑셀 업로드
+   → "적용"으로 현재까지 생성된 평형별 상품 정보(flatRows)에 일괄 반영)
+   ===================================================================== */
+
+/* ---- 도구 1 : 대분류/중분류/제조사 상품 맵핑 (1.2 상품구성코드 리스트 기준) ---- */
+const majorMidMakerMapModal = document.getElementById("majorMidMakerMapModal");
+const majorMidMakerMapModalBody = document.getElementById("majorMidMakerMapModalBody");
+
+function firstFlatRowFor(code) {
+  return flatRows.find((r) => r.code === code);
+}
+
+document.getElementById("majorMidMakerMapBtn").addEventListener("click", () => {
+  majorMidMakerMapModalBody.innerHTML = `
+    <div class="lang-edit-summary">1.2 상품구성코드 리스트입니다. 상품별로 대분류/중분류/제조사명을 입력하고 "적용"을 누르면 같은 상품코드를 쓰는 모든 평형별 상품 정보에 반영됩니다. 비워두면 해당 상품은 변경하지 않습니다.</div>
+    <div class="bulk-map-toolbar">
+      <button type="button" class="toolbar-btn">⭣ 엑셀 양식 다운로드</button>
+      <button type="button" class="toolbar-btn">⭱ 엑셀 업로드</button>
+    </div>
+    <div class="bulk-map-table-wrap">
+      <table class="bulk-map-table">
+        <thead><tr><th>상품 코드</th><th>항목명</th><th>대분류명</th><th>중분류명</th><th>제조사명</th></tr></thead>
+        <tbody>
+          ${skuData.map((s) => {
+            const existing = firstFlatRowFor(s.code) || {};
+            return `
+            <tr data-code="${s.code}">
+              <td class="code-cell">${s.code}</td>
+              <td>${s.item}</td>
+              <td><input type="text" class="bulk-map-input" data-field="majorName" value="${(existing.majorName || "").replace(/"/g, "&quot;")}" /></td>
+              <td><input type="text" class="bulk-map-input" data-field="midName" value="${(existing.midName || "").replace(/"/g, "&quot;")}" /></td>
+              <td><input type="text" class="bulk-map-input" data-field="maker" value="${(existing.maker || "").replace(/"/g, "&quot;")}" /></td>
+            </tr>`;
+          }).join("")}
+        </tbody>
+      </table>
+    </div>
+    <div class="lang-edit-actions">
+      <button class="toolbar-btn" id="majorMidMakerMapCancelBtn" type="button">취소</button>
+      <button class="primary-btn" id="majorMidMakerMapApplyBtn" type="button">적용</button>
+    </div>
+  `;
+  majorMidMakerMapModal.hidden = false;
+
+  document.getElementById("majorMidMakerMapCancelBtn").addEventListener("click", () => { majorMidMakerMapModal.hidden = true; });
+  document.getElementById("majorMidMakerMapApplyBtn").addEventListener("click", () => {
+    let changedSkus = 0;
+    majorMidMakerMapModalBody.querySelectorAll("tr[data-code]").forEach((tr) => {
+      const code = tr.dataset.code;
+      const majorName = tr.querySelector('[data-field="majorName"]').value.trim();
+      const midName = tr.querySelector('[data-field="midName"]').value.trim();
+      const maker = tr.querySelector('[data-field="maker"]').value.trim();
+      if (!majorName && !midName && !maker) return;
+      let touched = false;
+      flatRows.filter((r) => r.code === code).forEach((r) => {
+        if (majorName) r.majorName = majorName;
+        if (midName) r.midName = midName;
+        if (maker) r.maker = maker;
+        touched = true;
+      });
+      if (touched) changedSkus++;
+    });
+    dsAddEditLog("4. 상품고객언어", `대분류/중분류/제조사 상품 맵핑 적용: ${changedSkus}개 상품코드`);
+    renderLangTable();
+    majorMidMakerMapModal.hidden = true;
+    showToast(`${changedSkus}개 상품의 대분류/중분류/제조사가 반영되었습니다.`);
+  });
+});
+document.getElementById("majorMidMakerMapModalClose").addEventListener("click", () => { majorMidMakerMapModal.hidden = true; });
+
+/* ---- 도구 2 : 항목명(고객용) 입력 (1.2 상품구성코드 리스트 기준) ---- */
+const itemCustomerBulkModal = document.getElementById("itemCustomerBulkModal");
+const itemCustomerBulkModalBody = document.getElementById("itemCustomerBulkModalBody");
+
+function bulkTierOptionsHtml(selected) {
+  return `
+    <option value="" ${!selected ? "selected" : ""}>-</option>
+    <option value="1" ${selected === "1" ? "selected" : ""}>1단계</option>
+    <option value="2" ${selected === "2" ? "selected" : ""}>2단계</option>
+    <option value="3" ${selected === "3" ? "selected" : ""}>3단계</option>
+  `;
+}
+
+document.getElementById("itemCustomerBulkBtn").addEventListener("click", () => {
+  itemCustomerBulkModalBody.innerHTML = `
+    <div class="lang-edit-summary">1.2 상품구성코드 리스트입니다. 항목명(고객용)·별매품 단계·별매품 STEP을 입력하고 "적용"을 누르면 현재까지 생성된 평형별 상품 정보에 자동 반영됩니다. 비워두면(별매품 단계는 "-") 해당 값은 변경하지 않습니다.<br/>별매품 STEP은 별매품 단계(1/2/3)와는 별개로, 고객 안내문에 노출되는 순서를 정하는 번호입니다.<br/>여러 상품에 같은 값을 넣으려면 왼쪽 체크박스로 선택한 뒤 아래 「선택 항목에 일괄 입력」을 사용하세요.</div>
+    <div class="bulk-map-toolbar">
+      <button type="button" class="toolbar-btn">⭣ 엑셀 양식 다운로드</button>
+      <button type="button" class="toolbar-btn">⭱ 엑셀 업로드</button>
+    </div>
+    <div class="bulk-map-table-wrap">
+      <table class="bulk-map-table">
+        <thead><tr><th class="bulk-check-col"><input type="checkbox" id="itemCustomerBulkCheckAll" title="전체 선택" /></th><th>상품 코드</th><th>항목명</th><th>항목명(고객용)</th><th>별매품 단계</th><th>별매품 STEP</th></tr></thead>
+        <tbody>
+          ${skuData.map((s) => `
+            <tr data-code="${s.code}">
+              <td class="bulk-check-col"><input type="checkbox" class="bulk-map-check" /></td>
+              <td class="code-cell">${s.code}</td>
+              <td>${s.item}</td>
+              <td><input type="text" class="bulk-map-input" data-field="itemCustomer" value="${(s.itemCustomer || "").replace(/"/g, "&quot;")}" /></td>
+              <td><select class="bulk-tier-select" data-field="tier">${bulkTierOptionsHtml(PRODUCT_OPTION_TIER[s.code] || "")}</select></td>
+              <td><input type="number" min="1" class="bulk-step-input" data-field="step" value="${PRODUCT_OPTION_STEP[s.code] || ""}" placeholder="-" /></td>
+            </tr>`).join("")}
+        </tbody>
+      </table>
+    </div>
+    <div class="bulk-selected-row">
+      <input type="text" id="itemCustomerBulkSelectedValue" class="bulk-map-input" placeholder="체크한 상품들의 항목명(고객용)에 넣을 값" />
+      <select id="itemCustomerBulkSelectedTier" class="bulk-tier-select">
+        <option value="">별매품 단계 (변경 안 함)</option>
+        <option value="1">1단계</option>
+        <option value="2">2단계</option>
+        <option value="3">3단계</option>
+      </select>
+      <input type="number" min="1" id="itemCustomerBulkSelectedStep" class="bulk-step-input" placeholder="별매품 STEP" />
+      <button type="button" class="toolbar-btn" id="itemCustomerBulkSelectedFillBtn">✔ 선택 항목에 일괄 입력</button>
+    </div>
+    <div class="lang-edit-actions">
+      <button class="toolbar-btn" id="itemCustomerBulkCancelBtn" type="button">취소</button>
+      <button class="primary-btn" id="itemCustomerBulkApplyBtn" type="button">적용</button>
+    </div>
+  `;
+  itemCustomerBulkModal.hidden = false;
+
+  document.getElementById("itemCustomerBulkCheckAll").addEventListener("change", (e) => {
+    itemCustomerBulkModalBody.querySelectorAll(".bulk-map-check").forEach((cb) => { cb.checked = e.target.checked; });
+  });
+  document.getElementById("itemCustomerBulkSelectedFillBtn").addEventListener("click", () => {
+    const value = document.getElementById("itemCustomerBulkSelectedValue").value.trim();
+    const tier = document.getElementById("itemCustomerBulkSelectedTier").value;
+    const step = document.getElementById("itemCustomerBulkSelectedStep").value.trim();
+    if (!value && !tier && !step) { showToast("일괄 입력할 항목명(고객용) · 별매품 단계 · 별매품 STEP 중 하나를 먼저 입력해주세요."); return; }
+    const checkedRows = [...itemCustomerBulkModalBody.querySelectorAll("tr[data-code]")].filter((tr) => tr.querySelector(".bulk-map-check").checked);
+    if (checkedRows.length === 0) { showToast("값을 넣을 상품을 체크박스로 먼저 선택해주세요."); return; }
+    checkedRows.forEach((tr) => {
+      if (value) tr.querySelector('[data-field="itemCustomer"]').value = value;
+      if (tier) tr.querySelector('[data-field="tier"]').value = tier;
+      if (step) tr.querySelector('[data-field="step"]').value = step;
+    });
+    showToast(`${checkedRows.length}개 상품에 입력되었습니다. "적용"을 눌러야 실제 반영됩니다.`);
+  });
+
+  document.getElementById("itemCustomerBulkCancelBtn").addEventListener("click", () => { itemCustomerBulkModal.hidden = true; });
+  document.getElementById("itemCustomerBulkApplyBtn").addEventListener("click", () => {
+    let changedSkus = 0;
+    let changedTiers = 0;
+    let changedSteps = 0;
+    itemCustomerBulkModalBody.querySelectorAll("tr[data-code]").forEach((tr) => {
+      const code = tr.dataset.code;
+      const value = tr.querySelector('[data-field="itemCustomer"]').value.trim();
+      const tier = tr.querySelector('[data-field="tier"]').value;
+      const step = tr.querySelector('[data-field="step"]').value.trim();
+      if (value) {
+        const s = skuData.find((x) => x.code === code);
+        if (s) s.itemCustomer = value;
+        flatRows.filter((r) => r.code === code).forEach((r) => { r.itemCustomer = value; });
+        changedSkus++;
+      }
+      if (tier) {
+        PRODUCT_OPTION_TIER[code] = tier;
+        changedTiers++;
+      }
+      // STEP은 비우면 "지정 안 함"으로 되돌린다(빈칸 = 삭제).
+      if (step) {
+        if (PRODUCT_OPTION_STEP[code] !== step) changedSteps++;
+        PRODUCT_OPTION_STEP[code] = step;
+      } else if (PRODUCT_OPTION_STEP[code]) {
+        delete PRODUCT_OPTION_STEP[code];
+        changedSteps++;
+      }
+    });
+    dsAddEditLog("4. 상품고객언어", `항목명(고객용) 일괄 입력 적용: ${changedSkus}개 상품코드, 별매품 단계 ${changedTiers}개, 별매품 STEP ${changedSteps}개`);
+    renderSkuTable();
+    renderLangTable();
+    renderCostTable();
+    renderAllocationTable();
+    itemCustomerBulkModal.hidden = true;
+    showToast(`상품 ${changedSkus}건, 별매품 단계 ${changedTiers}건, 별매품 STEP ${changedSteps}건이 반영되었습니다.`);
+  });
+});
+document.getElementById("itemCustomerBulkModalClose").addEventListener("click", () => { itemCustomerBulkModal.hidden = true; });
+
+/* ---- 도구 3 : 세부사항(고객용) 입력 (1.1 프로덕트 리스트 기준) ----
+   세부사항은 1.1에서 설정된 "상품명"들을 +로 이어붙인 것이므로, 세부사항(고객용)의
+   원천 데이터도 1.1의 소분류(PK)마다 "상품명(고객용)"을 입력해두는 것이다. 적용하면
+   각 상품(SKU)에 매핑된 프로덕트들의 상품명(고객용)을 +로 이어붙여 세부사항(고객용)에
+   반영한다(매핑된 프로덕트가 없는 상품은 건드리지 않는다). */
+const detailCustomerBulkModal = document.getElementById("detailCustomerBulkModal");
+const detailCustomerBulkModalBody = document.getElementById("detailCustomerBulkModalBody");
+
+/* 검색으로 목록을 다시 그려도 체크 상태가 유지되도록, 입력 중인 값과 체크한 코드를
+   모달이 열려 있는 동안 별도로 보관한다(적용/닫기 전까지 실제 데이터는 건드리지 않음). */
+let detailCustomerDrafts = {};
+let detailCustomerChecked = new Set();
+
+function detailCustomerSyncDraftsFromDom() {
+  const listEl = document.getElementById("detailCustomerBulkList");
+  if (!listEl) return;
+  listEl.querySelectorAll("tr[data-code]").forEach((tr) => {
+    detailCustomerDrafts[tr.dataset.code] = tr.querySelector('[data-field="customerName"]').value;
+    if (tr.querySelector(".bulk-map-check").checked) detailCustomerChecked.add(tr.dataset.code);
+    else detailCustomerChecked.delete(tr.dataset.code);
+  });
+}
+
+function renderDetailCustomerBulkList(query) {
+  const q = (query || "").trim().toLowerCase();
+  const listEl = document.getElementById("detailCustomerBulkList");
+  const matches = PRODUCT_MASTER_CATALOG
+    .filter((p) => !q || [p.code, p.name, p.majorName, p.midName].join(" ").toLowerCase().includes(q))
+    .slice(0, 60);
+  listEl.innerHTML = `
+    <table class="bulk-map-table">
+      <thead><tr><th class="bulk-check-col"><input type="checkbox" id="detailCustomerBulkCheckAll" title="표시된 항목 전체 선택" /></th><th>소분류코드(PK)</th><th>상품명</th><th>상품명(고객용)</th></tr></thead>
+      <tbody>
+        ${matches.map((p) => {
+          const draft = detailCustomerDrafts[p.code] !== undefined ? detailCustomerDrafts[p.code] : (p.customerName || "");
+          return `
+          <tr data-code="${p.code}">
+            <td class="bulk-check-col"><input type="checkbox" class="bulk-map-check" ${detailCustomerChecked.has(p.code) ? "checked" : ""} /></td>
+            <td class="code-cell">${p.code}</td>
+            <td>${p.name}</td>
+            <td><input type="text" class="bulk-map-input" data-field="customerName" value="${draft.replace(/"/g, "&quot;")}" /></td>
+          </tr>`;
+        }).join("")}
+      </tbody>
+    </table>
+    ${PRODUCT_MASTER_CATALOG.length > matches.length && !q ? `<div class="bulk-map-hint">전체 ${PRODUCT_MASTER_CATALOG.length}건 중 최근 60건만 표시됩니다. 검색해서 찾아보세요.</div>` : ""}
+  `;
+  document.getElementById("detailCustomerBulkCheckAll").addEventListener("change", (e) => {
+    listEl.querySelectorAll(".bulk-map-check").forEach((cb) => { cb.checked = e.target.checked; });
+    detailCustomerSyncDraftsFromDom();
+  });
+}
+
+document.getElementById("detailCustomerBulkBtn").addEventListener("click", () => {
+  detailCustomerDrafts = {};
+  detailCustomerChecked = new Set();
+  detailCustomerBulkModalBody.innerHTML = `
+    <div class="lang-edit-summary">1.1 프로덕트(소분류) 리스트입니다. 상품명(고객용)을 입력하고 "적용"을 누르면, 각 상품(SKU)에 매핑된 프로덕트들의 상품명(고객용)을 +로 이어붙여 세부사항(고객용)에 자동 반영됩니다. 비워두면 해당 프로덕트는 변경하지 않습니다.<br/>여러 프로덕트에 같은 값을 넣으려면 왼쪽 체크박스로 선택한 뒤 아래 「선택 항목에 일괄 입력」을 사용하세요 (검색으로 목록이 바뀌어도 체크·입력값은 유지됩니다).</div>
+    <div class="bulk-map-toolbar">
+      <button type="button" class="toolbar-btn">⭣ 엑셀 양식 다운로드</button>
+      <button type="button" class="toolbar-btn">⭱ 엑셀 업로드</button>
+      <input type="text" id="detailCustomerBulkSearch" class="sku-product-search-input" placeholder="소분류코드(PK), 상품명, 대분류/중분류명으로 검색" autocomplete="off" />
+    </div>
+    <div class="bulk-map-table-wrap" id="detailCustomerBulkList"></div>
+    <div class="bulk-selected-row">
+      <input type="text" id="detailCustomerBulkSelectedValue" class="bulk-map-input" placeholder="체크한 프로덕트들의 상품명(고객용)에 넣을 값" />
+      <button type="button" class="toolbar-btn" id="detailCustomerBulkSelectedFillBtn">✔ 선택 항목에 일괄 입력</button>
+    </div>
+    <div class="lang-edit-actions">
+      <button class="toolbar-btn" id="detailCustomerBulkCancelBtn" type="button">취소</button>
+      <button class="primary-btn" id="detailCustomerBulkApplyBtn" type="button">적용</button>
+    </div>
+  `;
+  renderDetailCustomerBulkList("");
+  document.getElementById("detailCustomerBulkSearch").addEventListener("input", (e) => {
+    detailCustomerSyncDraftsFromDom();
+    renderDetailCustomerBulkList(e.target.value);
+  });
+  detailCustomerBulkModal.hidden = false;
+
+  document.getElementById("detailCustomerBulkSelectedFillBtn").addEventListener("click", () => {
+    const value = document.getElementById("detailCustomerBulkSelectedValue").value.trim();
+    if (!value) { showToast("일괄 입력할 값을 먼저 입력해주세요."); return; }
+    detailCustomerSyncDraftsFromDom();
+    if (detailCustomerChecked.size === 0) { showToast("값을 넣을 프로덕트를 체크박스로 먼저 선택해주세요."); return; }
+    detailCustomerChecked.forEach((code) => { detailCustomerDrafts[code] = value; });
+    renderDetailCustomerBulkList(document.getElementById("detailCustomerBulkSearch").value);
+    showToast(`${detailCustomerChecked.size}개 프로덕트에 입력되었습니다. "적용"을 눌러야 실제 반영됩니다.`);
+  });
+
+  document.getElementById("detailCustomerBulkCancelBtn").addEventListener("click", () => { detailCustomerBulkModal.hidden = true; });
+  document.getElementById("detailCustomerBulkApplyBtn").addEventListener("click", () => {
+    detailCustomerSyncDraftsFromDom();
+    let changedProducts = 0;
+    Object.entries(detailCustomerDrafts).forEach(([code, raw]) => {
+      const value = (raw || "").trim();
+      if (!value) return;
+      const p = PRODUCT_MASTER_CATALOG.find((x) => x.code === code);
+      if (p) { p.customerName = value; changedProducts++; }
+    });
+
+    let changedRows = 0;
+    flatRows.forEach((r) => {
+      const mapped = skuMappedProducts(r.code);
+      if (mapped.length === 0) return;
+      const joined = mapped.map((p) => p.customerName || p.name).filter(Boolean).join("+");
+      if (joined) { r.detailCustomer = joined; changedRows++; }
+    });
+
+    dsAddEditLog("4. 상품고객언어", `세부사항(고객용) 입력 적용: 프로덕트 ${changedProducts}건, 평형별 상품 정보 ${changedRows}건 반영`);
+    renderLangTable();
+    renderCostTable();
+    detailCustomerBulkModal.hidden = true;
+    showToast(`프로덕트 ${changedProducts}건 저장, 세부사항(고객용) ${changedRows}건에 반영되었습니다.`);
+  });
+});
+document.getElementById("detailCustomerBulkModalClose").addEventListener("click", () => { detailCustomerBulkModal.hidden = true; });
 
 // 대분류/중분류/제조사 조회·편집 : 1.5(대분류/중분류/제조사)에 있는 마스터 데이터를
 // 4.상품고객언어 상단에서도 바로 조회·추가·수정·삭제·정렬할 수 있게 한다.
@@ -1606,6 +1764,7 @@ function renderAllocationTable() {
       <td>${r.item}</td>
       <td>${r.detail}</td>
       <td>${PRODUCT_OPTION_TIER[r.productCode] ? `${PRODUCT_OPTION_TIER[r.productCode]}단계` : "-"}</td>
+      <td class="${PRODUCT_OPTION_STEP[r.productCode] ? "" : "muted"}">${productStepLabel(r.productCode)}</td>
       <td>${statusHtml}</td>
     </tr>
   `;
@@ -1988,10 +2147,15 @@ function renderPackageMapModal() {
             <label>품목명(공통)</label>
             <input type="text" id="pkgMapNameInput" value="공통패키지-${packageSeq}" />
           </div>
+          <div class="pkg-field">
+            <label>별매품 STEP</label>
+            <input type="number" min="1" id="pkgMapStepInput" placeholder="예: 1 (비우면 변경 안 함)" />
+          </div>
         </div>
         <div class="pkg-field-row">
           <div class="pkg-field"><label>비고</label><textarea id="pkgMapNoteInput" rows="2"></textarea></div>
         </div>
+        <div class="pkg-field-hint">별매품 STEP을 입력하면 위에서 선택한 상품 전체에 같은 STEP이 적용되며, 4.상품고객언어의 별매품 STEP과 같은 값을 공유합니다.</div>
         <div class="pkg-summary">
           <span>선택 상품 <strong>${checkedCodes.size}건</strong></span>
           <span>공급가 합계 <strong>${totals.supply}원</strong></span>
@@ -2023,9 +2187,14 @@ function renderPackageMapModal() {
     const baseName = document.getElementById("pkgMapNameInput").value.trim() || "공통패키지";
     const type = document.querySelector('input[name="pkgMapType"]:checked').value;
     const note = document.getElementById("pkgMapNoteInput").value.trim();
+    const step = document.getElementById("pkgMapStepInput").value.trim();
     const batchId = packageSeq;
     const createdAt = dsNowKorean();
     const createdBy = dsRoleName(dsGetCurrentRole());
+
+    // 별매품 STEP은 상품(SKU) 단위 값이라 평형별로 나뉘지 않고, 선택한 상품 전체에
+    // 같은 값으로 반영된다(4.상품고객언어의 별매품 STEP과 동일한 저장소를 공유).
+    if (step) codes.forEach((code) => { PRODUCT_OPTION_STEP[code] = step; });
 
     targetPyeongs.forEach((pyeong) => {
       const id = packageSeq++;
@@ -2046,10 +2215,11 @@ function renderPackageMapModal() {
       });
     });
 
-    dsAddEditLog("5. 안분표 생성", `공통 패키지 「${baseName}」 ${items.length}개 상품을 ${targetPyeongs.length}개 평형(${targetPyeongs.join(", ")})에 일괄 생성`);
+    dsAddEditLog("5. 안분표 생성", `공통 패키지 「${baseName}」 ${items.length}개 상품을 ${targetPyeongs.length}개 평형(${targetPyeongs.join(", ")})에 일괄 생성${step ? ` · 별매품 STEP ${step} 적용(${codes.length}개 상품)` : ""}`);
     renderPackageHistory();
+    if (step) { renderLangTable(); renderAllocationTable(); }
     packageMapModal.hidden = true;
-    showToast(`${targetPyeongs.length}개 평형에 일괄 생성되었습니다.`);
+    showToast(`${targetPyeongs.length}개 평형에 일괄 생성되었습니다.${step ? ` 별매품 STEP ${step}이 ${codes.length}개 상품에 반영되었습니다.` : ""}`);
   });
 }
 
@@ -2059,6 +2229,364 @@ document.getElementById("packageMapMenuItem").addEventListener("click", () => {
   packageMapModal.hidden = false;
 });
 document.getElementById("packageMapModalClose").addEventListener("click", () => { packageMapModal.hidden = true; });
+
+/* =====================================================================
+   5. 안분표 생성 : 안분표 가생성 (고객 → 고객스타일 → 상품스타일 선택)
+   -----------------------------------------------------------------------
+   기존 시스템은 한 번에 처리하는 총 연산건수가 10,000건을 넘으면 연산 오류가
+   발생했다. 그래서 실행 전에 선택 조건으로 총 연산건수를 먼저 계산하고,
+   10,000건을 넘으면 10,000건 단위의 배치로 자동 분할해 순차 실행한 뒤
+   결과를 병합해 하나의 안분표로 보여준다(중간에 실패해도 그 배치만 재실행).
+   ===================================================================== */
+const ALLOCATION_BATCH_LIMIT = 10000;
+// 안분표 1건(=1행)은 (평형 × 상품 × 고객 × 선택형평면) 조합으로 전개된다.
+const ALLOC_PLAN_VARIANTS = [
+  { code: "00", name: "미적용" },
+  { code: "01", name: "一자형 주방구조 선택시" },
+  { code: "02", name: "ㄱ자형 주방구조 선택시" },
+];
+const ALLOC_CUSTOMERS = [
+  { code: "U", name: "조합 - Union" },
+  { code: "C", name: "일반 - Customer" },
+];
+/* (평형 × 상품 × 고객 × 선택형평면) 조합 1건은 다시 세부 구성(공간 · 품목/항목 열)
+   으로 전개되어 여러 개의 안분표 행이 된다. 이 계수는 데모 데이터에서 전체를
+   선택했을 때 이 화면이 표시하는 안분표 규모(5,771건)와 비슷해지도록 맞춘 값이다. */
+const ALLOC_ROW_EXPANSION = 21;
+
+const allocationGenModal = document.getElementById("allocationGenModal");
+const allocationGenModalBody = document.getElementById("allocationGenModalBody");
+
+let allocGenCustomers = ["U"];
+let allocGenComboName = null;
+let allocGenStyleCodes = [];
+let allocGenResults = [];
+let allocGenRunning = false;
+let allocGenProgress = null; // { done, total, rows }
+// 현재 선택분을 "이번에 추가될 안분표"로 미리 보여줄지 여부.
+// 가생성을 마치면 이미 반영된 것이므로 껐다가, 선택을 바꾸면 다시 켠다.
+let allocGenPreviewOn = true;
+
+/* 선택한 상품스타일에 해당하는 상품(SKU)이 각 평형에 배정된 건수의 합 */
+function allocGenBaseCount(styleCodes) {
+  const codes = skuData.filter((s) => styleCodes.includes(s.styleCode)).map((s) => s.code);
+  let base = 0;
+  pyeongList.forEach((p) => {
+    const assigned = pivotAssignments[p];
+    if (!assigned) return;
+    codes.forEach((c) => { if (assigned.has(c)) base++; });
+  });
+  return base;
+}
+
+/* 안분표 1건(= 고객 × 고객스타일 × 상품스타일)의 연산 횟수 */
+function allocGenRowOps(products) {
+  return products * ALLOC_PLAN_VARIANTS.length * ALLOC_ROW_EXPANSION;
+}
+
+/* 현재 선택으로 이번에 새로 만들어지는 안분표 행들 */
+function allocGenBuildRows() {
+  if (allocGenCustomers.length === 0 || !allocGenComboName || allocGenStyleCodes.length === 0) return [];
+  const styles = distinctProductStyles();
+  const rows = [];
+  allocGenCustomers.forEach((cCode) => {
+    const customer = ALLOC_CUSTOMERS.find((x) => x.code === cCode);
+    allocGenStyleCodes.forEach((sCode) => {
+      const st = styles.find((x) => x.code === sCode);
+      const products = allocGenBaseCount([sCode]);
+      rows.push({
+        customerName: customer ? customer.name : cCode,
+        comboName: allocGenComboName,
+        styleCode: sCode,
+        styleName: st ? st.label : sCode,
+        products,
+        ops: allocGenRowOps(products),
+        batch: 0,
+        isNew: true,
+      });
+    });
+  });
+  return rows;
+}
+
+/* "누적생성"이라 이미 가생성된 행도 이번 실행에 함께 재연산된다.
+   같은 (고객 · 고객스타일 · 상품스타일) 조합은 다시 생성해도 중복으로 쌓이지
+   않고, 다른 고객스타일을 고르면 그만큼 안분표가 누적된다. */
+function allocGenRowKey(r) {
+  return `${r.customerName}|${r.comboName}|${r.styleCode}`;
+}
+function allocGenAllRows() {
+  const kept = allocGenResults.map((r) => Object.assign({}, r, { isNew: false }));
+  if (!allocGenPreviewOn) return kept;
+  const seen = new Set(kept.map(allocGenRowKey));
+  const fresh = allocGenBuildRows().filter((r) => !seen.has(allocGenRowKey(r)));
+  return kept.concat(fresh);
+}
+
+function allocGenSumOps(rows) {
+  return rows.reduce((sum, r) => sum + r.ops, 0);
+}
+
+/* 안분표 행들을 1회 처리 한도(10,000건) 안에서 순서대로 담아 배치를 만든다.
+   한 행의 연산 횟수가 한도보다 크면 그 행만 단독 배치로 처리한다. */
+function allocGenPackBatches(rows) {
+  const batches = [];
+  let cur = [];
+  let curOps = 0;
+  rows.forEach((r) => {
+    if (cur.length > 0 && curOps + r.ops > ALLOCATION_BATCH_LIMIT) {
+      batches.push({ rows: cur, ops: curOps });
+      cur = [];
+      curOps = 0;
+    }
+    cur.push(r);
+    curOps += r.ops;
+  });
+  if (cur.length > 0) batches.push({ rows: cur, ops: curOps });
+  batches.forEach((b, i) => b.rows.forEach((r) => { r.batch = i + 1; }));
+  return batches;
+}
+
+function renderAllocationGenModal() {
+  const combos = allCustomerStyleCombos();
+  const styles = distinctProductStyles();
+  const allRows = allocGenAllRows();
+  const newRows = allRows.filter((r) => r.isNew);
+  const batchList = allocGenPackBatches(allRows);   // 행마다 batch 번호도 여기서 채워진다
+  const total = allocGenSumOps(allRows);
+  const runOps = allocGenSumOps(newRows);
+  const accOps = allocGenSumOps(allocGenResults);
+  const batches = batchList.length;
+  const needsSplit = total > ALLOCATION_BATCH_LIMIT;
+  const ready = allocGenCustomers.length > 0 && allocGenComboName && allocGenStyleCodes.length > 0;
+  const displayRows = allocGenRunning || allocGenResults.length > 0 || ready ? allRows : [];
+
+  allocationGenModalBody.innerHTML = `
+    <div class="alloc-gen-split">
+      <div class="alloc-gen-left">
+        <div class="alloc-gen-panel-title">■ 선택한 스타일구성</div>
+        <div class="alloc-gen-guide-row">
+          <div class="alloc-gen-guide ${ready ? "ok" : ""}">
+            ${ready
+              ? `✔ 고객 ${allocGenCustomers.length}종 · 고객스타일 「${allocGenComboName}」 · 상품스타일 ${allocGenStyleCodes.length}종이 선택되었습니다.`
+              : `⚠ 고객, 고객스타일, 상품스타일을 선택해 주세요.`}
+          </div>
+          <button type="button" class="alloc-gen-run-btn" id="allocGenRunBtn" ${ready && !allocGenRunning ? "" : "disabled"}>
+            ${allocGenRunning ? "연산 중…" : "≡ 누적생성<br/>안분표<br/>가생성"}
+          </button>
+        </div>
+
+        <div class="alloc-gen-section">
+          <div class="alloc-gen-section-head"><span class="alloc-gen-step-no">1</span> 고객
+            <span class="alloc-gen-picked">${allocGenCustomers.length ? `☑ 「${allocGenCustomers.map((c) => (ALLOC_CUSTOMERS.find((x) => x.code === c) || {}).name).join(", ")}」 선택` : "미선택"}</span>
+          </div>
+          <div class="alloc-gen-list">
+            ${ALLOC_CUSTOMERS.map((c) => `
+              <label class="alloc-gen-row ${allocGenCustomers.includes(c.code) ? "selected" : ""}">
+                <input type="checkbox" class="alloc-gen-customer" value="${c.code}" ${allocGenCustomers.includes(c.code) ? "checked" : ""} />
+                <span class="alloc-gen-row-code">${c.code}</span>
+                <span class="alloc-gen-row-name">${c.name}</span>
+              </label>
+            `).join("")}
+          </div>
+        </div>
+
+        <div class="alloc-gen-section">
+          <div class="alloc-gen-section-head"><span class="alloc-gen-step-no">2</span> 고객스타일 선택
+            <span class="alloc-gen-picked">${allocGenComboName ? `☑ 「${allocGenComboName}」 선택` : "미선택"}</span>
+          </div>
+          <div class="alloc-gen-list">
+            ${combos.map((c) => `
+              <label class="alloc-gen-row ${allocGenComboName === c.name ? "selected" : ""}">
+                <input type="radio" name="allocGenCombo" class="alloc-gen-combo" value="${c.name}" ${allocGenComboName === c.name ? "checked" : ""} />
+                <span class="alloc-gen-row-name">${c.name}</span>
+                <span class="alloc-gen-row-sub">${c.productStyles.join(" + ")}</span>
+              </label>
+            `).join("")}
+          </div>
+        </div>
+
+        <div class="alloc-gen-section">
+          <div class="alloc-gen-section-head"><span class="alloc-gen-step-no">3</span> 상품스타일 선택
+            <span class="alloc-gen-picked ${allocGenStyleCodes.length ? "" : "warn"}">${allocGenStyleCodes.length ? `${allocGenStyleCodes.length}종 선택` : "⚠ 체크해 주세요"}</span>
+          </div>
+          <div class="alloc-gen-list">
+            ${styles.map((s) => `
+              <label class="alloc-gen-row ${allocGenStyleCodes.includes(s.code) ? "selected" : ""}">
+                <input type="checkbox" class="alloc-gen-style" value="${s.code}" ${allocGenStyleCodes.includes(s.code) ? "checked" : ""} />
+                <span class="alloc-gen-row-code">${s.code}</span>
+                <span class="alloc-gen-row-name">${s.label}</span>
+              </label>
+            `).join("")}
+          </div>
+        </div>
+      </div>
+
+      <div class="alloc-gen-right">
+        <div class="alloc-gen-calc ${needsSplit ? "split" : ""}">
+          <div class="alloc-gen-calc-title">연산량 사전 계산</div>
+          <div class="alloc-gen-calc-grid">
+            <span>이번 연산분</span><strong>${runOps.toLocaleString()}건</strong>
+            <span>기존 누적분</span><strong>${accOps.toLocaleString()}건</strong>
+            <span>총 연산건수</span><strong class="${needsSplit ? "over" : ""}">${total.toLocaleString()}건</strong>
+            <span>1회 처리 한도</span><strong>${ALLOCATION_BATCH_LIMIT.toLocaleString()}건</strong>
+            <span>실행 배치 수</span><strong>${batches}회</strong>
+          </div>
+          <div class="alloc-gen-calc-note">
+            ${total === 0
+              ? "고객·고객스타일·상품스타일을 선택하면 안분표별 연산 횟수가 계산됩니다."
+              : needsSplit
+                ? `안분표별 연산 횟수를 더해 <b>한 배치가 ${ALLOCATION_BATCH_LIMIT.toLocaleString()}건을 넘지 않도록</b> ${batches}개로 나눠 순차 연산한 뒤 결과를 병합합니다.`
+                : `총 연산건수가 한도 이내이므로 <b>분할 없이 1회</b>로 연산합니다.`}
+          </div>
+          ${batchList.length > 0 ? `
+            <div class="alloc-gen-batch-plan">
+              ${batchList.map((b, i) => `
+                <span class="alloc-gen-batch-chip ${allocGenProgress && allocGenProgress.done > i ? "done" : ""}">
+                  <b>${i + 1}차</b> ${b.ops.toLocaleString()}건 <i>· 안분표 ${b.rows.length}건</i>
+                </span>
+              `).join("")}
+            </div>` : ""}
+          <div class="alloc-gen-calc-formula">안분표 1건의 연산 횟수 = 평형 배정 상품 수 × 선택형평면 ${ALLOC_PLAN_VARIANTS.length}종 × 행 전개 ${ALLOC_ROW_EXPANSION}배 · 누적생성이라 기존 누적분도 함께 재연산합니다.</div>
+          ${allocGenProgress ? `
+            <div class="alloc-gen-progress">
+              <div class="alloc-gen-progress-bar"><i style="width:${Math.round((allocGenProgress.done / allocGenProgress.total) * 100)}%"></i></div>
+              <div class="alloc-gen-progress-text">배치 ${allocGenProgress.done} / ${allocGenProgress.total} 처리 · 누적 ${allocGenProgress.rows.toLocaleString()}건</div>
+            </div>` : ""}
+        </div>
+
+        <div class="alloc-gen-result-head">
+          <span>🗂 가생성된 안분표 <span class="alloc-gen-result-count">${displayRows.length}건</span>${newRows.length ? `<span class="alloc-gen-result-new">이번 신규 ${newRows.length}건 포함</span>` : ""}</span>
+          <button type="button" class="alloc-gen-clear-btn" id="allocGenClearBtn" ${allocGenResults.length ? "" : "disabled"}>⊘ 삭제</button>
+        </div>
+        <div class="alloc-gen-result-wrap">
+          <table class="alloc-gen-result-table">
+            <thead><tr><th>고객명</th><th>고객스타일</th><th>스타일코드</th><th>상품스타일명</th><th class="num">상품수</th><th class="num">연산 횟수</th><th>배치</th></tr></thead>
+            <tbody>
+              ${displayRows.length === 0
+                ? `<tr><td colspan="7" class="alloc-gen-result-empty">왼쪽에서 조건을 고르고 「안분표 가생성」을 눌러주세요.</td></tr>`
+                : displayRows.map((r) => `
+                  <tr class="${r.isNew ? "is-new" : ""}">
+                    <td>${r.customerName}${r.isNew ? `<span class="alloc-gen-new-tag">신규</span>` : ""}</td>
+                    <td>${r.comboName}</td>
+                    <td class="code-cell">${r.styleCode}</td>
+                    <td class="name" title="${r.styleName}">${r.styleName}</td>
+                    <td class="num">${r.products.toLocaleString()}</td>
+                    <td class="num"><b>${r.ops.toLocaleString()}</b></td>
+                    <td><span class="alloc-gen-batch-tag ${allocGenProgress && allocGenProgress.done >= r.batch ? "done" : ""}">${r.batch}차</span></td>
+                  </tr>`).join("")}
+              ${displayRows.length > 0 ? `
+                <tr class="alloc-gen-total-row">
+                  <td colspan="4">합계</td>
+                  <td class="num">${displayRows.reduce((s, r) => s + r.products, 0).toLocaleString()}</td>
+                  <td class="num"><b>${total.toLocaleString()}</b></td>
+                  <td>${batches}개 배치</td>
+                </tr>` : ""}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // 선택이 바뀌면 직전 실행의 진행률은 더 이상 현재 연산량과 맞지 않으므로 지운다
+  allocationGenModalBody.querySelectorAll(".alloc-gen-customer").forEach((el) => {
+    el.addEventListener("change", () => {
+      allocGenCustomers = [...allocationGenModalBody.querySelectorAll(".alloc-gen-customer:checked")].map((x) => x.value);
+      allocGenProgress = null;
+      allocGenPreviewOn = true;
+      renderAllocationGenModal();
+    });
+  });
+  allocationGenModalBody.querySelectorAll(".alloc-gen-combo").forEach((el) => {
+    el.addEventListener("change", () => {
+      allocGenComboName = el.value;
+      // 고객스타일을 고르면 그 조합을 이루는 상품스타일을 기본 선택으로 채워준다
+      const combo = allCustomerStyleCombos().find((c) => c.name === el.value);
+      if (combo) allocGenStyleCodes = [...combo.productStyles];
+      allocGenProgress = null;
+      allocGenPreviewOn = true;
+      renderAllocationGenModal();
+    });
+  });
+  allocationGenModalBody.querySelectorAll(".alloc-gen-style").forEach((el) => {
+    el.addEventListener("change", () => {
+      allocGenStyleCodes = [...allocationGenModalBody.querySelectorAll(".alloc-gen-style:checked")].map((x) => x.value);
+      allocGenProgress = null;
+      allocGenPreviewOn = true;
+      renderAllocationGenModal();
+    });
+  });
+
+  const clearBtn = document.getElementById("allocGenClearBtn");
+  if (clearBtn) clearBtn.addEventListener("click", () => {
+    allocGenResults = [];
+    allocGenProgress = null;
+    allocGenPreviewOn = true;
+    renderAllocationGenModal();
+  });
+
+  const runBtn = document.getElementById("allocGenRunBtn");
+  if (runBtn) runBtn.addEventListener("click", runAllocationGeneration);
+}
+
+/* 안분표별 연산 횟수를 순서대로 담아 한 배치가 한도(10,000건)를 넘지 않도록
+   나눈 뒤, 배치를 하나씩 순차 실행한다. 배치 사이에 화면을 양보(setTimeout)해
+   진행률과 배치 처리 상태가 실제로 갱신되도록 한다. */
+function runAllocationGeneration() {
+  if (allocGenRunning) return;
+  const rows = allocGenAllRows();
+  if (rows.length === 0) return;
+
+  const batchList = allocGenPackBatches(rows);   // 각 행에 batch 번호가 매겨진다
+  const total = allocGenSumOps(rows);
+  const batchCount = batchList.length;
+
+  allocGenRunning = true;
+  allocGenResults = rows;                        // 표에는 처리 예정 상태로 먼저 보여준다
+  allocGenProgress = { done: 0, total: batchCount, rows: 0 };
+  renderAllocationGenModal();
+
+  let batchIndex = 0;
+  let processed = 0;
+  function step() {
+    processed += batchList[batchIndex].ops;
+    batchIndex++;
+    allocGenProgress = { done: batchIndex, total: batchCount, rows: processed };
+
+    if (batchIndex < batchCount) {
+      renderAllocationGenModal();
+      setTimeout(step, 320);
+      return;
+    }
+
+    allocGenRunning = false;
+    allocGenPreviewOn = false;   // 이번 선택분은 이미 반영됨
+    renderAllocationGenModal();
+    dsAddEditLog(
+      "5. 안분표 생성",
+      `안분표 가생성 : 안분표 ${rows.length}건 · 총 연산 ${total.toLocaleString()}건${batchCount > 1
+        ? ` (1회 한도 ${ALLOCATION_BATCH_LIMIT.toLocaleString()}건을 넘지 않도록 ${batchCount}개 배치로 분할: ${batchList.map((b, i) => `${i + 1}차 ${b.ops.toLocaleString()}건`).join(", ")})`
+        : " (한도 이내로 1회 실행)"}`
+    );
+    showToast(
+      batchCount > 1
+        ? `안분표 ${rows.length}건 · 총 ${total.toLocaleString()}건을 ${batchCount}개 배치로 나눠 가생성했습니다.`
+        : `안분표 ${rows.length}건 · 총 ${total.toLocaleString()}건을 가생성했습니다.`
+    );
+  }
+  setTimeout(step, 320);
+}
+
+document.getElementById("allocationGenBtn").addEventListener("click", () => {
+  allocGenProgress = null;
+  renderAllocationGenModal();
+  allocationGenModal.hidden = false;
+});
+document.getElementById("allocationGenModalClose").addEventListener("click", () => {
+  if (allocGenRunning) { showToast("연산이 진행 중입니다. 잠시 후 다시 시도해주세요."); return; }
+  allocationGenModal.hidden = true;
+});
 
 /* ---- 패키지 생성 이력 (현재안/개선안 공통) ---- */
 const packageHistoryBtn = document.getElementById("packageHistoryBtn");
@@ -2222,7 +2750,7 @@ function renderStep1StageBox() {
           </div>
         </div>
         <button class="danger-btn" id="stageBoxReopenBtn" ${isOwner ? "" : "disabled"}>↺ ${meta.verb} 확정 강제취소</button>`;
-      document.getElementById("stageBoxReopenBtn").addEventListener("click", () => { dsRequestReopen(targetKey); renderEverything(); });
+      document.getElementById("stageBoxReopenBtn").addEventListener("click", () => { if (dsPromptAndRequestReopen(targetKey)) renderEverything(); });
     } else if (s.status === "reopen_pending") {
       box.innerHTML = `
         <div class="stage-pending-badge">⏳ 잠금 해제 승인 대기 중 (${s.pendingApprovals.map((k) => dsRoleName(stages[k].owner)).join(", ")})</div>
@@ -2261,7 +2789,7 @@ function renderStageBox(stageKey, containerId, verb, badgeText, upstreamKey, ove
         </div>
       </div>
       <button class="danger-btn" id="${stageKey}ReopenBtn" ${isOwner ? "" : "disabled"}>↺ ${verb} 확정 강제취소</button>`;
-    document.getElementById(`${stageKey}ReopenBtn`).addEventListener("click", () => { dsRequestReopen(stageKey); renderEverything(); });
+    document.getElementById(`${stageKey}ReopenBtn`).addEventListener("click", () => { if (dsPromptAndRequestReopen(stageKey)) renderEverything(); });
   } else if (s.status === "reopen_pending") {
     box.innerHTML = `
       <div class="stage-pending-badge">⏳ 잠금 해제 승인 대기 중 (${s.pendingApprovals.map((k) => dsRoleName(stages[k].owner)).join(", ")})</div>
@@ -2321,6 +2849,7 @@ function applyStageNavigation(stageKey) {
     if (link) link.click();
   };
   ({
+    s11: () => goStep1Tab("product"),
     s13: () => goStep1Tab("mapping"),
     s14: () => goStep1Tab("area"),
     s2: () => goStep("2"),

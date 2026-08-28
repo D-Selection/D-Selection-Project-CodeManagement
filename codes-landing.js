@@ -27,12 +27,17 @@ siteTableBody.innerHTML = sites.map((s) => `
     <td>${s.biz}</td>
     <td>${s.product}</td>
     <td>${s.created ? s.created : '<span class="value-empty">No value</span>'}</td>
+    <td class="csite-goto-cell">
+      <button class="csite-goto-btn" type="button" data-goto="hq" title="본사에서 관리하는 상품구성 · 원가 · 판매가 · 안분표 생성 화면">🏢 본사 메뉴</button>
+      <button class="csite-goto-btn" type="button" data-goto="site" title="본사 데이터를 가져와 현장에서 관리하는 화면(원가·판매가 제외, 가감조건/현장 고객언어 추가)">🏗 현장 메뉴</button>
+    </td>
   </tr>
 `).join("");
 
-/* 현장을 선택하면 바로 "1.1 페이지"(안분표 생성 앱의 1.상품구성 > 1.프로덕트)로 이동 */
+/* 현장별로 "본사 메뉴"(안분표 생성 앱, index.html) 또는
+   "현장 메뉴"(별매 행사 종료 후 현장이 직접 관리하는 site-menu.html)로 이동 */
 siteTableBody.addEventListener("click", (e) => {
-  const tr = e.target.closest("tr[data-code]");
-  if (!tr) return;
-  window.location.href = "index.html";
+  const btn = e.target.closest("[data-goto]");
+  if (!btn) return;
+  window.location.href = btn.dataset.goto === "site" ? "site-menu.html" : "index.html";
 });

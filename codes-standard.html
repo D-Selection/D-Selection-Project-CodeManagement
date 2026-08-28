@@ -18,6 +18,7 @@
         <a href="#" class="cnav-link"><span class="cnav-icon">🛡</span> 관리자 모드</a>
         <a href="codes-standard.html" class="cnav-link active"><span class="cnav-icon">📖</span> 현장별 표준코드</a>
         <a href="codes-landing.html" class="cnav-link"><span class="cnav-icon">📋</span> 현장 목록</a>
+        <a href="screen-spec.html" class="cnav-link"><span class="cnav-icon">🗒</span> 화면정의서</a>
       </nav>
     </header>
 
@@ -52,32 +53,13 @@
           </div>
         </aside>
 
-        <aside class="ccol ccol-narrow">
-          <div class="ccol-title"><span class="ccol-icon">🔎</span> 프로덕트코드</div>
-          <div class="cmini-section">
-            <div class="cmini-header">대분류 <span class="ccount">6</span> <span class="cexpand">⌄ ⤢</span></div>
-            <table class="cmini-table">
-              <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
-              <tbody id="majorBody"></tbody>
-            </table>
-          </div>
-          <div class="cmini-section cmini-scroll">
-            <div class="cmini-header">중분류 <span class="ccount">270</span> <span class="cfilter-tag">다</span> <span class="cexpand">⌄ ⤢</span></div>
-            <div class="cmini-table-scroll">
-              <table class="cmini-table">
-                <thead><tr><th>위코드 <span class="sort-icon">⇅</span></th><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
-                <tbody id="midBody"></tbody>
-              </table>
-            </div>
-          </div>
-        </aside>
-
         <aside class="ccol ccol-narrow ccol-scrollable">
-          <div class="ccol-title"><span class="ccol-icon">🔎</span> 현장코드 (고객스타일/스타일/평형 등)</div>
+          <div class="ccol-title"><span class="ccol-icon">🔎</span> 현장코드 (고객스타일/스타일)</div>
           <div class="cmini-section" id="masterCustStyleSection">
-            <div class="cmini-header">고객스타일 <span class="ccount" id="masterCustStyleCount">0</span> <button class="cmaster-add-btn" data-master="custStyles">+ 추가</button></div>
+            <div class="cmini-header">고객스타일 <span class="ccount" id="masterCustStyleCount">0</span> <button class="cmaster-add-btn" id="custStyleComboAddBtn">+ 추가</button></div>
+            <div class="ccombo-hint">고객스타일은 스타일의 조합으로 정의됩니다 (예: 미니멀 = 스타일 미니멀 + 스타일 미적용).</div>
             <table class="cmini-table">
-              <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
+              <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th><th>구성(스타일)</th></tr></thead>
               <tbody id="masterCustStyleBody"></tbody>
             </table>
           </div>
@@ -88,39 +70,63 @@
               <tbody id="masterStyleBody"></tbody>
             </table>
           </div>
-          <div class="cmini-section" id="masterPyeongSection">
-            <div class="cmini-header">평형 <span class="ccount" id="masterPyeongCount">0</span> <button class="cmaster-add-btn" data-master="pyeongs">+ 추가</button></div>
+        </aside>
+
+        <aside class="ccol ccol-narrow">
+          <div class="ccol-title">
+            <span class="ccol-icon">🔎</span> 프로덕트코드
+            <span class="cscheme-toggle">
+              <button type="button" class="cscheme-btn active" data-scheme="new">신규체계</button>
+              <button type="button" class="cscheme-btn" data-scheme="legacy">구버전체계</button>
+            </span>
+          </div>
+          <div class="ccategory-scheme-note" id="categorySchemeNote" hidden>
+            구버전 체계입니다. 개편 이전부터 있던 현장은 계속 이 체계로 조회 · 관리하고, 신규 현장은 신규체계를 사용합니다.
+          </div>
+          <div class="cmini-section">
+            <div class="cmini-header">대분류 <span class="ccount" id="majorCount">0</span></div>
             <table class="cmini-table">
               <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
-              <tbody id="masterPyeongBody"></tbody>
+              <tbody id="majorBody"></tbody>
             </table>
           </div>
-          <div class="cmini-section" id="masterPyeongOptionSection">
-            <div class="cmini-header">평형옵션 <span class="ccount" id="masterPyeongOptionCount">0</span> <button class="cmaster-add-btn" data-master="pyeongOptions">+ 추가</button></div>
-            <table class="cmini-table">
-              <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
-              <tbody id="masterPyeongOptionBody"></tbody>
-            </table>
-          </div>
-          <div class="cmini-section" id="masterPlanSection">
-            <div class="cmini-header">선택형평면 <span class="ccount" id="masterPlanCount">0</span> <button class="cmaster-add-btn" data-master="plans">+ 추가</button></div>
-            <table class="cmini-table">
-              <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
-              <tbody id="masterPlanBody"></tbody>
-            </table>
+          <div class="cmini-section cmini-scroll">
+            <div class="cmini-header">중분류 <span class="ccount" id="midCount">0</span> <span class="cexpand">⌄ ⤢</span></div>
+            <div class="cmini-table-scroll">
+              <table class="cmini-table">
+                <thead><tr><th>위코드 <span class="sort-icon">⇅</span></th><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th></tr></thead>
+                <tbody id="midBody"></tbody>
+              </table>
+            </div>
           </div>
         </aside>
 
         <div class="ccol ccol-wide">
           <div class="csub-toolbar">
             <div class="csub-toolbar-left">
-              <span class="ccol-title-inline">소분류 안내</span>
+              <span class="ccol-title-inline">전체 현장 소분류 집계 <span class="ccount" id="subAggCount">0</span></span>
+              <button type="button" class="toolbar-btn" id="productQuickAddBtn">+ 프로덕트 코드 추가</button>
+            </div>
+            <div class="csub-toolbar-right">
+              <input type="text" id="subAggSearch" class="csub-search-input" placeholder="소분류코드(PK), 상품명, 대분류명, 중분류명으로 검색" />
             </div>
           </div>
-          <div class="csubcat-moved-note">
-            소분류(PK)는 더 이상 전사공통코드로 관리하지 않습니다.<br/>
-            대분류 · 중분류만 여기(전사공통코드)에서 관리하고, 소분류(PK)는 <strong>현장별 관리 항목</strong>으로 바뀌었습니다.<br/>
-            현장별 소분류 목록은 「안분표 생성 &gt; 1. 상품구성 &gt; 1.1 프로덕트」 화면에서 조회 · 엑셀 다운로드/업로드 · 다른현장 불러오기로 관리합니다.
+          <div class="csubcat-moved-note csubcat-moved-note-compact">
+            소분류(PK)는 표준코드가 아니라 <strong>현장별 관리 항목</strong>입니다. 아래 목록은 각 현장이 실제로 입력해 쓰고 있는 소분류를
+            현장명 없이(사용 현장 수만) 모아 집계한 참고용 현황입니다. 실제 등록 · 수정은 「안분표 생성 &gt; 1. 상품구성 &gt; 1.1 프로덕트」 화면에서
+            현장별로 조회 · 엑셀 다운로드/업로드 · 다른현장 불러오기로 진행합니다.
+          </div>
+          <div class="ctable-wrap">
+            <table id="subAggTable">
+              <thead>
+                <tr>
+                  <th>대분류코드</th><th>대분류명</th><th>그룹명</th><th>중분류코드</th><th>중분류명</th>
+                  <th class="sortable">소분류코드(PK) <span class="sort-icon">⇅</span></th>
+                  <th>상품명</th><th>사용 현장 수</th>
+                </tr>
+              </thead>
+              <tbody id="subAggBody"></tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -152,38 +158,25 @@
           </div>
           <div class="csite-cols">
             <div class="csite-subcol">
-              <div class="cmini-header">고객 스타일 <span class="ccount" id="custStyleCount">6</span> <button class="cmaster-add-btn" data-site-master="custStyles">+ 추가</button></div>
+              <div class="cmini-header">고객 스타일 <span class="ccount" id="custStyleCount">6 / 6</span></div>
               <table class="cmini-table">
-                <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th><th></th></tr></thead>
+                <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th><th>적용</th></tr></thead>
                 <tbody id="custStyleBody"></tbody>
               </table>
             </div>
             <div class="csite-subcol">
-              <div class="cmini-header">스타일 <span class="ccount" id="styleCount">6</span> <button class="cmaster-add-btn" data-site-master="styles">+ 추가</button></div>
+              <div class="cmini-header">스타일 <span class="ccount" id="styleCount">6 / 6</span></div>
               <table class="cmini-table">
-                <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th><th></th></tr></thead>
+                <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th><th>적용</th></tr></thead>
                 <tbody id="styleBody"></tbody>
               </table>
             </div>
-            <div class="csite-subcol">
-              <div class="cmini-header">평형 <span class="ccount" id="pyeongCount">16</span> <button class="cmaster-add-btn" data-site-master="pyeongs">+ 추가</button></div>
-              <table class="cmini-table">
-                <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th><th></th></tr></thead>
+            <div class="csite-subcol csite-subcol-wide">
+              <div class="cmini-header">평형 (현장 자체 관리) <span class="ccount" id="pyeongCount">16</span> <button class="cmaster-add-btn" id="pyeongAddRowBtn">+ 행 추가</button></div>
+              <div class="cgrid-hint">코드/명칭 칸을 엑셀처럼 바로 입력·수정할 수 있고, 여러 줄을 붙여넣기(Tab/줄바꿈 구분)할 수도 있습니다.</div>
+              <table class="cmini-table cgrid-table">
+                <thead><tr><th>코드</th><th>명칭</th><th></th></tr></thead>
                 <tbody id="pyeongBody"></tbody>
-              </table>
-            </div>
-            <div class="csite-subcol">
-              <div class="cmini-header">평형옵션 <span class="ccount" id="pyeongOptionCount">1</span> <button class="cmaster-add-btn" data-site-master="pyeongOptions">+ 추가</button></div>
-              <table class="cmini-table">
-                <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th><th></th></tr></thead>
-                <tbody id="pyeongOptionBody"></tbody>
-              </table>
-            </div>
-            <div class="csite-subcol">
-              <div class="cmini-header">선택형 평면 <span class="ccount" id="planCount">3</span> <button class="cmaster-add-btn" data-site-master="plans">+ 추가</button></div>
-              <table class="cmini-table">
-                <thead><tr><th>코드 <span class="sort-icon">⇅</span></th><th>명칭</th><th></th></tr></thead>
-                <tbody id="planBody"></tbody>
               </table>
             </div>
           </div>
@@ -195,6 +188,95 @@
     <section class="ctab-panel" id="cpanel-help">
       <div class="chelp-empty">도움말 준비 중입니다.</div>
     </section>
+  </div>
+
+  <!-- 전사공통코드 : 프로덕트 코드(소분류/PK) 간편 추가 모달.
+       - 대분류/중분류를 검색 없이 한 화면에서 전부 보고 클릭으로 고른다.
+       - 상품명을 입력해 추가하면 실제 데이터에 바로 반영되지 않고 오른쪽 "대기 목록"에
+         쌓이기만 하며, 대분류/중분류를 자유롭게 바꿔가며 여러 건을 계속 쌓을 수 있다.
+       - "전체 저장"을 눌러야 그 시점에 쌓인 모든 항목이 한 번에 실제 데이터에 반영된다.
+       - 소분류코드(PK)는 항상 자동 채번되며, 대기 목록에 채번된 번호가 바로 보인다. -->
+  <div class="cmodal-backdrop" id="productQuickAddModal" hidden>
+    <div class="csend-modal cproduct-quick-add-modal">
+      <div class="cmodal-header">🏷 프로덕트 코드 추가 (소분류 · PK) <button class="cmodal-close" id="productQuickAddClose" type="button">✕</button></div>
+      <div class="cqa-note">새 프로덕트 코드는 신규체계(대분류 6개 · 중분류 267개) 기준으로 등록되며, 아래 대기 목록에 쌓아두었다가 <strong>"전체 저장"</strong>을 눌러야 실제로 반영됩니다.</div>
+      <div class="cmodal-body cqa-body-split">
+        <div class="cqa-left-col">
+          <div class="cqa-step-label">대분류 <span class="ccount" id="cqaMajorCount">6</span></div>
+          <div class="cqa-major-tabs" id="cqaMajorTabs"></div>
+
+          <div class="cqa-mid-existing-split">
+            <div class="cqa-mid-col">
+              <div class="cqa-step-label">중분류 <span class="ccount" id="cqaMidCount">0</span> <button type="button" class="cqa-new-mid-btn" id="cqaNewMidBtn" disabled>+ 새 중분류</button></div>
+              <input type="text" id="cqaMidSearchInput" class="cqa-inline-search" placeholder="중분류 코드/명칭 검색 (쉼표로 여러 단어 and 검색)" autocomplete="off" hidden />
+              <div class="cqa-new-mid-form" id="cqaNewMidForm" hidden>
+                <input type="text" id="cqaNewMidName" class="cqa-name-input" placeholder="새 중분류명" autocomplete="off" />
+                <input type="text" id="cqaNewMidGroup" class="cqa-name-input" placeholder="그룹명 (선택)" autocomplete="off" />
+                <button type="button" class="toolbar-btn" id="cqaNewMidConfirmBtn">추가</button>
+                <button type="button" class="toolbar-btn" id="cqaNewMidCancelBtn">취소</button>
+              </div>
+              <div class="cqa-mid-list" id="cqaMidList"></div>
+            </div>
+            <div class="cqa-existing-col">
+              <div class="cqa-step-label">기존 소분류 <span class="ccount" id="cqaExistingCount">0</span></div>
+              <input type="text" id="cqaExistingSearchInput" class="cqa-inline-search" placeholder="소분류 코드/상품명 검색 (쉼표로 여러 단어 and 검색)" autocomplete="off" hidden />
+              <div class="cqa-existing-list" id="cqaExistingList"></div>
+            </div>
+          </div>
+
+          <div class="cqa-selected-row" id="cqaSelectedRow" hidden>
+            선택됨: <strong id="cqaSelectedLabel"></strong> · 다음 채번 코드: <span class="ccode-cell" id="cqaNextCode">-</span>
+          </div>
+
+          <div class="cqa-mode-tabs" id="cqaAddControls" hidden>
+            <button type="button" class="cqa-mode-tab active" data-mode="single">1건씩 추가</button>
+            <button type="button" class="cqa-mode-tab" data-mode="bulk">여러 개 한번에</button>
+          </div>
+          <div class="cqa-mode-panel" id="cqaSingleMode" hidden>
+            <div class="cqa-single-row">
+              <input type="text" id="cqaSingleNameInput" class="cqa-name-input" placeholder="상품명 입력 후 Enter 또는 추가" autocomplete="off" />
+              <button type="button" class="toolbar-btn" id="cqaSingleAddBtn">대기 목록에 추가</button>
+            </div>
+          </div>
+          <div class="cqa-mode-panel" id="cqaBulkMode" hidden>
+            <textarea id="cqaBulkTextarea" class="cqa-bulk-textarea" rows="4" placeholder="상품명을 한 줄에 하나씩 붙여넣으세요.&#10;예)&#10;국산 세면기 수전/A사&#10;국산 세면기 수전/B사"></textarea>
+            <button type="button" class="toolbar-btn" id="cqaBulkAddBtn">여러 줄 한번에 대기 목록에 추가</button>
+          </div>
+        </div>
+
+        <div class="cqa-right-col">
+          <div class="cqa-step-label">대기 목록 <span class="ccount" id="cqaPendingCount">0</span></div>
+          <div class="cqa-pending-list" id="cqaPendingList"></div>
+          <button type="button" class="toolbar-btn cqa-save-btn" id="cqaSaveBtn" disabled>💾 전체 저장 (<span id="cqaSaveBtnCount">0</span>건)</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 전사공통코드 : 고객스타일 추가 — 고객스타일은 스타일의 조합으로 정의된다 -->
+  <div class="cmodal-backdrop" id="custStyleComboModal" hidden>
+    <div class="csend-modal">
+      <div class="cmodal-header">➕ 고객스타일 추가 <button class="cmodal-close" id="custStyleComboModalClose" type="button">✕</button></div>
+      <div class="cmodal-body">
+        <div class="ccombo-field">
+          <label>코드</label>
+          <input type="text" id="custStyleComboCode" placeholder="예: MX" autocomplete="off" />
+        </div>
+        <div class="ccombo-field">
+          <label>명칭</label>
+          <input type="text" id="custStyleComboName" placeholder="예: 믹스 스타일" autocomplete="off" />
+        </div>
+        <div class="ccombo-field">
+          <label>구성 스타일 (2개 이상 선택 가능)</label>
+          <div class="ccombo-style-checks" id="custStyleComboChecks"></div>
+        </div>
+        <div class="ccombo-error" id="custStyleComboError" hidden></div>
+        <div class="ccombo-actions">
+          <button class="toolbar-btn" id="custStyleComboCancelBtn" type="button">취소</button>
+          <button class="primary-btn" id="custStyleComboSaveBtn" type="button">추가</button>
+        </div>
+      </div>
+    </div>
   </div>
 
 <script src="shared-state.js"></script>
